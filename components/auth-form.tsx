@@ -6,7 +6,7 @@ import { authClient } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 
-export function AuthForm({ mode: _mode }: { mode: 'sign-in' | 'sign-up' }) {
+export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -31,6 +31,7 @@ export function AuthForm({ mode: _mode }: { mode: 'sign-in' | 'sign-up' }) {
   }
 
   const universityRequired = Boolean(error)
+  const isSignUp = mode === 'sign-up'
 
   return (
     <main className="flex min-h-svh items-center justify-center bg-background px-4 py-8">
@@ -42,12 +43,14 @@ export function AuthForm({ mode: _mode }: { mode: 'sign-in' | 'sign-up' }) {
           </div>
 
           <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground">
-            {universityRequired ? 'Pondicherry University account required' : 'Welcome to PUKart'}
+            {universityRequired ? 'Pondicherry University account required' : isSignUp ? 'Join PUKart' : 'Welcome to PUKart'}
           </h1>
           <p className="mt-3 max-w-sm text-pretty text-sm leading-6 text-muted-foreground">
             {universityRequired
               ? 'PUKart is exclusively for verified Pondicherry University students. Please sign in with your official @pondiuni.ac.in Google account.'
-              : 'Your campus marketplace for Pondicherry University students.'}
+              : isSignUp
+                ? 'Create your verified campus marketplace account with Google.'
+                : 'Your campus marketplace for Pondicherry University students.'}
           </p>
 
           {error && (
@@ -65,7 +68,7 @@ export function AuthForm({ mode: _mode }: { mode: 'sign-in' | 'sign-up' }) {
             <span className="flex size-6 items-center justify-center rounded-full bg-background font-sans text-sm font-bold text-foreground" aria-hidden="true">
               G
             </span>
-            {loading ? 'Opening Google…' : error ? 'Try another Google account' : 'Continue with Google'}
+            {loading ? 'Opening Google…' : error ? 'Try another Google account' : isSignUp ? 'Create account with Google' : 'Continue with Google'}
           </Button>
 
           <p className="mt-5 text-xs leading-5 text-muted-foreground">
