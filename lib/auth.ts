@@ -3,7 +3,13 @@ import { pool } from '@/lib/db'
 
 export const auth = betterAuth({
   database: pool,
-  baseURL: process.env.BETTER_AUTH_URL ?? (process.env.V0_RUNTIME_URL ? process.env.V0_RUNTIME_URL : process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'),
+  baseURL:
+    process.env.BETTER_AUTH_URL ??
+    (process.env.NODE_ENV === 'production'
+      ? 'https://terminus-ruddy.vercel.app'
+      : process.env.V0_RUNTIME_URL
+        ? process.env.V0_RUNTIME_URL
+        : 'http://localhost:3000'),
   databaseHooks: {
     user: {
       create: {
@@ -42,6 +48,7 @@ export const auth = betterAuth({
       : []),
     ...(process.env.NODE_ENV === 'production'
       ? [
+          'https://terminus-ruddy.vercel.app',
           ...(process.env.VERCEL_URL
             ? [`https://${process.env.VERCEL_URL}`]
             : []),
