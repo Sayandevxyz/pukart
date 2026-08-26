@@ -60,3 +60,27 @@ export async function archiveListing(id: number) {
   await db.update(listings).set({ status: 'archived' }).where(and(eq(listings.id, id), eq(listings.userId, userId)))
   revalidatePath('/')
 }
+
+export async function updateListing(id: number, input: {
+  title: string
+  description: string
+  price: number
+  category: string
+  type?: string
+  imageUrl?: string
+  location?: string
+}) {
+  const userId = await getUserId()
+  const title = input.title.trim()
+  const description = input.description.trim()
+  const category = input.category.trim()
+  if (!Number.isInteger(id) || id < 1) throw new Error('Invalid listing')
+  if (title.length < 3 || title.length > 120) throw new Error('Invalid title')
+  if (description.length < 10 || description.length > 3000) throw new Error('Invalid description')
+  if (!Number.isInteger(input.price) || input.price <= 0 || input.price > 10000000) throw new Error('Invalid price')
+  if (!category) throw new Error('Category is required')
+  const [updated] = await db.update(listings).set({ title, description, price: input.price, category, type: input.type ?? 'sell', imageUrl: input.imageUrl?.trim() || null, location: input.location?.trim() || null }).where(and(eq(listings.id, id), eq(listings.userId, userId), eq(listings.status, 'active'))).returning()
+  if (!updated) throw new Error('Listing not found')
+  revalidatePath('/')
+  return updated
+}

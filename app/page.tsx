@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import useSWR from 'swr'
 import { toggleFavorite, startConversation, requestTransaction } from '@/app/actions/marketplace'
 import { createListing } from '@/app/actions/listings'
@@ -72,6 +72,7 @@ const banners = [
 export default function Page() {
   const [query, setQuery] = useState('')
   const { data, error, isLoading } = useSWR<{ listings: Array<Record<string, unknown>> }>('/api/listings', fetcher)
+  const { data: favoriteData } = useSWR<{ listingIds: number[] }>('/api/favorites', fetcher)
   const listings: Listing[] = (data?.listings ?? []).map((item) => ({
     id: Number(item.id),
     title: String(item.title ?? 'Untitled listing'),
@@ -90,6 +91,9 @@ export default function Page() {
   const [activeType, setActiveType] = useState('All')
   const [sort, setSort] = useState('Newest')
   const [saved, setSaved] = useState<number[]>([])
+  useEffect(() => {
+    if (favoriteData?.listingIds) setSaved(favoriteData.listingIds)
+  }, [favoriteData])
   const [selected, setSelected] = useState<Listing | null>(null)
   const [drawer, setDrawer] = useState<'sell' | 'messages' | 'profile' | null>(null)
   const [banner, setBanner] = useState(0)
