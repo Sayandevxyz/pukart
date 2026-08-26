@@ -3,14 +3,13 @@ import { pool } from '@/lib/db'
 
 export const auth = betterAuth({
   database: pool,
-  secret: process.env.BETTER_AUTH_SECRET!,
   baseURL:
     process.env.BETTER_AUTH_URL ??
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : process.env.V0_RUNTIME_URL),
+    (process.env.NODE_ENV === 'production'
+      ? 'https://terminus-ruddy.vercel.app'
+      : process.env.V0_RUNTIME_URL
+        ? process.env.V0_RUNTIME_URL
+        : 'http://localhost:3000'),
   databaseHooks: {
     user: {
       create: {
@@ -26,8 +25,15 @@ export const auth = betterAuth({
   },
   socialProviders: {
     google: {
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID ?? '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+      prompt: 'select_account',
+      accessType: 'offline',
+      mapProfileToUser: async (profile) => ({
+        email: profile.email.trim().toLowerCase(),
+        name: profile.name,
+        image: profile.picture,
+      }),
     },
   },
   trustedOrigins: [
@@ -42,6 +48,7 @@ export const auth = betterAuth({
       : []),
     ...(process.env.NODE_ENV === 'production'
       ? [
+          'https://terminus-ruddy.vercel.app',
           ...(process.env.VERCEL_URL
             ? [`https://${process.env.VERCEL_URL}`]
             : []),
