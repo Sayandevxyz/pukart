@@ -8,7 +8,10 @@ export const auth = betterAuth({
   secret:
     process.env.BETTER_AUTH_SECRET ??
     process.env.BETTER_AUTH_API_KEY ??
-    process.env.BETTER_AUTH_API_KEY_2,
+    (process.env.BETTER_AUTH_API_KEY_2 &&
+    process.env.BETTER_AUTH_API_KEY_2 !== 'process.env.BETTER_AUTH_API_KEY'
+      ? process.env.BETTER_AUTH_API_KEY_2
+      : 'pukart-development-secret-change-in-production'),
   baseURL:
     process.env.BETTER_AUTH_URL ??
     (process.env.VERCEL_PROJECT_PRODUCTION_URL
@@ -19,6 +22,13 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,
+  },
+  socialProviders: {
+    google: {
+      clientId:
+        '984681777673-mr3d20r79q9i58bft7mepacsn91cia00.apps.googleusercontent.com',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    },
   },
   trustedOrigins: [
     ...(process.env.NODE_ENV === 'development'
