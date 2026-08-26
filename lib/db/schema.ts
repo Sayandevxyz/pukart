@@ -100,4 +100,66 @@ export const messages = pgTable("messages", {
 
 export type Listing = typeof listings.$inferSelect
 export type Conversation = typeof conversations.$inferSelect
+export const profiles = pgTable("profiles", {
+  userId: text("userId").primaryKey(),
+  department: text("department"),
+  course: text("course"),
+  year: integer("year"),
+  bio: text("bio"),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+})
+
+export const favorites = pgTable("favorites", {
+  id: serial("id").primaryKey(),
+  userId: text("userId").notNull(),
+  listingId: integer("listingId").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+}, (t) => [unique().on(t.userId, t.listingId)])
+
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: text("userId").notNull(),
+  kind: text("kind").notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  readAt: timestamp("readAt"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+})
+
+export const reports = pgTable("reports", {
+  id: serial("id").primaryKey(),
+  reporterId: text("reporterId").notNull(),
+  listingId: integer("listingId"),
+  reportedUserId: text("reportedUserId"),
+  reason: text("reason").notNull(),
+  status: text("status").notNull().default("open"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+})
+
+export const transactions = pgTable("transactions", {
+  id: serial("id").primaryKey(),
+  listingId: integer("listingId").notNull(),
+  buyerId: text("buyerId").notNull(),
+  sellerId: text("sellerId").notNull(),
+  status: text("status").notNull().default("inquiry"),
+  amount: integer("amount").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+})
+
+export const reviews = pgTable("reviews", {
+  id: serial("id").primaryKey(),
+  transactionId: integer("transactionId").notNull(),
+  authorId: text("authorId").notNull(),
+  recipientId: text("recipientId").notNull(),
+  rating: integer("rating").notNull(),
+  body: text("body").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+}, (t) => [unique().on(t.transactionId, t.authorId)])
+
+export type Profile = typeof profiles.$inferSelect
+export type Favorite = typeof favorites.$inferSelect
+export type Notification = typeof notifications.$inferSelect
+export type Report = typeof reports.$inferSelect
+export type Transaction = typeof transactions.$inferSelect
+export type Review = typeof reviews.$inferSelect
 export type Message = typeof messages.$inferSelect

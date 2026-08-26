@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
+import { toggleFavorite, startConversation, requestTransaction } from '@/app/actions/marketplace'
 import {
   Bell,
   BookOpen,
@@ -99,9 +100,16 @@ export default function Page() {
     window.setTimeout(() => setNotice(''), 2400)
   }
 
-  function toggleSaved(id: number) {
-    setSaved((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
-    toast(saved.includes(id) ? 'Removed from favorites' : 'Saved to favorites')
+  async function toggleSaved(id: number) {
+    const wasSaved = saved.includes(id)
+    setSaved((current) => wasSaved ? current.filter((item) => item !== id) : [...current, id])
+    try {
+      const result = await toggleFavorite(id)
+      toast(result.saved ? 'Saved to favorites' : 'Removed from favorites')
+    } catch (error) {
+      setSaved((current) => wasSaved ? [...current, id] : current.filter((item) => item !== id))
+      toast(error instanceof Error ? error.message : 'Sign in to save favorites')
+    }
   }
 
   return (
