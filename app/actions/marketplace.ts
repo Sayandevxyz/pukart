@@ -50,13 +50,54 @@ export async function startConversation(listingId: number, content = 'Hi, is thi
   return conversation
 }
 
+export async function getMyConversations() {
+  const user = await currentUser()
+  return db.select().from(conversations).where(or(eq(conversations.buyerId, user.id), eq(conversations.sellerId, user.id))).orderBy(desc(conversations.createdAt))
+}
+
+export async function getConversationMessages(conversationId: number) {
+  const user = await currentUser()
+  if (!Number.isInteger(conversationId) || conversationId < 1) throw new Error('Invalid conversation')
+  const allowed = await db.select({ id: conversations.id }).from(conversations).where(and(eq(conversations.id, conversationId), or(eq(conversations.buyerId, user.id), eq(conversations.sellerId, user.id)))).limit(1)
+  if (!allowed[0]) throw new Error('Conversation not found')
+  return db.select().from(messages).where(eq(messages.conversationId, conversationId)).orderBy(messages.createdAt)
+}
+
 export async function sendMessage(conversationId: number, content: string) {
   const user = await currentUser()
   const safeContent = text(content, 2000)
   const conversation = await db.select().from(conversations).where(and(eq(conversations.id, conversationId), or(eq(conversations.buyerId, user.id), eq(conversations.sellerId, user.id)))).limit(1)
   if (!conversation[0]) throw new Error('Conversation not found')
   const [message] = await db.insert(messages).values({ conversationId, senderId: user.id, content: safeContent }).returning()
+  const recipientId = conversation[0].buyerId === user.id ? conversation[0].sellerId : conversation[0].buyerId
+  await db.insert(notifications).values({ userId: recipientId, kind: 'message', title: 'New marketplace message', body: `${user.name} sent you a message` })
   return message
+}
+
+async function updateTransactionStatus(id: number, status: string) {
+  const user = await currentUser()
+  const tx = await db.select().from(transactions).where(and(eq(transactions.id, id), or(eq(transactions.buyerId, user.id), eq(transactions.sellerId, user.id)))).limit(1)
+  if (!tx[0]) throw new Error('Transaction not found')
+  const allowed = status === 'accepted' ? tx[0].sellerId === user.id && tx[0].status === 'inquiry' : status === 'rejected' ? tx[0].sellerId === user.id && tx[0].status === 'inquiry' : status === 'completed' ? tx[0].status === 'accepted' : status === 'cancelled' ? ['inquiry', 'accepted'].includes(tx[0].status) : false
+  if (!allowed) throw new Error('Invalid transaction transition')
+  const [updated] = await db.update(transactions).set({ status }).where(eq(transactions.id, id)).returning()
+  return updated
+}
+
+export async function acceptTransaction(id: number) {
+  return await updateTransactionStatus(id, 'accepted')
+}
+
+export async function rejectTransaction(id: number) {
+  return await updateTransactionStatus(id, 'rejected')
+}
+
+export async function completeTransaction(id: number) {
+  return await updateTransactionStatus(id, 'completed')
+}
+
+export async function cancelTransaction(id: number) {
+  return await updateTransactionStatus(id, 'cancelled')
 }
 
 export async function reportListing(listingId: number, reason: string) {
