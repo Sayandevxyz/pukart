@@ -36,10 +36,8 @@ export function AuthForm({ mode: _mode }: { mode: 'sign-in' | 'sign-up' }) {
     <main className="flex min-h-svh items-center justify-center bg-background px-4 py-8">
       <Card className="w-full max-w-md overflow-hidden border-border/70 bg-card p-8 shadow-xl shadow-primary/5 sm:p-10">
         <div className="flex flex-col items-center text-center">
-          <div className="mb-8 flex items-center gap-2">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-primary font-mono text-lg font-bold text-primary-foreground shadow-lg shadow-primary/20">
-              P
-            </span>
+          <div className="mb-8 flex items-center gap-3">
+            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-EScoY3Dr9cDuwfPiUrfIsTl2QOCJT5.png" alt="PUKart logo" className="h-14 w-14 rounded-2xl object-cover shadow-lg shadow-primary/20" />
             <span className="font-mono text-xl font-bold tracking-tight text-foreground">PUKart</span>
           </div>
 

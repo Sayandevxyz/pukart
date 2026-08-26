@@ -11,7 +11,10 @@ export const metadata: Metadata = {
   title: 'PUKart — Your Campus. Your Marketplace.',
   description: 'Buy, sell and rent with verified Pondicherry University students.',
   generator: 'PUKart',
-  icons: { icon: '/icon.svg', apple: '/apple-icon.png' },
+  icons: {
+    icon: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-EScoY3Dr9cDuwfPiUrfIsTl2QOCJT5.png',
+    apple: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-EScoY3Dr9cDuwfPiUrfIsTl2QOCJT5.png',
+  },
 }
 
 export const viewport: Viewport = { colorScheme: 'light', themeColor: '#f8f3e8', userScalable: false }
