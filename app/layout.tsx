@@ -8,9 +8,9 @@ const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono'
 const dmSerif = DM_Serif_Display({ subsets: ['latin'], weight: '400', variable: '--font-dm-serif' })
 
 export const metadata: Metadata = {
-  title: 'puk.art — Things worth keeping',
-  description: 'A thoughtful marketplace for art, objects, and creative tools.',
-  generator: 'puk.art',
+  title: 'PUKart — Your Campus. Your Marketplace.',
+  description: 'Buy, sell and rent with verified Pondicherry University students.',
+  generator: 'PUKart',
   icons: { icon: '/icon.svg', apple: '/apple-icon.png' },
 }
 
