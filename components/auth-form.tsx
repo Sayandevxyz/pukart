@@ -1,37 +1,28 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 
-export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
+export function AuthForm({ mode: _mode }: { mode: 'sign-in' | 'sign-up' }) {
   const router = useRouter()
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const isSignUp = mode === 'sign-up'
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleGoogleSignIn = async () => {
     setError(null)
     setLoading(true)
 
-    const { error } = isSignUp
-      ? await authClient.signUp.email({ email, password, name })
-      : await authClient.signIn.email({ email, password })
+    const result = await authClient.signIn.social({
+      provider: 'google',
+      callbackURL: '/',
+    })
 
-    setLoading(false)
-
-    if (error) {
-      setError(error.message ?? 'Something went wrong')
+    if (result.error) {
+      setLoading(false)
+      setError(result.error.message ?? 'Google sign-in could not be completed.')
       return
     }
 
@@ -39,82 +30,55 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
     router.refresh()
   }
 
-  return (
-    <main className="min-h-svh bg-background flex items-center justify-center px-4">
-      <Card className="w-full max-w-sm p-6">
-        <div className="mb-6">
-          <p className="mb-3 font-mono text-xs font-semibold uppercase tracking-[0.18em] text-primary">PUKart</p>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            {isSignUp ? 'Create your campus account' : 'Welcome back'}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isSignUp
-              ? 'Use your verified Pondicherry University email to get started.'
-              : 'Sign in with your university email to continue.'}
-          </p>
-        </div>
+  const universityRequired = Boolean(error)
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {isSignUp && (
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                autoComplete="name"
-              />
-            </div>
-          )}
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
+  return (
+    <main className="flex min-h-svh items-center justify-center bg-background px-4 py-8">
+      <Card className="w-full max-w-md overflow-hidden border-border/70 bg-card p-8 shadow-xl shadow-primary/5 sm:p-10">
+        <div className="flex flex-col items-center text-center">
+          <div className="mb-8 flex items-center gap-2">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-primary font-mono text-lg font-bold text-primary-foreground shadow-lg shadow-primary/20">
+              P
+            </span>
+            <span className="font-mono text-xl font-bold tracking-tight text-foreground">PUKart</span>
           </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              autoComplete={isSignUp ? 'new-password' : 'current-password'}
-            />
-          </div>
+
+          <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground">
+            {universityRequired ? 'Pondicherry University account required' : 'Welcome to PUKart'}
+          </h1>
+          <p className="mt-3 max-w-sm text-pretty text-sm leading-6 text-muted-foreground">
+            {universityRequired
+              ? 'PUKart is exclusively for verified Pondicherry University students. Please sign in with your official @pondiuni.ac.in Google account.'
+              : 'Your campus marketplace for Pondicherry University students.'}
+          </p>
 
           {error && (
-            <p className="text-sm text-destructive" role="alert">
+            <p className="mt-5 w-full rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-left text-sm leading-5 text-destructive" role="alert">
               {error}
             </p>
           )}
 
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading
-              ? 'Please wait...'
-              : isSignUp
-                ? 'Create account'
-                : 'Sign in'}
-          </Button>
-        </form>
-
-        <p className="text-sm text-muted-foreground text-center mt-6">
-          {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-          <Link
-            href={isSignUp ? '/sign-in' : '/sign-up'}
-            className="text-foreground font-medium underline-offset-4 hover:underline"
+          <Button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="mt-8 h-12 w-full gap-3 rounded-xl bg-foreground text-background shadow-lg shadow-foreground/10 transition-transform hover:-translate-y-0.5 hover:bg-foreground/90"
           >
-            {isSignUp ? 'Sign in' : 'Sign up'}
-          </Link>
-        </p>
+            <span className="flex size-6 items-center justify-center rounded-full bg-background font-sans text-sm font-bold text-foreground" aria-hidden="true">
+              G
+            </span>
+            {loading ? 'Opening Google…' : error ? 'Try another Google account' : 'Continue with Google'}
+          </Button>
+
+          <p className="mt-5 text-xs leading-5 text-muted-foreground">
+            Sign in using your official <span className="font-medium text-foreground">@pondiuni.ac.in</span> Google account.
+          </p>
+
+          <div className="mt-8 flex items-center gap-2 rounded-full border border-border bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground">
+            <span className="text-primary" aria-hidden="true">✓</span>
+            Verified University Students
+          </div>
+        </div>
       </Card>
     </main>
   )
