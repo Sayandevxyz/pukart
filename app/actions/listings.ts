@@ -9,8 +9,14 @@ import { listings } from '@/lib/db/schema'
 
 async function getUser() {
   const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) throw new Error('Unauthorized')
+  const email = session?.user?.email?.trim().toLowerCase()
+  if (!session?.user?.id || !email?.endsWith('@pondiuni.ac.in')) throw new Error('Unauthorized')
   return session.user
+}
+
+async function getUserId() {
+  const user = await getUser()
+  return user.id
 }
 
 export async function getActiveListings() {
