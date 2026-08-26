@@ -36,7 +36,7 @@ export async function createListing(input: {
 
   const [listing] = await db.insert(listings).values({
     userId,
-    sellerName: 'PUKart member',
+    sellerName: user.name,
     title,
     description,
     price: input.price,

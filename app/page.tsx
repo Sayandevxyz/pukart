@@ -3,7 +3,9 @@
 import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
+import useSWR from 'swr'
 import { toggleFavorite, startConversation, requestTransaction } from '@/app/actions/marketplace'
+import { createListing } from '@/app/actions/listings'
 import {
   Bell,
   BookOpen,
@@ -45,14 +47,10 @@ type Listing = {
   posted: string
 }
 
-const listings: Listing[] = [
-  { id: 1, title: 'Casio fx-991ES Plus', price: 650, originalPrice: 1000, category: 'Books & Academic', condition: 'Like new', type: 'Buy', seller: 'Aarav Menon', location: 'Kalapet', image: '/images/listing-laptop.png', rating: 4.8, posted: '12 min ago' },
-  { id: 2, title: 'Single-speed city cycle', price: 2800, originalPrice: 4200, category: 'Cycles', condition: 'Good', type: 'Buy', seller: 'Nikhil R', location: 'Hostel Road', image: '/images/listing-cycle.png', rating: 4.7, posted: '35 min ago' },
-  { id: 3, title: "The Artist's Way", price: 280, originalPrice: 450, category: 'Books & Academic', condition: 'Good', type: 'Buy', seller: 'Mara Studio', location: 'Auroville', image: '/images/listing-books.png', rating: 4.9, posted: '1 hr ago' },
-  { id: 4, title: 'MacBook stand + desk kit', price: 650, originalPrice: 900, category: 'Electronics', condition: 'Like new', type: 'Rent', seller: 'Priya S', location: 'Mahatma Gandhi Road', image: '/images/listing-laptop.png', rating: 4.6, posted: '2 hrs ago' },
-  { id: 5, title: 'Hand-painted tote bag', price: 380, originalPrice: 550, category: 'Fashion', condition: 'New', type: 'Buy', seller: 'Ishita K', location: 'Lawspet', image: '/images/listing-books.png', rating: 4.9, posted: '3 hrs ago' },
-  { id: 6, title: 'Badminton racquet pair', price: 900, originalPrice: 1400, category: 'Sports', condition: 'Good', type: 'Rent', seller: 'Dev Shah', location: 'Tagore Nagar', image: '/images/listing-cycle.png', rating: 4.5, posted: '5 hrs ago' },
-]
+const fetcher = (url: string) => fetch(url).then((response) => {
+  if (!response.ok) throw new Error('Unable to load marketplace listings')
+  return response.json()
+})
 
 const categories = [
   { name: 'Books', icon: BookOpen, tint: 'bg-blue-50 text-blue-700' },
@@ -73,6 +71,21 @@ const banners = [
 
 export default function Page() {
   const [query, setQuery] = useState('')
+  const { data, error, isLoading } = useSWR<{ listings: Array<Record<string, unknown>> }>('/api/listings', fetcher)
+  const listings: Listing[] = (data?.listings ?? []).map((item) => ({
+    id: Number(item.id),
+    title: String(item.title ?? 'Untitled listing'),
+    price: Number(item.price ?? 0),
+    originalPrice: Number(item.price ?? 0),
+    category: String(item.category ?? 'Other'),
+    condition: 'Verified listing',
+    type: String(item.type ?? 'sell').replace(/^./, (letter) => letter.toUpperCase()),
+    seller: String(item.sellerName ?? 'PU student'),
+    location: String(item.location ?? 'Pondicherry University'),
+    image: String(item.imageUrl ?? '/images/campus-marketplace.png'),
+    rating: 5,
+    posted: item.createdAt ? new Date(String(item.createdAt)).toLocaleDateString('en-IN') : 'Recently',
+  }))
   const [activeCategory, setActiveCategory] = useState('All')
   const [activeType, setActiveType] = useState('All')
   const [sort, setSort] = useState('Newest')
@@ -130,7 +143,7 @@ export default function Page() {
 
       <section className="mx-auto max-w-[1440px] px-4 py-7 sm:px-6 lg:px-8"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-accent">Shop by need</p><h2 className="mt-1 text-xl font-bold text-primary sm:text-2xl">Browse categories</h2></div><button onClick={() => toast('All categories are shown')} className="text-sm font-semibold text-primary hover:text-accent">View all <ChevronRight className="ml-1 inline" size={16} /></button></div><div className="mt-5 grid grid-cols-4 gap-3 sm:grid-cols-8">{categories.map(({ name, icon: Icon, tint }) => <button key={name} onClick={() => { setActiveCategory(name); document.getElementById('deals')?.scrollIntoView({ behavior: 'smooth' }) }} className="group flex min-w-0 flex-col items-center gap-2"><span className={`flex h-14 w-14 items-center justify-center rounded-2xl ${tint} transition group-hover:-translate-y-1 group-hover:shadow-md sm:h-16 sm:w-16`}><Icon size={25} /></span><span className="truncate text-xs font-semibold text-muted-foreground group-hover:text-foreground sm:text-sm">{name}</span></button>)}</div></section>
 
-      <section id="deals" className="bg-muted/45 py-8 sm:py-10"><div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8"><div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-accent">Curated for campus life</p><h2 className="mt-1 text-2xl font-bold text-primary sm:text-3xl">Deals near you</h2><p className="mt-1 text-sm text-muted-foreground">{filtered.length} verified listings around Pondicherry University</p></div><div className="flex gap-2"><select value={activeType} onChange={(event) => setActiveType(event.target.value)} aria-label="Filter listing type" className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold outline-none"><option>All</option><option>Buy</option><option>Rent</option></select><select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort listings" className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold outline-none"><option>Newest</option><option>Price low-high</option><option>Price high-low</option></select></div></div>{filtered.length > 0 ? <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-6">{filtered.map((item, index) => <ProductCard key={item.id} item={item} saved={saved.includes(item.id)} onSave={() => toggleSaved(item.id)} onOpen={() => setSelected(item)} index={index} />)}</div> : <div className="mt-6 rounded-2xl border border-dashed border-border bg-background px-6 py-16 text-center"><Search className="mx-auto text-muted-foreground" size={28} /><h3 className="mt-3 font-bold text-primary">No products found</h3><p className="mt-1 text-sm text-muted-foreground">Try a broader search or another category.</p><button onClick={() => { setQuery(''); setActiveCategory('All'); setActiveType('All') }} className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Clear filters</button></div>}</div></section>
+      <section id="deals" className="bg-muted/45 py-8 sm:py-10"><div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8"><div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-accent">Curated for campus life</p><h2 className="mt-1 text-2xl font-bold text-primary sm:text-3xl">Deals near you</h2><p className="mt-1 text-sm text-muted-foreground">{filtered.length} verified listings around Pondicherry University</p></div><div className="flex gap-2"><select value={activeType} onChange={(event) => setActiveType(event.target.value)} aria-label="Filter listing type" className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold outline-none"><option>All</option><option>Buy</option><option>Rent</option></select><select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort listings" className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold outline-none"><option>Newest</option><option>Price low-high</option><option>Price high-low</option></select></div></div>{isLoading ? <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-6">{Array.from({ length: 6 }).map((_, index) => <div key={index} className="aspect-square animate-pulse rounded-xl bg-muted" />)}</div> : error ? <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/5 px-6 py-12 text-center"><h3 className="font-bold text-primary">Marketplace unavailable</h3><p className="mt-1 text-sm text-muted-foreground">We couldn&apos;t load live listings. Please refresh and try again.</p><button onClick={() => window.location.reload()} className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Refresh marketplace</button></div> : filtered.length > 0 ? <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-6">{filtered.map((item, index) => <ProductCard key={item.id} item={item} saved={saved.includes(item.id)} onSave={() => toggleSaved(item.id)} onOpen={() => setSelected(item)} index={index} />)}</div> : <div className="mt-6 rounded-2xl border border-dashed border-border bg-background px-6 py-16 text-center"><Search className="mx-auto text-muted-foreground" size={28} /><h3 className="mt-3 font-bold text-primary">No products found</h3><p className="mt-1 text-sm text-muted-foreground">Try a broader search or another category.</p><button onClick={() => { setQuery(''); setActiveCategory('All'); setActiveType('All') }} className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Clear filters</button></div>}</div></section>
 
       <section className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 lg:px-8"><div className="grid gap-5 md:grid-cols-3"><InfoCard icon={<ShieldCheck />} title="Verified students only" copy="Every account uses a Pondicherry University email." /><InfoCard icon={<MapPin />} title="Meet safely on campus" copy="Find a convenient public spot for your handoff." /><InfoCard icon={<Sparkles />} title="Built for student budgets" copy="Make an offer and find useful things for less." /></div></section>
 
