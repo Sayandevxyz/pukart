@@ -17,7 +17,8 @@ export const auth = betterAuth({
         ? `https://${process.env.VERCEL_URL}`
         : process.env.V0_RUNTIME_URL),
   emailAndPassword: {
-    enabled: false,
+    enabled: true,
+    requireEmailVerification: false,
   },
   databaseHooks: {
     user: {
