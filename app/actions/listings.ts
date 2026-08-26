@@ -7,10 +7,10 @@ import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { listings } from '@/lib/db/schema'
 
-async function getUserId() {
+async function getUser() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) throw new Error('Unauthorized')
-  return session.user.id
+  return session.user
 }
 
 export async function getActiveListings() {
@@ -26,7 +26,7 @@ export async function createListing(input: {
   imageUrl?: string
   location?: string
 }) {
-  const userId = await getUserId()
+  const user = await getUser()
   const title = input.title.trim()
   const description = input.description.trim()
   if (title.length < 3 || title.length > 120) throw new Error('Invalid title')
@@ -35,7 +35,7 @@ export async function createListing(input: {
   if (!input.category.trim()) throw new Error('Category is required')
 
   const [listing] = await db.insert(listings).values({
-    userId,
+    userId: user.id,
     sellerName: user.name,
     title,
     description,
