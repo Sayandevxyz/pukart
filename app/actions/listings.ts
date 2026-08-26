@@ -1,86 +1,287 @@
 'use server'
 
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { auth } from '@/lib/auth'
+import { auth, isValidPondiUniEmail, isUserAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { listings } from '@/lib/db/schema'
+import { listings, listingImages, user as userTable, notifications } from '@/lib/db/schema'
+import { checkListingForScam } from '@/lib/ai'
+import { checkProfileCompletion } from '@/lib/constants/campus'
 
-async function getUser() {
+export async function getAuthenticatedUser() {
   const session = await auth.api.getSession({ headers: await headers() })
   const email = session?.user?.email?.trim().toLowerCase()
-  if (!session?.user?.id || !email?.endsWith('@pondiuni.ac.in')) throw new Error('Unauthorized')
+  if (!session?.user?.id || !isValidPondiUniEmail(email)) {
+    throw new Error('Unauthorized: Must be signed in with a verified @pondiuni.ac.in account.')
+  }
   return session.user
 }
 
-async function getUserId() {
-  const user = await getUser()
-  return user.id
+export async function getListingById(id: number) {
+  if (!Number.isInteger(id) || id < 1) return null
+
+  const rows = await db
+    .select({
+      listing: listings,
+      seller: {
+        id: userTable.id,
+        name: userTable.name,
+        email: userTable.email,
+        image: userTable.image,
+        department: userTable.department,
+        course: userTable.course,
+        year: userTable.year,
+        bio: userTable.bio,
+      },
+    })
+    .from(listings)
+    .leftJoin(userTable, eq(listings.userId, userTable.id))
+    .where(eq(listings.id, id))
+    .limit(1)
+
+  if (!rows[0]) return null
+
+  const images = await db
+    .select()
+    .from(listingImages)
+    .where(eq(listingImages.listingId, id))
+    .orderBy(listingImages.displayOrder)
+
+  return {
+    ...rows[0].listing,
+    seller: rows[0].seller,
+    images: images.length > 0 ? images.map((img) => img.url) : rows[0].listing.imageUrl ? [rows[0].listing.imageUrl] : [],
+  }
 }
 
 export async function getActiveListings() {
-  return db.select().from(listings).where(eq(listings.status, 'active')).orderBy(desc(listings.createdAt))
+  return db
+    .select()
+    .from(listings)
+    .where(eq(listings.status, 'active'))
+    .orderBy(desc(listings.createdAt))
 }
 
 export async function createListing(input: {
   title: string
   description: string
   price: number
+  originalPrice?: number
   category: string
   type?: string
+  condition?: string
   imageUrl?: string
+  images?: string[]
   location?: string
 }) {
-  const user = await getUser()
-  const title = input.title.trim()
-  const description = input.description.trim()
-  if (title.length < 3 || title.length > 120) throw new Error('Invalid title')
-  if (description.length < 10 || description.length > 3000) throw new Error('Invalid description')
-  if (!Number.isInteger(input.price) || input.price <= 0 || input.price > 10000000) throw new Error('Invalid price')
-  if (!input.category.trim()) throw new Error('Category is required')
+  const user = await getAuthenticatedUser()
 
-  const [listing] = await db.insert(listings).values({
-    userId: user.id,
-    sellerName: user.name,
-    title,
-    description,
-    price: input.price,
-    type: input.type ?? 'sell',
-    category: input.category.trim(),
-    imageUrl: input.imageUrl?.trim() || null,
-    location: input.location?.trim() || null,
-  }).returning()
-  revalidatePath('/')
-  return listing
-}
+  // Backend profile completion check
+  const [userProfile] = await db.select().from(userTable).where(eq(userTable.id, user.id)).limit(1)
+  if (userProfile) {
+    const profileCheck = checkProfileCompletion({
+      department: userProfile.department,
+      course: userProfile.course,
+      year: userProfile.year,
+      hostel: userProfile.hostel,
+    })
+    if (!profileCheck.isComplete) {
+      throw new Error(`Please complete your profile before listing. Missing: ${profileCheck.missingFields.join(', ')}`)
+    }
+  }
 
-export async function archiveListing(id: number) {
-  const userId = await getUserId()
-  await db.update(listings).set({ status: 'archived' }).where(and(eq(listings.id, id), eq(listings.userId, userId)))
-  revalidatePath('/')
-}
-
-export async function updateListing(id: number, input: {
-  title: string
-  description: string
-  price: number
-  category: string
-  type?: string
-  imageUrl?: string
-  location?: string
-}) {
-  const userId = await getUserId()
   const title = input.title.trim()
   const description = input.description.trim()
   const category = input.category.trim()
-  if (!Number.isInteger(id) || id < 1) throw new Error('Invalid listing')
-  if (title.length < 3 || title.length > 120) throw new Error('Invalid title')
-  if (description.length < 10 || description.length > 3000) throw new Error('Invalid description')
+  const condition = (input.condition || 'good').toLowerCase().trim()
+  const type = (input.type || 'sell').toLowerCase().trim()
+  const location = input.location?.trim() || 'Pondicherry University'
+
+  if (title.length < 3 || title.length > 120) throw new Error('Title must be between 3 and 120 characters')
+  if (description.length < 10 || description.length > 5000) throw new Error('Description must be between 10 and 5000 characters')
+  if (!Number.isInteger(input.price) || input.price <= 0 || input.price > 10000000) throw new Error('Price must be a positive integer in INR (max ₹10,000,000)')
+  if (!category) throw new Error('Category is required')
+
+  const scamCheck = checkListingForScam(title, description)
+
+  const allImages = (input.images && input.images.length > 0 ? input.images : input.imageUrl ? [input.imageUrl] : []).filter(Boolean)
+  const primaryImage = allImages[0] || input.imageUrl || null
+
+  const [listing] = await db
+    .insert(listings)
+    .values({
+      userId: user.id,
+      sellerName: user.name || 'Pondicherry University Student',
+      title,
+      description,
+      price: input.price,
+      originalPrice: input.originalPrice && input.originalPrice > 0 ? input.originalPrice : null,
+      type,
+      category,
+      condition,
+      imageUrl: primaryImage,
+      location,
+      status: 'active',
+      aiFlagged: scamCheck.flagged,
+      aiFlagReason: scamCheck.reason,
+    })
+    .returning()
+
+  if (allImages.length > 0) {
+    await db.insert(listingImages).values(
+      allImages.map((url, idx) => ({
+        listingId: listing.id,
+        url,
+        displayOrder: idx,
+        isPrimary: idx === 0,
+      }))
+    )
+  }
+
+  revalidatePath('/')
+  revalidatePath('/my-listings')
+  return listing
+}
+
+export async function updateListing(
+  id: number,
+  input: {
+    title: string
+    description: string
+    price: number
+    originalPrice?: number
+    category: string
+    type?: string
+    condition?: string
+    imageUrl?: string
+    images?: string[]
+    location?: string
+  }
+) {
+  const user = await getAuthenticatedUser()
+  if (!Number.isInteger(id) || id < 1) throw new Error('Invalid listing ID')
+
+  // Check ownership or admin
+  const [existing] = await db.select().from(listings).where(eq(listings.id, id)).limit(1)
+  if (!existing) throw new Error('Listing not found')
+
+  const isAdmin = isUserAdmin(user.email, (user as { role?: string }).role)
+  if (existing.userId !== user.id && !isAdmin) {
+    throw new Error('Forbidden: You can only edit your own listings.')
+  }
+
+  const title = input.title.trim()
+  const description = input.description.trim()
+  const category = input.category.trim()
+  const condition = (input.condition || existing.condition).toLowerCase().trim()
+  const type = (input.type || existing.type).toLowerCase().trim()
+
+  if (title.length < 3 || title.length > 120) throw new Error('Title must be between 3 and 120 characters')
+  if (description.length < 10 || description.length > 5000) throw new Error('Description must be between 10 and 5000 characters')
   if (!Number.isInteger(input.price) || input.price <= 0 || input.price > 10000000) throw new Error('Invalid price')
   if (!category) throw new Error('Category is required')
-  const [updated] = await db.update(listings).set({ title, description, price: input.price, category, type: input.type ?? 'sell', imageUrl: input.imageUrl?.trim() || null, location: input.location?.trim() || null }).where(and(eq(listings.id, id), eq(listings.userId, userId), eq(listings.status, 'active'))).returning()
-  if (!updated) throw new Error('Listing not found')
+
+  const allImages = (input.images && input.images.length > 0 ? input.images : input.imageUrl ? [input.imageUrl] : []).filter(Boolean)
+  const primaryImage = allImages[0] || input.imageUrl || existing.imageUrl
+
+  const [updated] = await db
+    .update(listings)
+    .set({
+      title,
+      description,
+      price: input.price,
+      originalPrice: input.originalPrice && input.originalPrice > 0 ? input.originalPrice : null,
+      category,
+      condition,
+      type,
+      imageUrl: primaryImage,
+      location: input.location?.trim() || existing.location,
+      updatedAt: new Date(),
+    })
+    .where(eq(listings.id, id))
+    .returning()
+
+  if (input.images && input.images.length > 0) {
+    await db.delete(listingImages).where(eq(listingImages.listingId, id))
+    await db.insert(listingImages).values(
+      input.images.map((url, idx) => ({
+        listingId: id,
+        url,
+        displayOrder: idx,
+        isPrimary: idx === 0,
+      }))
+    )
+  }
+
   revalidatePath('/')
+  revalidatePath(`/listing/${id}`)
+  revalidatePath('/my-listings')
   return updated
+}
+
+export async function setListingStatus(id: number, status: 'active' | 'reserved' | 'sold' | 'rented' | 'archived') {
+  const user = await getAuthenticatedUser()
+  if (!Number.isInteger(id) || id < 1) throw new Error('Invalid listing ID')
+
+  const [existing] = await db.select().from(listings).where(eq(listings.id, id)).limit(1)
+  if (!existing) throw new Error('Listing not found')
+
+  const isAdmin = isUserAdmin(user.email, (user as { role?: string }).role)
+  if (existing.userId !== user.id && !isAdmin) {
+    throw new Error('Forbidden: You can only change status for your own listings.')
+  }
+
+  const [updated] = await db
+    .update(listings)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(listings.id, id))
+    .returning()
+
+  revalidatePath('/')
+  revalidatePath(`/listing/${id}`)
+  revalidatePath('/my-listings')
+  return updated
+}
+
+export async function archiveListing(id: number) {
+  return setListingStatus(id, 'archived')
+}
+
+export async function deleteListing(id: number) {
+  const user = await getAuthenticatedUser()
+  if (!Number.isInteger(id) || id < 1) throw new Error('Invalid listing ID')
+
+  const [existing] = await db.select().from(listings).where(eq(listings.id, id)).limit(1)
+  if (!existing) throw new Error('Listing not found')
+
+  const isAdmin = isUserAdmin(user.email, (user as { role?: string }).role)
+  if (existing.userId !== user.id && !isAdmin) {
+    throw new Error('Forbidden: You can only delete your own listings.')
+  }
+
+  await db.delete(listings).where(eq(listings.id, id))
+
+  revalidatePath('/')
+  revalidatePath('/my-listings')
+  return { success: true }
+}
+
+export async function getMyListings(statusFilter?: string) {
+  const user = await getAuthenticatedUser()
+
+  let query = db.select().from(listings).where(eq(listings.userId, user.id))
+  if (statusFilter && statusFilter !== 'all') {
+    query = db.select().from(listings).where(and(eq(listings.userId, user.id), eq(listings.status, statusFilter)))
+  }
+
+  return query.orderBy(desc(listings.createdAt))
+}
+
+export async function incrementListingViews(id: number) {
+  if (!Number.isInteger(id) || id < 1) return
+  await db
+    .update(listings)
+    .set({ viewsCount: sql`${listings.viewsCount} + 1` })
+    .where(eq(listings.id, id))
 }

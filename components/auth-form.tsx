@@ -1,85 +1,199 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { ShieldCheck, AlertCircle, Sparkles, GraduationCap, X, ArrowRight } from 'lucide-react'
 
-export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
+function AuthFormContent() {
   const router = useRouter()
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const isSignUp = mode === 'sign-up'
+  const [showDomainModal, setShowDomainModal] = useState(false)
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (event.nativeEvent.isComposing || (event as unknown as KeyboardEvent).keyCode === 229) return
-    setError(null)
-    const normalizedEmail = email.trim().toLowerCase()
-    if (!normalizedEmail.endsWith('@pondiuni.ac.in')) {
-      setError('Use your official @pondiuni.ac.in email address.')
-      return
+  useEffect(() => {
+    const err = searchParams?.get('error')
+    if (err) {
+      setShowDomainModal(true)
+      setError('Personal email accounts are not permitted. Please use your official @pondiuni.ac.in account.')
     }
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
-      return
-    }
-    if (isSignUp && name.trim().length < 2) {
-      setError('Enter your full name.')
-      return
-    }
-    setLoading(true)
-    const result = isSignUp
-      ? await authClient.signUp.email({ name: name.trim(), email: normalizedEmail, password, callbackURL: '/' })
-      : await authClient.signIn.email({ email: normalizedEmail, password, callbackURL: '/' })
-    if (result.error) {
-      setLoading(false)
-      setError('Authentication could not be completed. Check your details and try again.')
-      return
-    }
-    router.push('/')
-    router.refresh()
-  }
+  }, [searchParams])
 
   async function handleGoogleSignIn() {
     setError(null)
     setLoading(true)
-    const result = await authClient.signIn.social({ provider: 'google', callbackURL: '/' })
-    if (result.error) {
+    try {
+      const result = await authClient.signIn.social({
+        provider: 'google',
+        callbackURL: '/',
+      })
+      if (result?.error) {
+        setLoading(false)
+        const msg = result.error.message || ''
+        if (msg.includes('pondiuni') || msg.includes('Access restricted')) {
+          setShowDomainModal(true)
+          setError('Access restricted: Only verified @pondiuni.ac.in accounts are permitted.')
+        } else if (msg.includes('missing') || msg.includes('provider') || msg.includes('secret') || msg.includes('database')) {
+          setError('Google OAuth / Database setup required: Please verify GOOGLE_CLIENT_ID and DATABASE_URL in .env.local.')
+        } else {
+          setError(msg || 'Google sign-in could not be completed. Use your official @pondiuni.ac.in account.')
+        }
+        return
+      }
+    } catch (err: any) {
       setLoading(false)
-      setError('Google sign-in could not be completed. Use your official university account.')
-      return
+      setShowDomainModal(true)
+      setError('Please use your official Pondicherry University Google account (@pondiuni.ac.in).')
     }
-    router.push('/')
-    router.refresh()
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-background px-4 py-8">
-      <Card className="w-full max-w-md overflow-hidden border-border/70 bg-card p-8 shadow-xl shadow-primary/5 sm:p-10">
-        <div className="flex flex-col items-center text-center">
-          <div className="mb-8 flex items-center gap-3">
-            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-EScoY3Dr9cDuwfPiUrfIsTl2QOCJT5.png" alt="PUKart logo" className="h-14 w-14 rounded-2xl object-cover shadow-lg shadow-primary/20" />
-            <span className="font-mono text-xl font-bold tracking-tight text-foreground">PUKart</span>
+    <main className="flex min-h-svh items-center justify-center bg-background px-4 py-8 relative">
+      {/* Modal Pop-up for Personal Email Warning */}
+      {showDomainModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl border border-amber-500/30 bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-start justify-between">
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600">
+                <GraduationCap className="size-7" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDomainModal(false)}
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <h3 className="mt-4 text-xl font-bold text-foreground">Use University Email</h3>
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+              PUKart is a secure campus marketplace exclusively for Pondicherry University members. Personal emails (Gmail, Outlook, Yahoo) are not allowed.
+            </p>
+
+            <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-foreground">
+              <span className="font-semibold text-amber-800 dark:text-amber-300 block mb-1">
+                Required Email Format:
+              </span>
+              <span className="font-mono font-bold text-sm text-primary">
+                your_Reg.no.@pondiuni.ac.in
+              </span>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-2.5">
+              <Button
+                type="button"
+                onClick={() => {
+                  setShowDomainModal(false)
+                  handleGoogleSignIn()
+                }}
+                className="h-12 w-full gap-2 rounded-xl bg-primary text-primary-foreground font-semibold shadow-md hover:bg-primary/90"
+              >
+                <span>Try with @pondiuni.ac.in</span>
+                <ArrowRight className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setShowDomainModal(false)}
+                className="h-10 text-xs text-muted-foreground"
+              >
+                Dismiss
+              </Button>
+            </div>
           </div>
-          <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground">{isSignUp ? 'Join PUKart' : 'Welcome to PUKart'}</h1>
-          <p className="mt-3 max-w-sm text-pretty text-sm leading-6 text-muted-foreground">Buy, sell and rent with verified Pondicherry University students.</p>
-          {error && <p className="mt-5 w-full rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-left text-sm leading-5 text-destructive" role="alert">{error}</p>}
-          <form onSubmit={handleSubmit} className="mt-6 w-full space-y-3 text-left">
-            {isSignUp && <label className="block text-sm font-medium text-foreground">Full name<input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/15" /></label>}
-            <label className="block text-sm font-medium text-foreground">University email<input value={email} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="email" placeholder="you@pondiuni.ac.in" required className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/15" /></label>
-            <label className="block text-sm font-medium text-foreground">Password<input value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete={isSignUp ? 'new-password' : 'current-password'} required className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/15" /></label>
-            <Button type="submit" disabled={loading} className="h-12 w-full rounded-xl bg-primary text-primary-foreground">{loading ? 'Please wait…' : isSignUp ? 'Create account' : 'Sign in'}</Button>
-          </form>
-          <div className="my-5 flex w-full items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
-          <Button type="button" onClick={handleGoogleSignIn} disabled={loading} className="h-12 w-full gap-3 rounded-xl bg-foreground text-background hover:bg-foreground/90"><span className="flex size-6 items-center justify-center rounded-full bg-background text-sm font-bold text-foreground" aria-hidden="true">G</span>{loading ? 'Opening Google…' : 'Continue with Google'}</Button>
-          <p className="mt-5 text-xs leading-5 text-muted-foreground">Only official <span className="font-medium text-foreground">@pondiuni.ac.in</span> accounts are accepted.</p>
+        </div>
+      )}
+
+      <Card className="w-full max-w-md overflow-hidden border-border/80 bg-card p-8 shadow-2xl shadow-primary/5 sm:p-10">
+        <div className="flex flex-col items-center text-center">
+          <div className="mb-6 flex items-center gap-3">
+            <img
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-EScoY3Dr9cDuwfPiUrfIsTl2QOCJT5.png"
+              alt="PUKart logo"
+              className="h-16 w-16 rounded-2xl object-cover shadow-lg shadow-primary/20"
+            />
+            <div className="text-left">
+              <span className="font-serif text-2xl font-bold tracking-tight text-primary">
+                PU<span className="text-accent">K</span>art
+              </span>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Campus Marketplace
+              </p>
+            </div>
+          </div>
+
+          <h1 className="text-balance text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Pondicherry University Sign-In
+          </h1>
+          <p className="mt-2.5 max-w-sm text-pretty text-sm leading-6 text-muted-foreground">
+            Connect directly with verified students, research scholars, and faculty on campus.
+          </p>
+
+          {error && (
+            <div
+              className="mt-5 flex w-full items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3.5 text-left text-sm leading-5 text-destructive"
+              role="alert"
+            >
+              <AlertCircle className="mt-0.5 size-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div className="my-6 w-full space-y-3">
+            <Button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="h-13 w-full gap-3 rounded-xl bg-foreground text-background font-semibold shadow-md transition hover:bg-foreground/90 active:scale-[0.99]"
+            >
+              <span
+                className="flex size-6 items-center justify-center rounded-full bg-background text-sm font-bold text-foreground"
+                aria-hidden="true"
+              >
+                G
+              </span>
+              {loading ? 'Opening Google Sign-In…' : 'Continue with Google'}
+            </Button>
+          </div>
+
+          <div className="w-full rounded-2xl border border-border/70 bg-muted/40 p-4 text-left">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-accent">
+              <ShieldCheck className="size-4" />
+              <span>Campus Security Guarantee</span>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">
+              PUKart exclusively admits <span className="font-semibold text-foreground">@pondiuni.ac.in</span> Google credentials.
+            </p>
+          </div>
+
+          <div className="mt-6 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+            <a href="/safety" className="hover:text-primary underline">
+              Safety Guidelines
+            </a>
+            <span>•</span>
+            <a href="/help" className="hover:text-primary underline">
+              Campus Help
+            </a>
+            <span>•</span>
+            <a href="/" className="hover:text-primary underline">
+              Browse Guest
+            </a>
+          </div>
         </div>
       </Card>
     </main>
+  )
+}
+
+export function AuthForm({ mode }: { mode?: 'sign-in' | 'sign-up' }) {
+  return (
+    <Suspense fallback={<div className="flex min-h-svh items-center justify-center">Loading authentication...</div>}>
+      <AuthFormContent />
+    </Suspense>
   )
 }

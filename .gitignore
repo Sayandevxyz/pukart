@@ -8,6 +8,11 @@ __v0_jsx-dev-runtime.ts
 
 # Environment variables
 .env*.local
+.env
+
+# User uploads (local dev)
+public/uploads/*
+!public/uploads/.gitkeep
 
 # Common ignores
 node_modules
