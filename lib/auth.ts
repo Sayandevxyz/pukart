@@ -3,12 +3,7 @@ import { pool } from '@/lib/db'
 
 export const auth = betterAuth({
   database: pool,
-  // The connected Neon project exposes the rotated auth key under the second
-  // variable name. Never fall back to a hardcoded secret in production.
-  secret:
-    process.env.BETTER_AUTH_SECRET ??
-    process.env.BETTER_AUTH_API_KEY_2 ??
-    process.env.BETTER_AUTH_API_KEY,
+  secret: process.env.BETTER_AUTH_SECRET!,
   baseURL:
     process.env.BETTER_AUTH_URL ??
     (process.env.VERCEL_PROJECT_PRODUCTION_URL
@@ -35,8 +30,7 @@ export const auth = betterAuth({
   },
   socialProviders: {
     google: {
-      clientId:
-        '984681777673-mr3d20r79q9i58bft7mepacsn91cia00.apps.googleusercontent.com',
+      clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
   },

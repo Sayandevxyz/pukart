@@ -43,13 +43,14 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
     <main className="min-h-svh bg-background flex items-center justify-center px-4">
       <Card className="w-full max-w-sm p-6">
         <div className="mb-6">
+          <p className="mb-3 font-mono text-xs font-semibold uppercase tracking-[0.18em] text-primary">PUKart</p>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            {isSignUp ? 'Create an account' : 'Welcome back'}
+            {isSignUp ? 'Create your campus account' : 'Welcome back'}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="mt-1 text-sm text-muted-foreground">
             {isSignUp
-              ? 'Sign up to get started'
-              : 'Sign in to your account to continue'}
+              ? 'Use your verified Pondicherry University email to get started.'
+              : 'Sign in with your university email to continue.'}
           </p>
         </div>
 
