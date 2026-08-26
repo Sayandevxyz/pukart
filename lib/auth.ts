@@ -3,6 +3,12 @@ import { pool } from '@/lib/db'
 
 export const auth = betterAuth({
   database: pool,
+  // The connected Neon project exposes the rotated auth key under the second
+  // variable name; keep BETTER_AUTH_SECRET as the preferred production name.
+  secret:
+    process.env.BETTER_AUTH_SECRET ??
+    process.env.BETTER_AUTH_API_KEY ??
+    process.env.BETTER_AUTH_API_KEY_2,
   baseURL:
     process.env.BETTER_AUTH_URL ??
     (process.env.VERCEL_PROJECT_PRODUCTION_URL
