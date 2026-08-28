@@ -7,6 +7,19 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: [
+        'pukart.shop',
+        'www.pukart.shop',
+        'terminus-ruddy.vercel.app',
+        'localhost:3000',
+        'localhost:3001',
+        '127.0.0.1:3000',
+        '127.0.0.1:3001',
+      ],
+    },
+  },
   async headers() {
     return [
       {

@@ -19,39 +19,44 @@ export async function getAuthenticatedUser() {
 }
 
 export async function getListingById(id: number) {
-  if (!Number.isInteger(id) || id < 1) return null
+  try {
+    if (!Number.isInteger(id) || id < 1) return null
 
-  const rows = await db
-    .select({
-      listing: listings,
-      seller: {
-        id: userTable.id,
-        name: userTable.name,
-        email: userTable.email,
-        image: userTable.image,
-        department: userTable.department,
-        course: userTable.course,
-        year: userTable.year,
-        bio: userTable.bio,
-      },
-    })
-    .from(listings)
-    .leftJoin(userTable, eq(listings.userId, userTable.id))
-    .where(eq(listings.id, id))
-    .limit(1)
+    const rows = await db
+      .select({
+        listing: listings,
+        seller: {
+          id: userTable.id,
+          name: userTable.name,
+          email: userTable.email,
+          image: userTable.image,
+          department: userTable.department,
+          course: userTable.course,
+          year: userTable.year,
+          bio: userTable.bio,
+        },
+      })
+      .from(listings)
+      .leftJoin(userTable, eq(listings.userId, userTable.id))
+      .where(eq(listings.id, id))
+      .limit(1)
 
-  if (!rows[0]) return null
+    if (!rows[0]) return null
 
-  const images = await db
-    .select()
-    .from(listingImages)
-    .where(eq(listingImages.listingId, id))
-    .orderBy(listingImages.displayOrder)
+    const images = await db
+      .select()
+      .from(listingImages)
+      .where(eq(listingImages.listingId, id))
+      .orderBy(listingImages.displayOrder)
 
-  return {
-    ...rows[0].listing,
-    seller: rows[0].seller,
-    images: images.length > 0 ? images.map((img) => img.url) : rows[0].listing.imageUrl ? [rows[0].listing.imageUrl] : [],
+    return {
+      ...rows[0].listing,
+      seller: rows[0].seller,
+      images: images.length > 0 ? images.map((img) => img.url) : rows[0].listing.imageUrl ? [rows[0].listing.imageUrl] : [],
+    }
+  } catch (err) {
+    console.error('[getListingById error]', err)
+    return null
   }
 }
 

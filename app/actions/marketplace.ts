@@ -658,18 +658,23 @@ export async function leaveReview(input: {
 }
 
 export async function getUserRatingStats(userId: string) {
-  const revs = await db.select().from(reviews).where(eq(reviews.recipientId, userId))
-  if (revs.length === 0) {
+  try {
+    const revs = await db.select().from(reviews).where(eq(reviews.recipientId, userId))
+    if (revs.length === 0) {
+      return { averageRating: null, reviewCount: 0, reviews: [] }
+    }
+
+    const total = revs.reduce((acc, curr) => acc + curr.rating, 0)
+    const average = Number((total / revs.length).toFixed(1))
+
+    return {
+      averageRating: average,
+      reviewCount: revs.length,
+      reviews: revs,
+    }
+  } catch (err) {
+    console.error('[getUserRatingStats error]', err)
     return { averageRating: null, reviewCount: 0, reviews: [] }
-  }
-
-  const total = revs.reduce((acc, curr) => acc + curr.rating, 0)
-  const average = Number((total / revs.length).toFixed(1))
-
-  return {
-    averageRating: average,
-    reviewCount: revs.length,
-    reviews: revs,
   }
 }
 
