@@ -1,10 +1,9 @@
 import { Navbar } from '@/components/navbar'
+import { Footer } from '@/components/footer'
 import {
   HelpCircle,
-  ShoppingBag,
-  Tag,
-  ShieldCheck,
-  RotateCcw,
+  Mail,
+  Instagram,
   MessageCircle,
 } from 'lucide-react'
 
@@ -33,32 +32,80 @@ export default function HelpPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
+    <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
+      <div>
+        <Navbar />
 
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 space-y-8">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-accent">Pondicherry University</span>
-          <h1 className="mt-1 font-serif text-3xl font-bold text-primary sm:text-4xl">Help & Campus FAQ</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Frequently asked questions about buying, selling, and campus handoffs on PUKart.
-          </p>
-        </div>
+        <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 space-y-8">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-accent">Pondicherry University</span>
+            <h1 className="mt-1 font-serif text-3xl font-bold text-primary sm:text-4xl">Help & Campus FAQ</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Frequently asked questions about buying, selling, and campus handoffs on PUKart.
+            </p>
+          </div>
 
-        <div className="divide-y divide-border rounded-2xl border border-border bg-card shadow-sm">
-          {faqs.map((faq, idx) => (
-            <div key={idx} className="p-6 space-y-2">
-              <h2 className="font-bold text-base text-primary flex items-start gap-2">
-                <HelpCircle className="size-5 text-accent shrink-0 mt-0.5" />
-                <span>{faq.q}</span>
+          <div className="divide-y divide-border rounded-2xl border border-border bg-card shadow-sm">
+            {faqs.map((faq, idx) => (
+              <div key={idx} className="p-6 space-y-2">
+                <h2 className="font-bold text-base text-primary flex items-start gap-2">
+                  <HelpCircle className="size-5 text-accent shrink-0 mt-0.5" />
+                  <span>{faq.q}</span>
+                </h2>
+                <p className="text-xs leading-relaxed text-muted-foreground pl-7">
+                  {faq.a}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Direct Support & Contact */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+            <div>
+              <h2 className="font-bold text-lg text-primary flex items-center gap-2">
+                <MessageCircle className="size-5 text-accent" />
+                Still need assistance or have feedback?
               </h2>
-              <p className="text-xs leading-relaxed text-muted-foreground pl-7">
-                {faq.a}
+              <p className="text-xs text-muted-foreground mt-1">
+                Reach out to the PUKart student team directly via Email or Instagram. We are active daily to help campus students.
               </p>
             </div>
-          ))}
-        </div>
-      </main>
+
+            <div className="grid gap-3 sm:grid-cols-2 pt-2">
+              <a
+                href="mailto:contactpukart@gmail.com"
+                className="flex items-center gap-3 rounded-xl border border-border bg-background p-4 text-xs font-semibold text-foreground transition hover:border-accent hover:text-accent shadow-xs"
+              >
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                  <Mail size={18} />
+                </div>
+                <div>
+                  <div className="text-foreground font-bold">Email Support</div>
+                  <div className="text-muted-foreground truncate text-[11px]">contactpukart@gmail.com</div>
+                </div>
+              </a>
+
+              <a
+                href="https://www.instagram.com/pu_kart?igsi=aDdsODBoeTVsMzNn"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 rounded-xl border border-border bg-background p-4 text-xs font-semibold text-foreground transition hover:border-pink-500 hover:text-pink-500 shadow-xs"
+              >
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-pink-500/10 text-pink-500">
+                  <Instagram size={18} />
+                </div>
+                <div>
+                  <div className="text-foreground font-bold">Instagram Community</div>
+                  <div className="text-muted-foreground truncate text-[11px]">@pu_kart</div>
+                </div>
+              </a>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <Footer />
     </div>
   )
 }
+

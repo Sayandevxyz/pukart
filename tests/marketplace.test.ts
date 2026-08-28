@@ -153,6 +153,22 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
       expect(allTypes[0].label).toBe('All Types')
       expect(nullTypes[0].label).toBe('All Types')
     })
+
+    it('should return category-tailored title and description placeholders', () => {
+      const bikeOptions = getFormOptionsForCategory('Bikes')
+      const bookOptions = getFormOptionsForCategory('Books')
+      const cycleOptions = getFormOptionsForCategory('Cycles')
+      const scootyOptions = getFormOptionsForCategory('Scooty')
+
+      expect(bikeOptions.titlePlaceholder.toLowerCase()).toContain('royal enfield')
+      expect(bikeOptions.descriptionPlaceholder.toLowerCase()).toContain('rc transfer')
+
+      expect(bookOptions.titlePlaceholder.toLowerCase()).toContain('engineering mathematics')
+      expect(bookOptions.descriptionPlaceholder.toLowerCase()).toContain('edition')
+
+      expect(cycleOptions.titlePlaceholder.toLowerCase()).toContain('bicycle')
+      expect(scootyOptions.titlePlaceholder.toLowerCase()).toContain('activa')
+    })
   })
 })
 

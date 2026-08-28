@@ -13,6 +13,8 @@ export interface CategoryConfig {
   label: string
   typeLabel: string // e.g. "Listing Type", "Meal Type", "Service Category"
   conditionLabel: string // e.g. "Condition", "Freshness", "Billing Mode"
+  titlePlaceholder: string
+  descriptionPlaceholder?: string
   types: FilterOption[]
   conditions: FilterOption[]
   defaultType?: string
@@ -41,6 +43,8 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     label: 'Campus Food & Tiffins',
     typeLabel: 'Food Type',
     conditionLabel: 'Freshness & Shelf',
+    titlePlaceholder: 'e.g. Fresh Homemade North Indian Lunch Tiffin / Evening Snacks',
+    descriptionPlaceholder: 'Detail food items included, Veg/Non-Veg, freshness timing, portion size, and pickup/delivery options.',
     defaultType: 'tiffin',
     defaultCondition: 'fresh_today',
     types: [
@@ -68,6 +72,8 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     label: 'Student Services & Skills',
     typeLabel: 'Service Field',
     conditionLabel: 'Pricing Structure',
+    titlePlaceholder: 'e.g. Python & ML Tutoring / Thesis Printing & Xerox / Cycle Servicing',
+    descriptionPlaceholder: 'Detail services offered, your experience/skills, expected turnaround time, and meeting or handover preferences.',
     defaultType: 'tutoring',
     defaultCondition: 'fixed',
     types: [
@@ -96,6 +102,8 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     label: 'Academic Books & Notes',
     typeLabel: 'Availability',
     conditionLabel: 'Book Condition',
+    titlePlaceholder: 'e.g. Engineering Mathematics Volume 1 - Erwin Kreyszig',
+    descriptionPlaceholder: 'Detail edition, author name, condition of pages, any highlights/notes inside, and pickup spot on campus.',
     defaultType: 'sell',
     defaultCondition: 'good',
     types: [
@@ -120,6 +128,8 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     label: 'Laptops, Gadgets & Peripherals',
     typeLabel: 'Deal Type',
     conditionLabel: 'Device Condition',
+    titlePlaceholder: 'e.g. Casio fx-991EX Scientific Calculator / HP 24" IPS Monitor / Logitech Mouse',
+    descriptionPlaceholder: 'Detail model, specs, working condition, warranty, included charger/cables/bill, and meeting point.',
     defaultType: 'sell',
     defaultCondition: 'good',
     types: [
@@ -143,6 +153,8 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     label: 'Campus Bicycles',
     typeLabel: 'Listing Type',
     conditionLabel: 'Cycle Condition',
+    titlePlaceholder: 'e.g. Hero Sprint 21-Speed Gear Bicycle / Hercules Roadeo / Btwin Riverside',
+    descriptionPlaceholder: 'Detail bicycle brand, gear/brake condition, tire status, lock/bell/basket included, and hostel pickup.',
     defaultType: 'sell',
     defaultCondition: 'good',
     types: [
@@ -165,6 +177,8 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     label: 'Motorcycles & Two-Wheelers',
     typeLabel: 'Listing Type',
     conditionLabel: 'Vehicle Condition',
+    titlePlaceholder: 'e.g. Royal Enfield Classic 350 (2021) / Yamaha FZ-S / Honda Shine 125',
+    descriptionPlaceholder: 'Detail registration year, kilometers run, RC transfer / NOC status, insurance validity, mileage, and test ride location.',
     defaultType: 'sell',
     defaultCondition: 'good',
     types: [
@@ -186,6 +200,8 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     label: 'Scooters & EV Scooters',
     typeLabel: 'Listing Type',
     conditionLabel: 'Scooty Condition',
+    titlePlaceholder: 'e.g. Honda Activa 6G / TVS Jupiter 125 / Suzuki Access 125',
+    descriptionPlaceholder: 'Detail model year, self-start/battery condition, tire health, mileage, RC/insurance status, and campus pickup location.',
     defaultType: 'sell',
     defaultCondition: 'good',
     types: [
@@ -207,6 +223,8 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     label: 'Hostel Furniture & Appliances',
     typeLabel: 'Listing Type',
     conditionLabel: 'Item Condition',
+    titlePlaceholder: 'e.g. Wooden Study Table & Chair / Table Fan / Induction Cooktop / Electric Kettle',
+    descriptionPlaceholder: 'Detail dimensions, power rating, cosmetic condition, working status, and which hostel room to collect from.',
     defaultType: 'sell',
     defaultCondition: 'good',
     types: [
@@ -228,6 +246,8 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     label: 'Clothing, Lab Coats & Accessories',
     typeLabel: 'Listing Type',
     conditionLabel: 'Garment Condition',
+    titlePlaceholder: 'e.g. Pondicherry University Convocation Gown / Men\'s Formal Blazer (Size 40) / Lab Coat',
+    descriptionPlaceholder: 'Detail brand, size, fit, fabric material, how many times worn, and whether dry-cleaned or freshly washed.',
     defaultType: 'sell',
     defaultCondition: 'like_new',
     types: [
@@ -250,6 +270,8 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     label: 'Sports Gear & Gym Equipment',
     typeLabel: 'Listing Type',
     conditionLabel: 'Equipment Condition',
+    titlePlaceholder: 'e.g. Yonex Nanoray Badminton Racket / Kipsta Football Size 5 / Dumbbells Set',
+    descriptionPlaceholder: 'Detail brand, grip/string condition, accessories included (cover, shuttlecocks, balls), and handover preference.',
     defaultType: 'sell',
     defaultCondition: 'good',
     types: [
@@ -303,6 +325,9 @@ export function getFormOptionsForCategory(category?: string | null) {
     conditions,
     typeLabel: config?.typeLabel || 'Listing Type',
     conditionLabel: config?.conditionLabel || 'Condition',
+    titlePlaceholder: config?.titlePlaceholder || 'e.g. Item title or model name...',
+    descriptionPlaceholder:
+      config?.descriptionPlaceholder || 'Detail what is included, how old the item is, defects if any, and pickup preferences.',
     defaultType: config?.defaultType || types[0]?.value || 'sell',
     defaultCondition: config?.defaultCondition || conditions[0]?.value || 'good',
   }

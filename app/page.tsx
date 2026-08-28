@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState, Suspense } from 'react'
 import useSWR from 'swr'
 import { Navbar } from '@/components/navbar'
+import { Footer } from '@/components/footer'
 import {
   BookOpen,
   Laptop,
@@ -625,28 +626,7 @@ function MarketplaceHome() {
       </section>
 
       {/* Footer */}
-      <footer className="mx-auto flex max-w-[1440px] flex-col gap-4 px-4 py-8 text-xs text-muted-foreground sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-        <p className="font-serif text-xl font-semibold text-primary">
-          PU<span className="text-accent">K</span>art
-        </p>
-        <div className="flex flex-wrap gap-4 font-medium">
-          <Link href="/safety" className="hover:text-foreground">
-            Campus Safety
-          </Link>
-          <Link href="/help" className="hover:text-foreground">
-            Help Center
-          </Link>
-          <Link href="/notifications" className="hover:text-foreground">
-            Alerts
-          </Link>
-          <Link href="/my-listings" className="hover:text-foreground">
-            Seller Dashboard
-          </Link>
-        </div>
-        <p className="max-w-sm text-[11px] leading-5">
-          PUKart is an independent campus marketplace designed for the Pondicherry University student community.
-        </p>
-      </footer>
+      <Footer />
     </main>
   )
 }

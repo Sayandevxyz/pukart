@@ -374,9 +374,9 @@ export default function NewListingPage() {
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Engineering Mathematics Volume 1 - Erwin Kreyszig"
+                placeholder={formOptions.titlePlaceholder}
                 maxLength={120}
-                className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm font-medium outline-none focus:border-accent"
+                className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm font-medium outline-none focus:border-accent transition-colors"
               />
             </div>
 
@@ -457,8 +457,8 @@ export default function NewListingPage() {
                 rows={5}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Detail what is included, how old the item is, defects if any, and pickup preferences."
-                className="mt-1.5 w-full rounded-xl border border-border bg-background p-4 text-sm outline-none focus:border-accent"
+                placeholder={formOptions.descriptionPlaceholder}
+                className="mt-1.5 w-full rounded-xl border border-border bg-background p-4 text-sm outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>
