@@ -54,7 +54,7 @@ export function PushNotificationBanner() {
       if (res?.data?.user) {
         setSession(res.data.user)
       }
-    }).catch(() => {})
+    }).catch(() => { })
   }, [])
 
   async function handleEnablePush() {
@@ -120,7 +120,7 @@ export function PushNotificationBanner() {
       return (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl bg-emerald-700 px-5 py-3.5 text-sm font-semibold text-white shadow-2xl animate-in fade-in slide-in-from-bottom-5">
           <CheckCircle2 size={20} className="text-emerald-200" />
-          <span>Lockscreen notifications enabled for PuKart!</span>
+          <span>Notifications enabled for PuKart!</span>
         </div>
       )
     }
@@ -139,7 +139,7 @@ export function PushNotificationBanner() {
           </div>
           <div>
             <h4 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-              <span>Get Phone Lockscreen Alerts</span>
+              <span>Get notifications Alerts</span>
               <Smartphone size={14} className="text-muted-foreground" />
             </h4>
             <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
