@@ -256,7 +256,7 @@ function MarketplaceHome() {
           <div className="relative z-10 flex min-h-[320px] max-w-2xl flex-col justify-center px-6 py-10 sm:min-h-[380px] sm:px-12">
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-emerald-300 w-fit backdrop-blur-md shadow-sm">
               <Sparkles size={13} className="text-amber-400 animate-pulse" />
-              <span>Pondicherry University Official Campus Marketplace</span>
+              <span>Pondicherry University Campus Marketplace</span>
             </div>
 
             <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-balance leading-[1.1]">
