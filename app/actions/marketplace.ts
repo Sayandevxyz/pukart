@@ -362,6 +362,7 @@ export async function sendMessage(conversationId: number, content: string, image
 
     revalidatePath(`/messages/${conversationId}`)
     revalidatePath('/messages')
+    revalidatePath('/notifications')
     return { success: true, message }
   } catch (err: any) {
     console.error('[sendMessage error]', err)
@@ -428,6 +429,7 @@ export async function makeOffer(listingId: number, amount: number, message?: str
     }
 
     revalidatePath('/transactions')
+    revalidatePath('/notifications')
     return { success: true, offer }
   } catch (err: any) {
     console.error('[makeOffer error]', err)
@@ -600,6 +602,7 @@ export async function requestTransaction(listingId: number, paymentMethod = 'mee
     }
 
     revalidatePath('/transactions')
+    revalidatePath('/notifications')
     return { success: true, transaction }
   } catch (err: any) {
     console.error('[requestTransaction error]', err)

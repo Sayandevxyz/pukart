@@ -42,13 +42,27 @@ export function Navbar({
       }
     }).catch(() => {})
 
-    // Load favorites count
-    fetch('/api/favorites')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d?.listingIds) setFavoriteCount(d.listingIds.length)
-      })
-      .catch(() => {})
+    function loadCounts() {
+      // Load favorites count
+      fetch('/api/favorites')
+        .then((r) => r.json())
+        .then((d) => {
+          if (d?.listingIds) setFavoriteCount(d.listingIds.length)
+        })
+        .catch(() => {})
+
+      // Load notifications count
+      fetch('/api/notifications')
+        .then((r) => r.json())
+        .then((d) => {
+          if (typeof d?.unreadCount === 'number') setUnreadNotificationCount(d.unreadCount)
+        })
+        .catch(() => {})
+    }
+
+    loadCounts()
+    const interval = setInterval(loadCounts, 15000)
+    return () => clearInterval(interval)
   }, [])
 
   function handleSearchSubmit(e: React.FormEvent, isAi = false) {
@@ -304,7 +318,7 @@ export function Navbar({
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-2 rounded-xl border border-border p-3 hover:bg-muted"
                 >
-                  <Bell size={16} /> Alerts
+                  <Bell size={16} /> Alerts {unreadNotificationCount > 0 ? `(${unreadNotificationCount})` : ''}
                 </Link>
               </div>
 
