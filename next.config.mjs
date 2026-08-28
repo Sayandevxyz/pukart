@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   devIndicators: false,
+  serverExternalPackages: ['web-push'],
   typescript: {
     ignoreBuildErrors: true,
   },
