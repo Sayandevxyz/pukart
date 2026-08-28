@@ -101,79 +101,92 @@ export async function getMyFavorites() {
 // ==========================================
 
 export async function startConversation(listingId: number, initialMessage = 'Hi, is this still available?') {
-  const user = await currentUser()
-  if (!Number.isInteger(listingId) || listingId < 1) throw new Error('Invalid listing')
+  try {
+    const user = await currentUser()
+    if (!Number.isInteger(listingId) || listingId < 1) {
+      return { success: false, error: 'Invalid listing ID' }
+    }
 
-  const [listing] = await db
-    .select()
-    .from(listings)
-    .where(eq(listings.id, listingId))
-    .limit(1)
+    const [listing] = await db
+      .select()
+      .from(listings)
+      .where(eq(listings.id, listingId))
+      .limit(1)
 
-  if (!listing) throw new Error('Listing not found')
-  if (listing.userId === user.id) throw new Error('You cannot start a conversation with yourself')
+    if (!listing) {
+      return { success: false, error: 'Listing not found' }
+    }
+    if (listing.userId === user.id) {
+      return { success: false, error: 'You are the seller of this listing' }
+    }
 
-  // Check if buyer is blocked by seller or vice versa
-  const blocked = await db
-    .select()
-    .from(blockedUsers)
-    .where(
-      or(
-        and(eq(blockedUsers.userId, listing.userId), eq(blockedUsers.blockedUserId, user.id)),
-        and(eq(blockedUsers.userId, user.id), eq(blockedUsers.blockedUserId, listing.userId))
+    // Check if buyer is blocked by seller or vice versa
+    const blocked = await db
+      .select()
+      .from(blockedUsers)
+      .where(
+        or(
+          and(eq(blockedUsers.userId, listing.userId), eq(blockedUsers.blockedUserId, user.id)),
+          and(eq(blockedUsers.userId, user.id), eq(blockedUsers.blockedUserId, listing.userId))
+        )
       )
-    )
-    .limit(1)
-  if (blocked[0]) throw new Error('Communication is blocked between these users.')
+      .limit(1)
+    if (blocked[0]) {
+      return { success: false, error: 'Communication is blocked between these accounts.' }
+    }
 
-  const cleanContent = sanitizeText(initialMessage, 1, 2000)
+    const cleanContent = sanitizeText(initialMessage, 1, 2000)
 
-  // Find existing conversation
-  const existing = await db
-    .select()
-    .from(conversations)
-    .where(and(eq(conversations.listingId, listingId), eq(conversations.buyerId, user.id)))
-    .limit(1)
+    // Find existing conversation
+    const existing = await db
+      .select()
+      .from(conversations)
+      .where(and(eq(conversations.listingId, listingId), eq(conversations.buyerId, user.id)))
+      .limit(1)
 
-  let conversation = existing[0]
-  if (!conversation) {
-    const [created] = await db
-      .insert(conversations)
-      .values({
-        listingId,
-        buyerId: user.id,
-        sellerId: listing.userId,
-        lastMessage: cleanContent,
-        lastMessageAt: new Date(),
-      })
-      .returning()
-    conversation = created
+    let conversation = existing[0]
+    if (!conversation) {
+      const [created] = await db
+        .insert(conversations)
+        .values({
+          listingId,
+          buyerId: user.id,
+          sellerId: listing.userId,
+          lastMessage: cleanContent,
+          lastMessageAt: new Date(),
+        })
+        .returning()
+      conversation = created
+    }
+
+    // Insert initial message
+    await db.insert(messages).values({
+      conversationId: conversation.id,
+      senderId: user.id,
+      content: cleanContent,
+    })
+
+    // Update conversation lastMessage
+    await db
+      .update(conversations)
+      .set({ lastMessage: cleanContent, lastMessageAt: new Date() })
+      .where(eq(conversations.id, conversation.id))
+
+    // Notify seller
+    await db.insert(notifications).values({
+      userId: listing.userId,
+      kind: 'message',
+      title: 'New Campus Inquiry',
+      body: `${user.name || 'A student'} asked about "${listing.title}": ${cleanContent.slice(0, 80)}`,
+      link: `/messages/${conversation.id}`,
+    })
+
+    revalidatePath('/messages')
+    return { success: true, id: conversation.id, conversation }
+  } catch (err: any) {
+    console.error('[startConversation error]', err)
+    return { success: false, error: err.message || 'Unable to open conversation' }
   }
-
-  // Insert initial message
-  await db.insert(messages).values({
-    conversationId: conversation.id,
-    senderId: user.id,
-    content: cleanContent,
-  })
-
-  // Update conversation lastMessage
-  await db
-    .update(conversations)
-    .set({ lastMessage: cleanContent, lastMessageAt: new Date() })
-    .where(eq(conversations.id, conversation.id))
-
-  // Notify seller
-  await db.insert(notifications).values({
-    userId: listing.userId,
-    kind: 'message',
-    title: 'New Campus Inquiry',
-    body: `${user.name || 'A student'} asked about "${listing.title}": ${cleanContent.slice(0, 80)}`,
-    link: `/messages/${conversation.id}`,
-  })
-
-  revalidatePath('/messages')
-  return conversation
 }
 
 export async function getMyConversations() {
@@ -324,37 +337,42 @@ export async function blockUser(targetUserId: string) {
 // ==========================================
 
 export async function makeOffer(listingId: number, amount: number, message?: string) {
-  const user = await currentUser()
-  if (!Number.isInteger(listingId) || listingId < 1) throw new Error('Invalid listing')
-  if (!Number.isInteger(amount) || amount <= 0 || amount > 10000000) throw new Error('Invalid offer amount in INR')
+  try {
+    const user = await currentUser()
+    if (!Number.isInteger(listingId) || listingId < 1) return { success: false, error: 'Invalid listing' }
+    if (!Number.isInteger(amount) || amount <= 0 || amount > 10000000) return { success: false, error: 'Invalid offer amount in INR' }
 
-  const [listing] = await db.select().from(listings).where(eq(listings.id, listingId)).limit(1)
-  if (!listing || listing.status !== 'active') throw new Error('Listing is no longer active')
-  if (listing.userId === user.id) throw new Error('Cannot make an offer on your own listing')
+    const [listing] = await db.select().from(listings).where(eq(listings.id, listingId)).limit(1)
+    if (!listing || listing.status !== 'active') return { success: false, error: 'Listing is no longer active' }
+    if (listing.userId === user.id) return { success: false, error: 'You are the seller of this listing' }
 
-  const [offer] = await db
-    .insert(offers)
-    .values({
-      listingId,
-      buyerId: user.id,
-      sellerId: listing.userId,
-      amount,
-      message: message ? sanitizeText(message, 1, 500) : null,
-      status: 'pending',
+    const [offer] = await db
+      .insert(offers)
+      .values({
+        listingId,
+        buyerId: user.id,
+        sellerId: listing.userId,
+        amount,
+        message: message ? sanitizeText(message, 1, 500) : null,
+        status: 'pending',
+      })
+      .returning()
+
+    // Notify seller
+    await db.insert(notifications).values({
+      userId: listing.userId,
+      kind: 'offer',
+      title: 'New Offer Received!',
+      body: `${user.name || 'A student'} offered ₹${amount.toLocaleString('en-IN')} for "${listing.title}"`,
+      link: `/transactions`,
     })
-    .returning()
 
-  // Notify seller
-  await db.insert(notifications).values({
-    userId: listing.userId,
-    kind: 'offer',
-    title: 'New Offer Received!',
-    body: `${user.name || 'A student'} offered ₹${amount.toLocaleString('en-IN')} for "${listing.title}"`,
-    link: `/transactions`,
-  })
-
-  revalidatePath('/transactions')
-  return offer
+    revalidatePath('/transactions')
+    return { success: true, offer }
+  } catch (err: any) {
+    console.error('[makeOffer error]', err)
+    return { success: false, error: err.message || 'Failed to submit offer' }
+  }
 }
 
 export async function respondToOffer(offerId: number, action: 'accept' | 'reject' | 'counter', counterAmount?: number) {
@@ -461,39 +479,44 @@ export async function respondToOffer(offerId: number, action: 'accept' | 'reject
 // ==========================================
 
 export async function requestTransaction(listingId: number, paymentMethod = 'meetup_cash', meetupLocation = 'Pondicherry University Campus') {
-  const user = await currentUser()
-  const [listing] = await db
-    .select()
-    .from(listings)
-    .where(and(eq(listings.id, listingId), eq(listings.status, 'active')))
-    .limit(1)
+  try {
+    const user = await currentUser()
+    const [listing] = await db
+      .select()
+      .from(listings)
+      .where(and(eq(listings.id, listingId), eq(listings.status, 'active')))
+      .limit(1)
 
-  if (!listing) throw new Error('Listing is not available')
-  if (listing.userId === user.id) throw new Error('Cannot buy your own listing')
+    if (!listing) return { success: false, error: 'Listing is not available' }
+    if (listing.userId === user.id) return { success: false, error: 'You are the seller of this listing' }
 
-  const [transaction] = await db
-    .insert(transactions)
-    .values({
-      listingId,
-      buyerId: user.id,
-      sellerId: listing.userId,
-      amount: listing.price,
-      status: 'requested',
-      paymentMethod,
-      meetupLocation: sanitizeText(meetupLocation, 2, 200),
+    const [transaction] = await db
+      .insert(transactions)
+      .values({
+        listingId,
+        buyerId: user.id,
+        sellerId: listing.userId,
+        amount: listing.price,
+        status: 'requested',
+        paymentMethod,
+        meetupLocation: sanitizeText(meetupLocation, 2, 200),
+      })
+      .returning()
+
+    await db.insert(notifications).values({
+      userId: listing.userId,
+      kind: 'transaction',
+      title: 'Purchase Request Received',
+      body: `${user.name || 'A student'} requested to buy "${listing.title}" for ₹${listing.price.toLocaleString('en-IN')}`,
+      link: `/transactions`,
     })
-    .returning()
 
-  await db.insert(notifications).values({
-    userId: listing.userId,
-    kind: 'transaction',
-    title: 'Purchase Request Received',
-    body: `${user.name || 'A student'} requested to buy "${listing.title}" for ₹${listing.price.toLocaleString('en-IN')}`,
-    link: `/transactions`,
-  })
-
-  revalidatePath('/transactions')
-  return transaction
+    revalidatePath('/transactions')
+    return { success: true, transaction }
+  } catch (err: any) {
+    console.error('[requestTransaction error]', err)
+    return { success: false, error: err.message || 'Failed to submit buy request' }
+  }
 }
 
 export async function getMyTransactions() {

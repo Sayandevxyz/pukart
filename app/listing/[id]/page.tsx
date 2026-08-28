@@ -124,13 +124,29 @@ export default function ListingDetailPage() {
 
   async function handleContactSeller() {
     if (!session?.user) {
+      showToast('Please sign in to contact the seller')
       router.push(`/sign-in?redirect=${encodeURIComponent(`/listing/${listingId}`)}`)
+      return
+    }
+    if (listing?.userId === session?.user?.id) {
+      showToast('You are the seller of this listing')
       return
     }
     setActionLoading(true)
     try {
-      const conv = await startConversation(listingId, `Hi ${listing.sellerName || 'there'}, is this ${listing.title} still available?`)
-      router.push(`/messages/${conv.id}`)
+      const res = await startConversation(listingId, `Hi ${listing.seller?.name || listing.sellerName || 'there'}, is this ${listing.title} still available?`)
+      if (res && res.success === false) {
+        setActionLoading(false)
+        showToast(res.error || 'Unable to open conversation')
+        return
+      }
+      const convId = res?.id || res?.conversation?.id
+      if (convId) {
+        router.push(`/messages/${convId}`)
+      } else {
+        setActionLoading(false)
+        showToast('Unable to open conversation')
+      }
     } catch (err: any) {
       setActionLoading(false)
       showToast(err.message || 'Unable to open conversation')
@@ -183,10 +199,14 @@ export default function ListingDetailPage() {
     }
     setActionLoading(true)
     try {
-      await makeOffer(listingId, val, offerNote)
-      setOfferModalOpen(false)
-      showToast(`Offer of ₹${val.toLocaleString('en-IN')} submitted successfully!`)
-      router.push('/transactions')
+      const res = await makeOffer(listingId, val, offerNote)
+      if (res && res.success === false) {
+        showToast(res.error || 'Failed to submit offer')
+      } else {
+        setOfferModalOpen(false)
+        showToast(`Offer of ₹${val.toLocaleString('en-IN')} submitted successfully!`)
+        router.push('/transactions')
+      }
     } catch (err: any) {
       showToast(err.message || 'Failed to submit offer')
     } finally {
@@ -202,10 +222,14 @@ export default function ListingDetailPage() {
     }
     setActionLoading(true)
     try {
-      await requestTransaction(listingId, 'meetup_cash', meetupLocation)
-      setBuyModalOpen(false)
-      showToast('Purchase request sent! Check your transactions page.')
-      router.push('/transactions')
+      const res = await requestTransaction(listingId, 'meetup_cash', meetupLocation)
+      if (res && res.success === false) {
+        showToast(res.error || 'Failed to send buy request')
+      } else {
+        setBuyModalOpen(false)
+        showToast('Purchase request sent! Check your transactions page.')
+        router.push('/transactions')
+      }
     } catch (err: any) {
       showToast(err.message || 'Failed to send buy request')
     } finally {
