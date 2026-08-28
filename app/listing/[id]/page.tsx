@@ -134,7 +134,7 @@ export default function ListingDetailPage() {
     }
     setActionLoading(true)
     try {
-      const res = await startConversation(listingId, `Hi ${listing.seller?.name || listing.sellerName || 'there'}, is this ${listing.title} still available?`)
+      const res = await startConversation(listingId)
       if (res && res.success === false) {
         setActionLoading(false)
         showToast(res.error || 'Unable to open conversation')

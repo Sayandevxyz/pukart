@@ -100,7 +100,7 @@ export async function getMyFavorites() {
 // 2. CHAT & MESSAGING SYSTEM (Priority 7)
 // ==========================================
 
-export async function startConversation(listingId: number, initialMessage = 'Hi, is this still available?') {
+export async function startConversation(listingId: number, initialMessage?: string) {
   try {
     const user = await currentUser()
     if (!Number.isInteger(listingId) || listingId < 1) {
@@ -135,8 +135,6 @@ export async function startConversation(listingId: number, initialMessage = 'Hi,
       return { success: false, error: 'Communication is blocked between these accounts.' }
     }
 
-    const cleanContent = sanitizeText(initialMessage, 1, 2000)
-
     // Find existing conversation
     const existing = await db
       .select()
@@ -152,39 +150,40 @@ export async function startConversation(listingId: number, initialMessage = 'Hi,
           listingId,
           buyerId: user.id,
           sellerId: listing.userId,
-          lastMessage: cleanContent,
+          lastMessage: null,
           lastMessageAt: new Date(),
         })
         .returning()
       conversation = created
     }
 
-    // Insert initial message
-    await db.insert(messages).values({
-      conversationId: conversation.id,
-      senderId: user.id,
-      content: cleanContent,
-    })
-
-    // Update conversation lastMessage
-    await db
-      .update(conversations)
-      .set({ lastMessage: cleanContent, lastMessageAt: new Date() })
-      .where(eq(conversations.id, conversation.id))
-
-    // Notify seller (non-blocking — don't let notification failure prevent conversation)
-    try {
-      const safeTitle = (listing.title || '').replace(/["""]/g, "'").slice(0, 100)
-      const safeBody = `${(user.name || 'A student')} asked about ${safeTitle}`.slice(0, 200)
-      await db.insert(notifications).values({
-        userId: listing.userId,
-        kind: 'message',
-        title: 'New Campus Inquiry',
-        body: safeBody,
-        link: `/messages/${conversation.id}`,
+    // Only if a non-empty initialMessage was explicitly provided, insert it
+    if (initialMessage && initialMessage.trim()) {
+      const cleanContent = sanitizeText(initialMessage, 1, 2000)
+      await db.insert(messages).values({
+        conversationId: conversation.id,
+        senderId: user.id,
+        content: cleanContent,
       })
-    } catch (notifErr) {
-      console.error('[startConversation] notification insert failed (non-fatal):', notifErr)
+
+      await db
+        .update(conversations)
+        .set({ lastMessage: cleanContent, lastMessageAt: new Date() })
+        .where(eq(conversations.id, conversation.id))
+
+      try {
+        const safeTitle = (listing.title || '').replace(/["""]/g, "'").slice(0, 100)
+        const safeBody = `${(user.name || 'A student')} asked about ${safeTitle}`.slice(0, 200)
+        await db.insert(notifications).values({
+          userId: listing.userId,
+          kind: 'message',
+          title: 'New Campus Inquiry',
+          body: safeBody,
+          link: `/messages/${conversation.id}`,
+        })
+      } catch (notifErr) {
+        console.error('[startConversation] notification insert failed (non-fatal):', notifErr)
+      }
     }
 
     revalidatePath('/messages')
