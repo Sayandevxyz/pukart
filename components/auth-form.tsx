@@ -128,10 +128,10 @@ function AuthFormContent() {
           </div>
 
           <h1 className="text-balance text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Pondicherry University Sign-In
+            PuKart Sign-In
           </h1>
           <p className="mt-2.5 max-w-sm text-pretty text-sm leading-6 text-muted-foreground">
-            Connect directly with verified students, research scholars, and faculty on campus.
+            Buy, sell, and connect with students across Pondicherry University.
           </p>
 
           {error && (
