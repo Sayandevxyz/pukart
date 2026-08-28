@@ -172,14 +172,20 @@ export async function startConversation(listingId: number, initialMessage = 'Hi,
       .set({ lastMessage: cleanContent, lastMessageAt: new Date() })
       .where(eq(conversations.id, conversation.id))
 
-    // Notify seller
-    await db.insert(notifications).values({
-      userId: listing.userId,
-      kind: 'message',
-      title: 'New Campus Inquiry',
-      body: `${user.name || 'A student'} asked about "${listing.title}": ${cleanContent.slice(0, 80)}`,
-      link: `/messages/${conversation.id}`,
-    })
+    // Notify seller (non-blocking — don't let notification failure prevent conversation)
+    try {
+      const safeTitle = (listing.title || '').replace(/["""]/g, "'").slice(0, 100)
+      const safeBody = `${(user.name || 'A student')} asked about ${safeTitle}`.slice(0, 200)
+      await db.insert(notifications).values({
+        userId: listing.userId,
+        kind: 'message',
+        title: 'New Campus Inquiry',
+        body: safeBody,
+        link: `/messages/${conversation.id}`,
+      })
+    } catch (notifErr) {
+      console.error('[startConversation] notification insert failed (non-fatal):', notifErr)
+    }
 
     revalidatePath('/messages')
     return { success: true, id: conversation.id, conversation }
@@ -358,14 +364,19 @@ export async function makeOffer(listingId: number, amount: number, message?: str
       })
       .returning()
 
-    // Notify seller
-    await db.insert(notifications).values({
-      userId: listing.userId,
-      kind: 'offer',
-      title: 'New Offer Received!',
-      body: `${user.name || 'A student'} offered ₹${amount.toLocaleString('en-IN')} for "${listing.title}"`,
-      link: `/transactions`,
-    })
+    // Notify seller (non-blocking)
+    try {
+      const safeTitle = (listing.title || '').replace(/["""]/g, "'").slice(0, 100)
+      await db.insert(notifications).values({
+        userId: listing.userId,
+        kind: 'offer',
+        title: 'New Offer Received!',
+        body: `${user.name || 'A student'} offered ₹${amount.toLocaleString('en-IN')} for ${safeTitle}`.slice(0, 200),
+        link: `/transactions`,
+      })
+    } catch (notifErr) {
+      console.error('[makeOffer] notification insert failed (non-fatal):', notifErr)
+    }
 
     revalidatePath('/transactions')
     return { success: true, offer }
@@ -503,13 +514,19 @@ export async function requestTransaction(listingId: number, paymentMethod = 'mee
       })
       .returning()
 
-    await db.insert(notifications).values({
-      userId: listing.userId,
-      kind: 'transaction',
-      title: 'Purchase Request Received',
-      body: `${user.name || 'A student'} requested to buy "${listing.title}" for ₹${listing.price.toLocaleString('en-IN')}`,
-      link: `/transactions`,
-    })
+    // Notify seller (non-blocking)
+    try {
+      const safeTitle = (listing.title || '').replace(/["""]/g, "'").slice(0, 100)
+      await db.insert(notifications).values({
+        userId: listing.userId,
+        kind: 'transaction',
+        title: 'Purchase Request Received',
+        body: `${user.name || 'A student'} requested to buy ${safeTitle} for ₹${listing.price.toLocaleString('en-IN')}`.slice(0, 200),
+        link: `/transactions`,
+      })
+    } catch (notifErr) {
+      console.error('[requestTransaction] notification insert failed (non-fatal):', notifErr)
+    }
 
     revalidatePath('/transactions')
     return { success: true, transaction }
