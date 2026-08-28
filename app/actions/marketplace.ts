@@ -20,6 +20,7 @@ import {
   blockedUsers,
 } from '@/lib/db/schema'
 import { checkProfileCompletion } from '@/lib/constants/campus'
+import { sendPushNotification } from '@/lib/push'
 
 async function currentUser() {
   try {
@@ -360,6 +361,18 @@ export async function sendMessage(conversationId: number, content: string, image
       console.error('[sendMessage notification error]', notifErr)
     }
 
+    // Send Lockscreen Web Push Notification
+    try {
+      sendPushNotification(recipientId, {
+        title: `Message from ${(user.name || 'PU Student').slice(0, 40)}`,
+        body: cleanContent.slice(0, 100),
+        url: `/messages/${conversationId}`,
+        tag: `msg-${conversationId}`,
+      }).catch((e) => console.error('[sendMessage push async error]', e))
+    } catch (pushErr) {
+      console.error('[sendMessage push error]', pushErr)
+    }
+
     revalidatePath(`/messages/${conversationId}`)
     revalidatePath('/messages')
     revalidatePath('/notifications')
@@ -424,6 +437,14 @@ export async function makeOffer(listingId: number, amount: number, message?: str
         body: `${user.name || 'A student'} offered ₹${amount.toLocaleString('en-IN')} for ${safeTitle}`.slice(0, 200),
         link: `/transactions`,
       })
+
+      // Send Lockscreen Web Push Notification
+      sendPushNotification(listing.userId, {
+        title: 'New Offer Received!',
+        body: `${user.name || 'A student'} offered ₹${amount.toLocaleString('en-IN')} for ${safeTitle}`,
+        url: `/transactions`,
+        tag: `offer-${listing.id}`,
+      }).catch((e) => console.error('[makeOffer push async error]', e))
     } catch (notifErr) {
       console.error('[makeOffer] notification insert failed (non-fatal):', notifErr)
     }
@@ -487,6 +508,14 @@ export async function respondToOffer(offerId: number, action: 'accept' | 'reject
           body: `Your offer for ₹${(offer.counterAmount || offer.amount).toLocaleString('en-IN')} was accepted. Ready for campus meetup.`,
           link: `/transactions`,
         })
+
+        // Send Lockscreen Web Push Notification
+        sendPushNotification(targetUserId, {
+          title: 'Offer Accepted!',
+          body: `Your offer for ₹${(offer.counterAmount || offer.amount).toLocaleString('en-IN')} was accepted. Ready for campus meetup.`,
+          url: `/transactions`,
+          tag: `offer-${offer.id}`,
+        }).catch((e) => console.error('[respondToOffer push async error]', e))
       } catch (notifErr) {
         console.error('[respondToOffer notification error]', notifErr)
       }
@@ -597,6 +626,14 @@ export async function requestTransaction(listingId: number, paymentMethod = 'mee
         body: `${user.name || 'A student'} requested to buy ${safeTitle} for ₹${listing.price.toLocaleString('en-IN')}`.slice(0, 200),
         link: `/transactions`,
       })
+
+      // Send Lockscreen Web Push Notification
+      sendPushNotification(listing.userId, {
+        title: 'Purchase Request Received!',
+        body: `${user.name || 'A student'} requested to buy ${safeTitle} for ₹${listing.price.toLocaleString('en-IN')}`,
+        url: `/transactions`,
+        tag: `tx-${listing.id}`,
+      }).catch((e) => console.error('[requestTransaction push async error]', e))
     } catch (notifErr) {
       console.error('[requestTransaction] notification insert failed (non-fatal):', notifErr)
     }
