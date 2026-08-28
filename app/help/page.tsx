@@ -1,9 +1,8 @@
 import { Navbar } from '@/components/navbar'
-import { Footer } from '@/components/footer'
+import { Footer, InstagramIcon } from '@/components/footer'
 import {
   HelpCircle,
   Mail,
-  Instagram,
   MessageCircle,
 } from 'lucide-react'
 
@@ -92,7 +91,7 @@ export default function HelpPage() {
                 className="flex items-center gap-3 rounded-xl border border-border bg-background p-4 text-xs font-semibold text-foreground transition hover:border-pink-500 hover:text-pink-500 shadow-xs"
               >
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-pink-500/10 text-pink-500">
-                  <Instagram size={18} />
+                  <InstagramIcon size={18} />
                 </div>
                 <div>
                   <div className="text-foreground font-bold">Instagram Community</div>
