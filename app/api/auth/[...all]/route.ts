@@ -8,36 +8,34 @@ export async function GET(request: NextRequest) {
   try {
     const res = await handler.GET(request)
 
-    // Intercept error redirects or 500s during OAuth callback
-    if (
-      (request.nextUrl.pathname.includes('/callback/google') || request.nextUrl.pathname.includes('/api/auth/error')) &&
-      res.status >= 400
-    ) {
-      return NextResponse.redirect(new URL('/sign-in?error=personal_email_not_allowed', request.url))
-    }
-
-    // If Better Auth tries to redirect to /api/auth/error
+    // Intercept error redirects during OAuth callback to show personal email warning
     const location = res.headers.get('location')
-    if (location && (location.includes('/api/auth/error') || location.includes('error='))) {
+    if (
+      location &&
+      (location.includes('/api/auth/error') ||
+        location.includes('error=') ||
+        location.includes('access_denied') ||
+        location.includes('Access%20restricted'))
+    ) {
       return NextResponse.redirect(new URL('/sign-in?error=personal_email_not_allowed', request.url))
     }
 
     return res
   } catch (error) {
-    console.warn('[Auth OAuth Interceptor Catch]', error)
+    console.warn('[Auth OAuth GET Catch]', error)
     return NextResponse.redirect(new URL('/sign-in?error=personal_email_not_allowed', request.url))
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const res = await handler.POST(request)
-    if (res.status >= 500) {
-      return NextResponse.redirect(new URL('/sign-in?error=personal_email_not_allowed', request.url))
-    }
-    return res
+    return await handler.POST(request)
   } catch (error) {
-    console.warn('[Auth POST Interceptor Catch]', error)
-    return NextResponse.redirect(new URL('/sign-in?error=personal_email_not_allowed', request.url))
+    console.error('[Auth POST Catch]', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Authentication request failed' },
+      { status: 500 }
+    )
   }
 }
+

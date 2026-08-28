@@ -33,12 +33,15 @@ export function isUserAdmin(email?: string | null, role?: string | null): boolea
 }
 
 const rawBaseUrl =
-  process.env.BETTER_AUTH_URL ??
-  (process.env.NODE_ENV === 'production'
-    ? 'https://terminus-ruddy.vercel.app'
-    : process.env.V0_RUNTIME_URL
-      ? process.env.V0_RUNTIME_URL
-      : 'http://localhost:3000')
+  process.env.BETTER_AUTH_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXT_PUBLIC_APP_URL ||
+        (process.env.NODE_ENV === 'production'
+          ? 'https://terminus-ruddy.vercel.app'
+          : 'http://localhost:3000'))
 
 export const auth = betterAuth({
   database: pool,
@@ -58,8 +61,8 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user) => {
-          const email = user.email.trim().toLowerCase()
-          if (!isValidPondiUniEmail(email)) {
+          const email = user.email?.trim().toLowerCase()
+          if (!email || !isValidPondiUniEmail(email)) {
             throw new Error('Access restricted: Only verified Pondicherry University (@pondiuni.ac.in) accounts are permitted.')
           }
           const role = isUserAdmin(email, (user as { role?: string }).role) ? 'admin' : 'user'
@@ -80,13 +83,13 @@ export const auth = betterAuth({
   },
   socialProviders: {
     google: {
-      clientId: process.env.GOOGLE_CLIENT_ID ?? '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
       prompt: 'select_account',
       accessType: 'offline',
       mapProfileToUser: async (profile) => {
-        const email = profile.email.trim().toLowerCase()
-        if (!isValidPondiUniEmail(email)) {
+        const email = profile.email?.trim().toLowerCase()
+        if (!email || !isValidPondiUniEmail(email)) {
           throw new Error('Access restricted: Only official @pondiuni.ac.in accounts are permitted to join PUKart.')
         }
         return {
@@ -98,22 +101,19 @@ export const auth = betterAuth({
     },
   },
   trustedOrigins: [
-    ...(process.env.NODE_ENV === 'development'
-      ? [
-          'http://localhost:3000',
-          ...(process.env.V0_RUNTIME_URL ? [process.env.V0_RUNTIME_URL] : []),
-          ...(process.env.V0_DEV_APP_URL ? [process.env.V0_DEV_APP_URL] : []),
-          ...(process.env.V0_BUILD_URL ? [process.env.V0_BUILD_URL] : []),
-          ...(process.env.V0_SANDBOX_URL ? [process.env.V0_SANDBOX_URL] : []),
-        ]
-      : []),
-    ...(process.env.NODE_ENV === 'production'
-      ? [
-          'https://terminus-ruddy.vercel.app',
-          ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
-          ...(process.env.VERCEL_PROJECT_PRODUCTION_URL ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`] : []),
-        ]
-      : []),
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'https://terminus-ruddy.vercel.app',
+    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
+    ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL] : []),
+    ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+    ...(process.env.VERCEL_PROJECT_PRODUCTION_URL ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`] : []),
+    ...(process.env.V0_RUNTIME_URL ? [process.env.V0_RUNTIME_URL] : []),
+    ...(process.env.V0_DEV_APP_URL ? [process.env.V0_DEV_APP_URL] : []),
+    ...(process.env.V0_BUILD_URL ? [process.env.V0_BUILD_URL] : []),
+    ...(process.env.V0_SANDBOX_URL ? [process.env.V0_SANDBOX_URL] : []),
   ],
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
