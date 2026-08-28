@@ -5,6 +5,8 @@ import { auth, isValidPondiUniEmail } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { pushSubscriptions } from '@/lib/db/schema'
 
+export const runtime = 'nodejs'
+
 export async function POST(req: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() })

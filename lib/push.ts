@@ -1,4 +1,3 @@
-import webpush from 'web-push'
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { pushSubscriptions } from '@/lib/db/schema'
@@ -12,10 +11,15 @@ const VAPID_PRIVATE_KEY =
 
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:contactpukart@gmail.com'
 
-try {
-  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
-} catch (err) {
-  console.error('[web-push] Failed to set VAPID details:', err)
+let webpushInstance: any = null
+
+async function getWebPush() {
+  if (!webpushInstance) {
+    const wp = await import('web-push')
+    webpushInstance = wp.default || wp
+    webpushInstance.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+  }
+  return webpushInstance
 }
 
 export interface PushPayload {
@@ -28,13 +32,15 @@ export interface PushPayload {
 }
 
 /**
- * Sends a real-time Web Push notification to all registered devices of a given student user.
+ * Sends a real-time Web Push notification to all registered devices of a given user.
  * Automatically cleans up expired/unsubscribed endpoints (410 Gone / 404 Not Found).
  */
 export async function sendPushNotification(userId: string, payload: PushPayload): Promise<{ sent: number; failed: number }> {
   if (!userId) return { sent: 0, failed: 0 }
 
   try {
+    const webpush = await getWebPush()
+
     const subscriptions = await db
       .select()
       .from(pushSubscriptions)
