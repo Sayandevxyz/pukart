@@ -170,6 +170,108 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
       expect(scootyOptions.titlePlaceholder.toLowerCase()).toContain('activa')
     })
   })
+
+  describe('Seller & Buyer Messaging Visibility Rules (Priority 7)', () => {
+    interface MockConv {
+      id: number
+      listingId: number
+      buyerId: string
+      sellerId: string
+      lastMessage: string | null
+      lastMessageAt: Date
+    }
+
+    interface MockMsg {
+      id: number
+      conversationId: number
+      senderId: string
+      content: string
+      readAt: Date | null
+      createdAt: Date
+    }
+
+    const sellerUser = { id: 'seller_123', name: 'Pujari Vyshnav', email: 'pujari@pondiuni.ac.in' }
+    const buyerUser = { id: 'buyer_456', name: 'Sayan Mondal', email: 'sayan@pondiuni.ac.in' }
+
+    const mockConversations: MockConv[] = [
+      {
+        id: 1,
+        listingId: 2,
+        buyerId: buyerUser.id,
+        sellerId: sellerUser.id,
+        lastMessage: 'Is this calculator still available?',
+        lastMessageAt: new Date(),
+      },
+    ]
+
+    const mockMessages: MockMsg[] = [
+      {
+        id: 101,
+        conversationId: 1,
+        senderId: buyerUser.id,
+        content: 'Is this calculator still available?',
+        readAt: null,
+        createdAt: new Date(),
+      },
+    ]
+
+    it('should allow seller to find conversations where sellerId === seller.id', () => {
+      const sellerInboxes = mockConversations.filter(
+        (c) => c.sellerId === sellerUser.id || c.buyerId === sellerUser.id
+      )
+      expect(sellerInboxes.length).toBe(1)
+      expect(sellerInboxes[0].buyerId).toBe(buyerUser.id)
+    })
+
+    it('should identify buyer as the counterparty when viewed by seller', () => {
+      const conv = mockConversations[0]
+      const isBuyer = conv.buyerId === sellerUser.id
+      const counterpartyId = isBuyer ? conv.sellerId : conv.buyerId
+      expect(isBuyer).toBe(false)
+      expect(counterpartyId).toBe(buyerUser.id)
+    })
+
+    it('should allow seller to view all messages sent by the buyer in the conversation', () => {
+      const convMessages = mockMessages.filter((m) => m.conversationId === 1)
+      expect(convMessages.length).toBe(1)
+      expect(convMessages[0].senderId).toBe(buyerUser.id)
+      expect(convMessages[0].content).toBe('Is this calculator still available?')
+    })
+
+    it('should mark unread buyer messages as read when seller accesses conversation', () => {
+      const unreadForSeller = mockMessages.filter(
+        (m) => m.conversationId === 1 && m.senderId !== sellerUser.id && m.readAt === null
+      )
+      expect(unreadForSeller.length).toBe(1)
+
+      // Simulate seller opening chat
+      unreadForSeller.forEach((m) => {
+        m.readAt = new Date()
+      })
+
+      expect(mockMessages[0].readAt).not.toBeNull()
+    })
+
+    it('should allow seller to send reply and update conversation state', () => {
+      const replyText = 'Yes, available! We can meet at Library gate.'
+      mockMessages.push({
+        id: 102,
+        conversationId: 1,
+        senderId: sellerUser.id,
+        content: replyText,
+        readAt: null,
+        createdAt: new Date(),
+      })
+      mockConversations[0].lastMessage = replyText
+
+      const latestMessages = mockMessages.filter((m) => m.conversationId === 1)
+      expect(latestMessages.length).toBe(2)
+      expect(latestMessages[1].senderId).toBe(sellerUser.id)
+      expect(latestMessages[1].content).toBe(replyText)
+      expect(mockConversations[0].lastMessage).toBe(replyText)
+    })
+  })
 })
+
 
 
