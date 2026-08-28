@@ -39,10 +39,14 @@ export default function NotificationsPage() {
     setLoading(true)
     try {
       const data = await getNotifications()
-      setNotifications(data)
+      if (Array.isArray(data)) {
+        setNotifications(data)
+      } else {
+        setNotifications([])
+      }
     } catch (err: any) {
-      console.error(err)
-      showToast(err.message || 'Failed to load notifications')
+      console.error('[loadNotifications error]', err)
+      setNotifications([])
     } finally {
       setLoading(false)
     }
