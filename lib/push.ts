@@ -1,3 +1,4 @@
+import webpush from 'web-push'
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { pushSubscriptions } from '@/lib/db/schema'
@@ -11,15 +12,10 @@ const VAPID_PRIVATE_KEY =
 
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:contactpukart@gmail.com'
 
-let webpushInstance: any = null
-
-async function getWebPush() {
-  if (!webpushInstance) {
-    const wp = await import('web-push')
-    webpushInstance = wp.default || wp
-    webpushInstance.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
-  }
-  return webpushInstance
+try {
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+} catch (err) {
+  console.error('[web-push] Failed to set VAPID details:', err)
 }
 
 export interface PushPayload {
@@ -32,15 +28,13 @@ export interface PushPayload {
 }
 
 /**
- * Sends a real-time Web Push notification to all registered devices of a given user.
+ * Sends a real-time Web Push notification to all registered devices of a given student user.
  * Automatically cleans up expired/unsubscribed endpoints (410 Gone / 404 Not Found).
  */
 export async function sendPushNotification(userId: string, payload: PushPayload): Promise<{ sent: number; failed: number }> {
   if (!userId) return { sent: 0, failed: 0 }
 
   try {
-    const webpush = await getWebPush()
-
     const subscriptions = await db
       .select()
       .from(pushSubscriptions)
@@ -55,8 +49,8 @@ export async function sendPushNotification(userId: string, payload: PushPayload)
       body: payload.body || 'You have a new alert on PuKart.',
       url: payload.url || '/',
       tag: payload.tag || 'pukart-alert',
-      icon: payload.icon || '/icon-192.png',
-      badge: payload.badge || '/badge.png',
+      icon: payload.icon || 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-EScoY3Dr9cDuwfPiUrfIsTl2QOCJT5.png',
+      badge: payload.badge || 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-EScoY3Dr9cDuwfPiUrfIsTl2QOCJT5.png',
     })
 
     let sent = 0

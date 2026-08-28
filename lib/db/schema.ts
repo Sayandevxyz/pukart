@@ -363,6 +363,24 @@ export const blockedUsers = pgTable(
   (t) => [unique().on(t.userId, t.blockedUserId)]
 )
 
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => [
+    index("push_subs_user_idx").on(t.userId),
+    unique("push_subs_endpoint_unique").on(t.endpoint),
+  ]
+)
+
 // ---------- Type Exports ----------
 
 export type User = typeof user.$inferSelect
@@ -380,3 +398,4 @@ export type Notification = typeof notifications.$inferSelect
 export type Report = typeof reports.$inferSelect
 export type Profile = typeof profiles.$inferSelect
 export type BlockedUser = typeof blockedUsers.$inferSelect
+export type PushSubscriptionRecord = typeof pushSubscriptions.$inferSelect

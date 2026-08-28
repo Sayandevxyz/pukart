@@ -328,6 +328,15 @@ export async function runMigrations() {
         "createdAt" timestamp NOT NULL DEFAULT NOW(),
         CONSTRAINT "blocked_users_unique" UNIQUE ("userId", "blockedUserId")
       );
+
+      CREATE TABLE IF NOT EXISTS "push_subscriptions" (
+        "id" serial PRIMARY KEY,
+        "userId" text NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+        "endpoint" text NOT NULL UNIQUE,
+        "p256dh" text NOT NULL,
+        "auth" text NOT NULL,
+        "createdAt" timestamp NOT NULL DEFAULT NOW()
+      );
     `)
 
     // 8. Performance Indexes
@@ -347,6 +356,7 @@ export async function runMigrations() {
       CREATE INDEX IF NOT EXISTS "favorites_user_idx" ON "favorites" ("userId");
       CREATE INDEX IF NOT EXISTS "notifications_user_idx" ON "notifications" ("userId");
       CREATE INDEX IF NOT EXISTS "reports_status_idx" ON "reports" ("status");
+      CREATE INDEX IF NOT EXISTS "push_subs_user_idx" ON "push_subscriptions" ("userId");
     `)
 
     // 8.5 Ensure all columns exist on pre-existing tables
