@@ -10,6 +10,7 @@ import {
   Sparkles,
   ArrowLeft,
   Trash2,
+  Phone,
 } from 'lucide-react'
 import { getListingById, updateListing, deleteListing } from '@/app/actions/listings'
 import { generateProductDescription } from '@/lib/ai'
@@ -34,6 +35,7 @@ export default function EditListingPage() {
   const [price, setPrice] = useState('')
   const [originalPrice, setOriginalPrice] = useState('')
   const [location, setLocation] = useState('Pondicherry University')
+  const [phone, setPhone] = useState('')
   const [description, setDescription] = useState('')
   const [images, setImages] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
@@ -69,6 +71,7 @@ export default function EditListingPage() {
         setPrice(String(item.price))
         setOriginalPrice(item.originalPrice ? String(item.originalPrice) : '')
         setLocation(item.location || 'Pondicherry University')
+        setPhone(item.phone || '')
         setDescription(item.description)
         setImages(item.images && item.images.length > 0 ? item.images : [item.imageUrl].filter(Boolean))
       }
@@ -143,6 +146,7 @@ export default function EditListingPage() {
         condition,
         type,
         location,
+        phone: phone.trim() || undefined,
         images,
         imageUrl: images[0],
       })
@@ -361,6 +365,28 @@ export default function EditListingPage() {
                 onChange={(e) => setLocation(e.target.value)}
                 className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm font-medium outline-none focus:border-accent"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                Phone / WhatsApp Number <span className="text-xs font-normal text-muted-foreground">(Shown to buyers for direct call / WhatsApp)</span>
+              </label>
+              <div className="relative mt-1.5">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-muted-foreground">
+                  <Phone size={16} className="text-accent" />
+                </div>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="e.g. 9876543210 (or +91 98765 43210)"
+                  maxLength={20}
+                  className="h-12 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-sm font-medium outline-none focus:border-accent transition-colors"
+                />
+              </div>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                Buyers can contact you via direct phone call or WhatsApp to finalize campus meetup and product inspection.
+              </p>
             </div>
           </div>
 

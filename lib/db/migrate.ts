@@ -139,6 +139,7 @@ export async function runMigrations() {
         "condition" text NOT NULL DEFAULT 'good',
         "imageUrl" text,
         "location" text DEFAULT 'Pondicherry University',
+        "phone" text,
         "status" text NOT NULL DEFAULT 'active',
         "featured" boolean NOT NULL DEFAULT false,
         "viewsCount" integer NOT NULL DEFAULT 0,
@@ -383,6 +384,7 @@ export async function runMigrations() {
       ALTER TABLE "listings" ADD COLUMN IF NOT EXISTS "condition" text NOT NULL DEFAULT 'good';
       ALTER TABLE "listings" ADD COLUMN IF NOT EXISTS "imageUrl" text;
       ALTER TABLE "listings" ADD COLUMN IF NOT EXISTS "location" text NOT NULL DEFAULT 'Pondicherry University';
+      ALTER TABLE "listings" ADD COLUMN IF NOT EXISTS "phone" text;
       ALTER TABLE "listings" ADD COLUMN IF NOT EXISTS "status" text NOT NULL DEFAULT 'active';
       ALTER TABLE "listings" ADD COLUMN IF NOT EXISTS "featured" boolean NOT NULL DEFAULT false;
       ALTER TABLE "listings" ADD COLUMN IF NOT EXISTS "viewsCount" integer NOT NULL DEFAULT 0;

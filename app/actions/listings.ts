@@ -34,6 +34,7 @@ export async function getListingById(id: number) {
           course: userTable.course,
           year: userTable.year,
           bio: userTable.bio,
+          phone: userTable.phone,
         },
       })
       .from(listings)
@@ -51,6 +52,7 @@ export async function getListingById(id: number) {
 
     return {
       ...rows[0].listing,
+      phone: rows[0].listing.phone || rows[0].seller?.phone || null,
       seller: rows[0].seller,
       images: images.length > 0 ? images.map((img) => img.url) : rows[0].listing.imageUrl ? [rows[0].listing.imageUrl] : [],
     }
@@ -79,6 +81,7 @@ export async function createListing(input: {
   imageUrl?: string
   images?: string[]
   location?: string
+  phone?: string
 }) {
   const user = await getAuthenticatedUser()
 
@@ -102,6 +105,7 @@ export async function createListing(input: {
   const condition = (input.condition || 'good').toLowerCase().trim()
   const type = (input.type || 'sell').toLowerCase().trim()
   const location = input.location?.trim() || 'Pondicherry University'
+  const phone = input.phone?.trim().slice(0, 25) || userProfile?.phone || null
 
   if (title.length < 3 || title.length > 120) throw new Error('Title must be between 3 and 120 characters')
   if (description.length < 10 || description.length > 5000) throw new Error('Description must be between 10 and 5000 characters')
@@ -112,6 +116,15 @@ export async function createListing(input: {
 
   const allImages = (input.images && input.images.length > 0 ? input.images : input.imageUrl ? [input.imageUrl] : []).filter(Boolean)
   const primaryImage = allImages[0] || input.imageUrl || null
+
+  // If user provided a phone number and their profile didn't have one, update user profile as well
+  if (input.phone?.trim() && !userProfile?.phone) {
+    try {
+      await db.update(userTable).set({ phone: input.phone.trim().slice(0, 25) }).where(eq(userTable.id, user.id))
+    } catch (profileErr) {
+      console.error('[createListing] profile phone sync error:', profileErr)
+    }
+  }
 
   const [listing] = await db
     .insert(listings)
@@ -127,6 +140,7 @@ export async function createListing(input: {
       condition,
       imageUrl: primaryImage,
       location,
+      phone,
       status: 'active',
       aiFlagged: scamCheck.flagged,
       aiFlagReason: scamCheck.reason,
@@ -162,6 +176,7 @@ export async function updateListing(
     imageUrl?: string
     images?: string[]
     location?: string
+    phone?: string
   }
 ) {
   const user = await getAuthenticatedUser()
@@ -181,6 +196,7 @@ export async function updateListing(
   const category = input.category.trim()
   const condition = (input.condition || existing.condition).toLowerCase().trim()
   const type = (input.type || existing.type).toLowerCase().trim()
+  const phone = input.phone !== undefined ? (input.phone?.trim().slice(0, 25) || null) : existing.phone
 
   if (title.length < 3 || title.length > 120) throw new Error('Title must be between 3 and 120 characters')
   if (description.length < 10 || description.length > 5000) throw new Error('Description must be between 10 and 5000 characters')
@@ -202,6 +218,7 @@ export async function updateListing(
       type,
       imageUrl: primaryImage,
       location: input.location?.trim() || existing.location,
+      phone,
       updatedAt: new Date(),
     })
     .where(eq(listings.id, id))

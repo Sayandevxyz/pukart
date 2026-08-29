@@ -15,6 +15,10 @@ import {
   ShoppingBag,
   Heart,
   GraduationCap,
+  Phone,
+  PhoneCall,
+  Copy,
+  Check,
 } from 'lucide-react'
 import { getSellerProfile } from '@/app/actions/marketplace'
 import { startConversation, toggleFavorite } from '@/app/actions/marketplace'
@@ -30,10 +34,18 @@ export default function SellerProfilePage() {
   const [loading, setLoading] = useState(true)
   const [favorites, setFavorites] = useState<number[]>([])
   const [toastMessage, setToastMessage] = useState('')
+  const [copiedPhone, setCopiedPhone] = useState(false)
 
   function showToast(msg: string) {
     setToastMessage(msg)
     window.setTimeout(() => setToastMessage(''), 3000)
+  }
+
+  function handleCopyPhone(phoneStr: string) {
+    navigator.clipboard.writeText(phoneStr)
+    setCopiedPhone(true)
+    showToast('Phone number copied to clipboard!')
+    setTimeout(() => setCopiedPhone(false), 2500)
   }
 
   useEffect(() => {
@@ -165,6 +177,51 @@ export default function SellerProfilePage() {
                 </p>
               )}
               {user.bio && <p className="text-xs text-muted-foreground mt-2 max-w-2xl">{user.bio}</p>}
+
+              {user.phone && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 pt-2 border-t border-border/60">
+                  <span className="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-xl border border-primary/20">
+                    <Phone size={13} className="text-accent" />
+                    <span>{user.phone.startsWith('+') ? user.phone : `+91 ${user.phone}`}</span>
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => handleCopyPhone(user.phone)}
+                    className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-muted transition"
+                  >
+                    {copiedPhone ? (
+                      <>
+                        <Check size={13} className="text-emerald-500" />
+                        <span className="text-emerald-500">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={13} />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+
+                  <a
+                    href={`tel:${user.phone.replace(/\D/g, '').length === 10 ? `+91${user.phone.replace(/\D/g, '')}` : `+${user.phone.replace(/\D/g, '')}`}`}
+                    className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-90 transition"
+                  >
+                    <PhoneCall size={12} /> Call
+                  </a>
+
+                  <a
+                    href={`https://wa.me/${user.phone.replace(/\D/g, '').length === 10 ? `91${user.phone.replace(/\D/g, '')}` : user.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                      `Hi ${user.name || 'there'}, I found your profile on PUKart and would like to inquire about your campus listings.`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition"
+                  >
+                    <MessageCircle size={12} /> WhatsApp
+                  </a>
+                </div>
+              )}
             </div>
 
             {/* Rating Summary */}

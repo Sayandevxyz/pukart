@@ -113,6 +113,7 @@ export const listings = pgTable(
     condition: text("condition").notNull().default("good"), // 'brand_new' | 'like_new' | 'good' | 'fair' | 'poor'
     imageUrl: text("imageUrl"), // Primary thumbnail
     location: text("location").default("Pondicherry University"),
+    phone: text("phone"),
     status: text("status").notNull().default("active"), // 'active' | 'reserved' | 'sold' | 'rented' | 'archived'
     featured: boolean("featured").notNull().default(false),
     viewsCount: integer("viewsCount").notNull().default(0),
