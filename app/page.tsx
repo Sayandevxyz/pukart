@@ -127,7 +127,7 @@ function MarketplaceHome() {
   useEffect(() => {
     authClient.getSession().then((res) => {
       if (res?.data?.user) setSession(res.data)
-    }).catch(() => {})
+    }).catch(() => { })
   }, [])
 
   useEffect(() => {
@@ -203,11 +203,10 @@ function MarketplaceHome() {
               setPage(1)
               document.getElementById('deals')?.scrollIntoView({ behavior: 'smooth' })
             }}
-            className={`whitespace-nowrap rounded-lg px-3.5 py-1.5 transition ${
-              activeCategory === 'All'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-            }`}
+            className={`whitespace-nowrap rounded-lg px-3.5 py-1.5 transition ${activeCategory === 'All'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
           >
             All Items
           </button>
@@ -219,11 +218,10 @@ function MarketplaceHome() {
                 setPage(1)
                 document.getElementById('deals')?.scrollIntoView({ behavior: 'smooth' })
               }}
-              className={`whitespace-nowrap rounded-lg px-3.5 py-1.5 transition ${
-                activeCategory === name
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
+              className={`whitespace-nowrap rounded-lg px-3.5 py-1.5 transition ${activeCategory === name
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
             >
               {name}
             </button>
@@ -234,11 +232,10 @@ function MarketplaceHome() {
               setPage(1)
               document.getElementById('deals')?.scrollIntoView({ behavior: 'smooth' })
             }}
-            className={`whitespace-nowrap rounded-lg px-3.5 py-1.5 transition ${
-              activeType === 'Rent'
-                ? 'bg-accent text-accent-foreground shadow-sm'
-                : 'text-muted-foreground hover:bg-muted'
-            }`}
+            className={`whitespace-nowrap rounded-lg px-3.5 py-1.5 transition ${activeType === 'Rent'
+              ? 'bg-accent text-accent-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-muted'
+              }`}
           >
             Rentals
           </button>
@@ -291,12 +288,12 @@ function MarketplaceHome() {
             <div className="mt-8 flex flex-wrap items-center gap-4 text-xs font-medium text-slate-300 border-t border-white/10 pt-4">
               <span className="flex items-center gap-1.5">
                 <ShieldCheck size={15} className="text-emerald-400" />
-                Verified @pondiuni.ac.in Only
+                Built by Students, for Students
               </span>
               <span>•</span>
               <span className="flex items-center gap-1.5">
                 <Sparkles size={15} className="text-amber-400" />
-                0% Commission & Free Meetups
+                Free & Easy to Use
               </span>
             </div>
           </div>
@@ -326,11 +323,10 @@ function MarketplaceHome() {
                   setPage(1)
                   document.getElementById('deals')?.scrollIntoView({ behavior: 'smooth' })
                 }}
-                className={`group flex flex-col items-center justify-center rounded-2xl p-3.5 text-center transition-all duration-200 border ${
-                  isSelected
-                    ? 'border-primary bg-primary/10 shadow-md ring-2 ring-primary/20 scale-[1.02]'
-                    : 'border-border/80 bg-card hover:border-accent hover:shadow-md hover:-translate-y-1'
-                }`}
+                className={`group flex flex-col items-center justify-center rounded-2xl p-3.5 text-center transition-all duration-200 border ${isSelected
+                  ? 'border-primary bg-primary/10 shadow-md ring-2 ring-primary/20 scale-[1.02]'
+                  : 'border-border/80 bg-card hover:border-accent hover:shadow-md hover:-translate-y-1'
+                  }`}
               >
                 <span
                   className={`flex size-12 items-center justify-center rounded-xl ${tint} transition-transform group-hover:scale-110 shadow-sm`}
