@@ -1068,6 +1068,8 @@ export async function getCurrentUserProfile() {
 export async function getSellerProfile(userId: string) {
   try {
     if (!userId) return null
+    const currentUserSession = await currentUser()
+
     const [userRow] = await db.select().from(userTable).where(eq(userTable.id, userId)).limit(1)
     if (!userRow) return null
 
@@ -1078,6 +1080,27 @@ export async function getSellerProfile(userId: string) {
       .orderBy(desc(listings.createdAt))
 
     const ratingStats = await getUserRatingStats(userId)
+
+    if (!currentUserSession) {
+      return {
+        user: {
+          id: userRow.id,
+          name: 'Verified PU Student',
+          image: null,
+          email: null,
+          department: null,
+          course: null,
+          year: null,
+          bio: null,
+          phone: null,
+          hostel: null,
+          isPrivate: true,
+        },
+        listings: sellerListings,
+        ratingStats,
+        isPrivate: true,
+      }
+    }
 
     return {
       user: userRow,

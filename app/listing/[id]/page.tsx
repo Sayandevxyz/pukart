@@ -29,6 +29,7 @@ import {
   PhoneCall,
   Copy,
   Check,
+  Lock,
 } from 'lucide-react'
 import {
   getListingById,
@@ -507,107 +508,125 @@ export default function ListingDetailPage() {
               </p>
             </div>
 
-            {/* Seller Profile Card */}
-            <div className="rounded-2xl border border-border bg-muted/40 p-5 space-y-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Seller Information</p>
-              <div className="flex items-center gap-3.5">
-                <div className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-lg shadow-sm">
-                  {listing.sellerName?.[0]?.toUpperCase() || 'P'}
+            {/* Seller Profile Card — Protected for Logged-In Students */}
+            {!session?.user ? (
+              <div className="rounded-2xl border border-accent/30 bg-accent/5 p-5 space-y-3.5 shadow-sm">
+                <div className="flex items-center gap-2.5 text-sm font-bold text-foreground">
+                  <ShieldCheck className="size-5 text-accent shrink-0" />
+                  <span>Seller & Contact Info Protected</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <button
-                    type="button"
-                    onClick={handleViewSellerProfile}
-                    className="font-bold text-primary hover:text-accent truncate block text-base text-left"
-                  >
-                    {listing.sellerName || 'Verified PU Student'}
-                  </button>
-                  <p className="flex items-center gap-1 text-xs font-semibold text-accent mt-0.5">
-                    <ShieldCheck size={14} /> Verified Pondicherry University
-                  </p>
-                  {listing.seller?.department && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {listing.seller.department} {listing.seller.year ? `· Year ${listing.seller.year}` : ''}
-                    </p>
-                  )}
-                </div>
-                {sellerStats?.averageRating && (
-                  <div className="flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1 text-xs font-bold text-white shadow-sm">
-                    <span>{sellerStats.averageRating}</span>
-                    <Star size={11} fill="currentColor" />
-                  </div>
-                )}
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  To prevent spam and safeguard student privacy, seller contact numbers, WhatsApp, and academic department details are visible only to verified Pondicherry University students.
+                </p>
+                <Link
+                  href={`/sign-in?redirect=${encodeURIComponent(`/listing/${listing.id}`)}`}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 px-4 text-xs font-bold text-primary-foreground shadow-md hover:opacity-95 active:scale-98 transition"
+                >
+                  <Lock size={14} /> Sign In with @pondiuni.ac.in to View Contact Info
+                </Link>
               </div>
-
-              {/* Seller Phone / Direct Call & WhatsApp Contact Box */}
-              {sellerPhone ? (
-                <div className="rounded-xl border border-border bg-card p-3.5 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                      <Phone size={14} className="text-accent" />
-                      <span>Direct Contact Number</span>
-                    </div>
+            ) : (
+              <div className="rounded-2xl border border-border bg-muted/40 p-5 space-y-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Seller Information</p>
+                <div className="flex items-center gap-3.5">
+                  <div className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-lg shadow-sm">
+                    {listing.sellerName?.[0]?.toUpperCase() || 'P'}
+                  </div>
+                  <div className="flex-1 min-w-0">
                     <button
                       type="button"
-                      onClick={() => handleCopyPhone(sellerPhone)}
-                      className="flex items-center gap-1 text-[11px] font-semibold text-accent hover:underline"
+                      onClick={handleViewSellerProfile}
+                      className="font-bold text-primary hover:text-accent truncate block text-base text-left"
                     >
-                      {copiedPhone ? (
-                        <>
-                          <Check size={12} className="text-emerald-500" />
-                          <span className="text-emerald-500">Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy size={12} />
-                          <span>Copy</span>
-                        </>
-                      )}
+                      {listing.sellerName || 'Verified PU Student'}
                     </button>
+                    <p className="flex items-center gap-1 text-xs font-semibold text-accent mt-0.5">
+                      <ShieldCheck size={14} /> Verified Pondicherry University
+                    </p>
+                    {listing.seller?.department && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {listing.seller.department} {listing.seller.year ? `· Year ${listing.seller.year}` : ''}
+                      </p>
+                    )}
                   </div>
-
-                  <p className="text-sm font-extrabold tracking-wide text-primary">
-                    {sellerPhone.startsWith('+') ? sellerPhone : `+91 ${sellerPhone}`}
-                  </p>
-
-                  {!isOwner && (
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <a
-                        href={`tel:${cleanPhoneDigits.length === 10 ? `+91${cleanPhoneDigits}` : `+${cleanPhoneDigits}`}`}
-                        className="flex items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-90 transition"
-                      >
-                        <PhoneCall size={13} /> Call Seller
-                      </a>
-                      <a
-                        href={`https://wa.me/${formattedPhoneForWa}?text=${encodeURIComponent(
-                          `Hi ${listing.sellerName || 'there'}, I'm interested in your "${listing.title}" on PUKart (₹${listing.price}). Is it available?`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition"
-                      >
-                        <MessageCircle size={13} /> WhatsApp
-                      </a>
+                  {sellerStats?.averageRating && (
+                    <div className="flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1 text-xs font-bold text-white shadow-sm">
+                      <span>{sellerStats.averageRating}</span>
+                      <Star size={11} fill="currentColor" />
                     </div>
                   )}
                 </div>
-              ) : isOwner ? (
-                <div className="rounded-xl border border-dashed border-border bg-card/60 p-3 text-xs text-muted-foreground">
-                  <p>You haven&apos;t added a contact phone to this listing.</p>
-                  <Link href={`/listing/${listing.id}/edit`} className="font-bold text-accent hover:underline mt-1 inline-block">
-                    + Add Phone Number
-                  </Link>
-                </div>
-              ) : null}
 
-              <button
-                type="button"
-                onClick={handleViewSellerProfile}
-                className="w-full text-center rounded-xl border border-border bg-background py-2 text-xs font-bold text-primary hover:bg-muted transition"
-              >
-                View Seller Profile & Other Listings
-              </button>
-            </div>
+                {/* Seller Phone / Direct Call & WhatsApp Contact Box */}
+                {sellerPhone ? (
+                  <div className="rounded-xl border border-border bg-card p-3.5 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                        <Phone size={14} className="text-accent" />
+                        <span>Direct Contact Number</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyPhone(sellerPhone)}
+                        className="flex items-center gap-1 text-[11px] font-semibold text-accent hover:underline"
+                      >
+                        {copiedPhone ? (
+                          <>
+                            <Check size={12} className="text-emerald-500" />
+                            <span className="text-emerald-500">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={12} />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <p className="text-sm font-extrabold tracking-wide text-primary">
+                      {sellerPhone.startsWith('+') ? sellerPhone : `+91 ${sellerPhone}`}
+                    </p>
+
+                    {!isOwner && (
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        <a
+                          href={`tel:${cleanPhoneDigits.length === 10 ? `+91${cleanPhoneDigits}` : `+${cleanPhoneDigits}`}`}
+                          className="flex items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-90 transition"
+                        >
+                          <PhoneCall size={13} /> Call Seller
+                        </a>
+                        <a
+                          href={`https://wa.me/${formattedPhoneForWa}?text=${encodeURIComponent(
+                            `Hi ${listing.sellerName || 'there'}, I'm interested in your "${listing.title}" on PUKart (₹${listing.price}). Is it available?`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition"
+                        >
+                          <MessageCircle size={13} /> WhatsApp
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ) : isOwner ? (
+                  <div className="rounded-xl border border-dashed border-border bg-card/60 p-3 text-xs text-muted-foreground">
+                    <p>You haven&apos;t added a contact phone to this listing.</p>
+                    <Link href={`/listing/${listing.id}/edit`} className="font-bold text-accent hover:underline mt-1 inline-block">
+                      + Add Phone Number
+                    </Link>
+                  </div>
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={handleViewSellerProfile}
+                  className="w-full text-center rounded-xl border border-border bg-background py-2 text-xs font-bold text-primary hover:bg-muted transition"
+                >
+                  View Seller Profile & Other Listings
+                </button>
+              </div>
+            )}
 
             {/* CTA ACTION BUTTONS */}
             {isOwner ? (

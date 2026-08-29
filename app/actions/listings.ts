@@ -22,6 +22,18 @@ export async function getListingById(id: number) {
   try {
     if (!Number.isInteger(id) || id < 1) return null
 
+    // Check if viewer is an authenticated Pondicherry University student
+    let isAuthenticatedStudent = false
+    try {
+      const session = await auth.api.getSession({ headers: await headers() })
+      const email = session?.user?.email?.trim().toLowerCase()
+      if (session?.user?.id && isValidPondiUniEmail(email)) {
+        isAuthenticatedStudent = true
+      }
+    } catch {
+      isAuthenticatedStudent = false
+    }
+
     const rows = await db
       .select({
         listing: listings,
@@ -50,11 +62,32 @@ export async function getListingById(id: number) {
       .where(eq(listingImages.listingId, id))
       .orderBy(listingImages.displayOrder)
 
+    // If viewer is NOT signed in, protect seller details & phone number
+    const rawListing = rows[0].listing
+    const rawSeller = rows[0].seller
+
+    const sanitizedPhone = isAuthenticatedStudent ? (rawListing.phone || rawSeller?.phone || null) : null
+    const sanitizedSeller = isAuthenticatedStudent
+      ? rawSeller
+      : {
+          id: rawSeller?.id,
+          name: 'Verified PU Student',
+          image: null,
+          email: null,
+          department: null,
+          course: null,
+          year: null,
+          bio: null,
+          phone: null,
+          isPrivate: true,
+        }
+
     return {
-      ...rows[0].listing,
-      phone: rows[0].listing.phone || rows[0].seller?.phone || null,
-      seller: rows[0].seller,
-      images: images.length > 0 ? images.map((img) => img.url) : rows[0].listing.imageUrl ? [rows[0].listing.imageUrl] : [],
+      ...rawListing,
+      sellerName: isAuthenticatedStudent ? rawListing.sellerName : 'Verified PU Student',
+      phone: sanitizedPhone,
+      seller: sanitizedSeller,
+      images: images.length > 0 ? images.map((img) => img.url) : rawListing.imageUrl ? [rawListing.imageUrl] : [],
     }
   } catch (err) {
     console.error('[getListingById error]', err)
