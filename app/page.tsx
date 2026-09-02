@@ -51,7 +51,7 @@ export default function SellerProfilePage() {
   useEffect(() => {
     authClient.getSession().then((res) => {
       if (res?.data?.user) setSession(res.data as any)
-    }).catch(() => { })
+    }).catch(() => {})
 
     if (!sellerId) return
 
@@ -68,7 +68,7 @@ export default function SellerProfilePage() {
       .then((d) => {
         if (d?.listingIds) setFavorites(d.listingIds)
       })
-      .catch(() => { })
+      .catch(() => {})
   }, [sellerId])
 
   async function handleToggleFavorite(listingId: number) {
@@ -112,7 +112,7 @@ export default function SellerProfilePage() {
             href={`/sign-in?redirect=${encodeURIComponent(`/seller/${sellerId}`)}`}
             className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-sm font-bold text-primary-foreground shadow-lg hover:opacity-95 transition"
           >
-            Sign in
+            Sign in with @pondiuni.ac.in
           </Link>
           <div>
             <Link href="/" className="mt-3 inline-block text-xs font-semibold text-muted-foreground hover:text-foreground transition">
