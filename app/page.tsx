@@ -30,6 +30,8 @@ import {
   Clock,
   Filter,
   X,
+  LogIn,
+  User,
 } from 'lucide-react'
 import { toggleFavorite } from '@/app/actions/marketplace'
 import { authClient } from '@/lib/auth-client'
@@ -282,6 +284,23 @@ function MarketplaceHome() {
                 <Plus size={16} />
                 <span>Post Free Listing</span>
               </Link>
+              {!session?.user ? (
+                <Link
+                  href="/sign-in"
+                  className="flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/15 backdrop-blur-md px-5 py-3 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/25 hover:text-white transition-all"
+                >
+                  <LogIn size={16} />
+                  <span>Sign In</span>
+                </Link>
+              ) : (
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/15 backdrop-blur-md px-5 py-3 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/25 hover:text-white transition-all"
+                >
+                  <User size={16} />
+                  <span>My Profile</span>
+                </Link>
+              )}
             </div>
 
             {/* Campus Trust Points */}
