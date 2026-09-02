@@ -40,7 +40,7 @@ export function Navbar({
       if (res?.data) {
         setSession(res.data as unknown as { user?: { id: string; name?: string; email?: string; role?: string; image?: string } })
       }
-    }).catch(() => {})
+    }).catch(() => { })
 
     function loadCounts() {
       // Load favorites count
@@ -49,7 +49,7 @@ export function Navbar({
         .then((d) => {
           if (d?.listingIds) setFavoriteCount(d.listingIds.length)
         })
-        .catch(() => {})
+        .catch(() => { })
 
       // Load notifications count
       fetch('/api/notifications')
@@ -57,7 +57,7 @@ export function Navbar({
         .then((d) => {
           if (typeof d?.unreadCount === 'number') setUnreadNotificationCount(d.unreadCount)
         })
-        .catch(() => {})
+        .catch(() => { })
     }
 
     loadCounts()
@@ -355,7 +355,7 @@ export function Navbar({
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex w-full items-center justify-center rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground"
               >
-                Sign In with @pondiuni.ac.in
+                Sign In with University mail
               </Link>
               <div className="flex justify-around text-xs text-muted-foreground pt-2">
                 <Link href="/safety" onClick={() => setMobileMenuOpen(false)} className="hover:underline">
