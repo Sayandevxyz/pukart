@@ -22,6 +22,13 @@ export const viewport: Viewport = { colorScheme: 'dark', themeColor: '#04130d', 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`dark ${geist.variable} ${geistMono.variable} ${dmSerif.variable} bg-background`}>
+      <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3020277614217124"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="antialiased bg-background text-foreground selection:bg-emerald-500 selection:text-white">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
