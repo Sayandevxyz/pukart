@@ -18,7 +18,7 @@ async function requireAdmin() {
   const session = await auth.api.getSession({ headers: await headers() })
   const email = session?.user?.email?.trim().toLowerCase()
   if (!session?.user?.id || !isValidPondiUniEmail(email)) {
-    throw new Error('Unauthorized: Valid Pondicherry University account required')
+    throw new Error('Unauthorized: Valid account required')
   }
   const isAdmin = isUserAdmin(email, (session.user as { role?: string }).role)
   if (!isAdmin) {

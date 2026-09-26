@@ -50,7 +50,7 @@ function sanitizeText(value: unknown, min: number, max: number): string {
 export async function toggleFavorite(listingId: number) {
   try {
     const user = await currentUser()
-    if (!user) return { success: false, error: 'Please sign in with your official @pondiuni.ac.in account' }
+    if (!user) return { success: false, error: 'Please sign in to continue' }
     if (!Number.isInteger(listingId) || listingId < 1) return { success: false, error: 'Invalid listing ID' }
 
     const existing = await db

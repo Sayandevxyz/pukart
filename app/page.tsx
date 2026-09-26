@@ -282,7 +282,7 @@ function MarketplaceHome() {
                 className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 backdrop-blur-md px-5 py-3 text-sm font-semibold text-white hover:bg-white/20 transition-all"
               >
                 <Plus size={16} />
-                <span>Post Free Listing</span>
+                <span>Sell and Buy and Rent</span>
               </Link>
               {!session?.user ? (
                 <Link
@@ -588,9 +588,9 @@ function MarketplaceHome() {
               <ShieldCheck />
             </span>
             <div>
-              <h3 className="font-bold text-sm text-primary">Verified Students Only</h3>
+              <h3 className="font-bold text-sm text-primary">Verified Community</h3>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Every buyer and seller uses a genuine @pondiuni.ac.in credentials.
+                Every buyer and seller signs in securely to trade safely.
               </p>
             </div>
           </div>

@@ -12,13 +12,11 @@ function AuthFormContent() {
   const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [showDomainModal, setShowDomainModal] = useState(false)
 
   useEffect(() => {
     const err = searchParams?.get('error')
     if (err) {
-      setShowDomainModal(true)
-      setError('Personal email accounts are not permitted. Please use your official @pondiuni.ac.in account.')
+      setError(err === 'access_denied' ? 'Sign in was cancelled.' : 'Authentication error. Please try again.')
     }
   }, [searchParams])
 
@@ -33,81 +31,21 @@ function AuthFormContent() {
       if (result?.error) {
         setLoading(false)
         const msg = result.error.message || ''
-        if (msg.includes('pondiuni') || msg.includes('Access restricted')) {
-          setShowDomainModal(true)
-          setError('Access restricted: Only verified @pondiuni.ac.in accounts are permitted.')
-        } else if (msg.includes('missing') || msg.includes('provider') || msg.includes('secret') || msg.includes('database')) {
+        if (msg.includes('missing') || msg.includes('provider') || msg.includes('secret') || msg.includes('database')) {
           setError('Google OAuth / Database setup required: Please verify GOOGLE_CLIENT_ID and DATABASE_URL in .env.local.')
         } else {
-          setError(msg || 'Google sign-in could not be completed. Use your official @pondiuni.ac.in account.')
+          setError(msg || 'Google sign-in could not be completed. Please try again.')
         }
         return
       }
     } catch (err: any) {
       setLoading(false)
-      setShowDomainModal(true)
-      setError('Please use your official Pondicherry University Google account (@pondiuni.ac.in).')
+      setError('Could not complete Google sign-in. Please try again.')
     }
   }
 
   return (
     <main className="flex min-h-svh items-center justify-center bg-background px-4 py-8 relative">
-      {/* Modal Pop-up for Personal Email Warning */}
-      {showDomainModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-2xl border border-amber-500/30 bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-start justify-between">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600">
-                <GraduationCap className="size-7" />
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowDomainModal(false)}
-                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition"
-                aria-label="Close"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <h3 className="mt-4 text-xl font-bold text-foreground">Use University Email</h3>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-              PUKart is a secure campus marketplace exclusively for Pondicherry University members. Personal emails (Gmail, Outlook, Yahoo) are not allowed.
-            </p>
-
-            <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-foreground">
-              <span className="font-semibold text-amber-800 dark:text-amber-300 block mb-1">
-                Required Email Format:
-              </span>
-              <span className="font-mono font-bold text-sm text-primary">
-                your_Reg.no.@pondiuni.ac.in
-              </span>
-            </div>
-
-            <div className="mt-6 flex flex-col gap-2.5">
-              <Button
-                type="button"
-                onClick={() => {
-                  setShowDomainModal(false)
-                  handleGoogleSignIn()
-                }}
-                className="h-12 w-full gap-2 rounded-xl bg-primary text-primary-foreground font-semibold shadow-md hover:bg-primary/90"
-              >
-                <span>Try with @pondiuni.ac.in</span>
-                <ArrowRight className="size-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setShowDomainModal(false)}
-                className="h-10 text-xs text-muted-foreground"
-              >
-                Dismiss
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <Card className="w-full max-w-md overflow-hidden border-border/80 bg-card p-8 shadow-2xl shadow-primary/5 sm:p-10">
         <div className="flex flex-col items-center text-center">
@@ -167,7 +105,7 @@ function AuthFormContent() {
               <span>Campus Security Guarantee</span>
             </div>
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              PUKart exclusively admits <span className="font-semibold text-foreground">@pondiuni.ac.in</span> Google credentials.
+              Sign in securely with your Google account to buy, sell, and connect.
             </p>
           </div>
 

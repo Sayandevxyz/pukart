@@ -20,7 +20,7 @@ export default function SafetyPage() {
             <span className="text-xs font-bold uppercase tracking-wider text-accent">Pondicherry University</span>
             <h1 className="mt-1 font-serif text-3xl font-bold text-primary sm:text-4xl">Campus Safety Guidelines</h1>
             <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-              PUKart is strictly restricted to verified @pondiuni.ac.in community members. Follow these core safety rules to ensure secure and seamless exchanges on campus.
+              PUKart is designed for our campus community. Follow these core safety rules to ensure secure and seamless exchanges on campus.
             </p>
           </div>
 

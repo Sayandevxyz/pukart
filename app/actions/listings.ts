@@ -13,7 +13,7 @@ export async function getAuthenticatedUser() {
   const session = await auth.api.getSession({ headers: await headers() })
   const email = session?.user?.email?.trim().toLowerCase()
   if (!session?.user?.id || !isValidPondiUniEmail(email)) {
-    throw new Error('Unauthorized: Must be signed in with a verified @pondiuni.ac.in account.')
+    throw new Error('Unauthorized: Must be signed in to perform this action.')
   }
   return session.user
 }

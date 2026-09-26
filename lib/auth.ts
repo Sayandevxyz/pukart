@@ -2,20 +2,22 @@ import { betterAuth } from 'better-auth'
 import { pool } from '@/lib/db'
 
 /**
- * Strict validator for Pondicherry University emails.
- * Only allows exact @pondiuni.ac.in domains.
- * Rejects Gmail, Outlook, other universities, and lookalike domains (e.g., pondiuni.ac.in.evil.com).
+ * Validator for email addresses.
+ * Accepts any standard valid email format.
  */
-export function isValidPondiUniEmail(email?: string | null): boolean {
+export function isValidEmail(email?: string | null): boolean {
   if (!email || typeof email !== 'string') return false
   const clean = email.trim().toLowerCase()
   const parts = clean.split('@')
   if (parts.length !== 2) return false
   const [localPart, domain] = parts
   if (!localPart || !domain) return false
-  // Reject subdomains or lookalikes - only exact pondiuni.ac.in is authorized
-  return domain === 'pondiuni.ac.in'
+  return domain.includes('.') && domain.length >= 3 && !domain.startsWith('.') && !domain.endsWith('.')
 }
+
+// Backwards-compatible alias for existing imports across the codebase
+export const isValidPondiUniEmail = isValidEmail
+
 
 /**
  * Helper to check if a user has admin privileges based on DB role or configured admin emails.
@@ -62,8 +64,8 @@ export const auth = betterAuth({
       create: {
         before: async (user) => {
           const email = user.email?.trim().toLowerCase()
-          if (!email || !isValidPondiUniEmail(email)) {
-            throw new Error('Access restricted: Only verified Pondicherry University (@pondiuni.ac.in) accounts are permitted.')
+          if (!email || !isValidEmail(email)) {
+            throw new Error('Please provide a valid email address.')
           }
           const role = isUserAdmin(email, (user as { role?: string }).role) ? 'admin' : 'user'
           return {
@@ -89,12 +91,12 @@ export const auth = betterAuth({
       accessType: 'offline',
       mapProfileToUser: async (profile) => {
         const email = profile.email?.trim().toLowerCase()
-        if (!email || !isValidPondiUniEmail(email)) {
-          throw new Error('Access restricted: Only official @pondiuni.ac.in accounts are permitted to join PUKart.')
+        if (!email || !isValidEmail(email)) {
+          throw new Error('Please sign in with a valid email address.')
         }
         return {
           email,
-          name: profile.name || 'PU Student',
+          name: profile.name || 'Campus User',
           image: profile.picture || null,
         }
       },

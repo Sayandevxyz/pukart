@@ -30,24 +30,21 @@ function AuthErrorContent() {
           <GraduationCap className="size-8" />
         </div>
 
-        <span className="text-xs font-bold uppercase tracking-wider text-accent">Pondicherry University</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-accent">PUKart Marketplace</span>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          University Email Required
+          Sign-In Issue
         </h1>
 
-        <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-left text-sm leading-6 text-foreground">
+        <div className="mt-4 rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-left text-sm leading-6 text-foreground">
           <div className="flex items-start gap-2.5">
-            <AlertCircle className="size-5 shrink-0 text-amber-600 mt-0.5" />
+            <AlertCircle className="size-5 shrink-0 text-destructive mt-0.5" />
             <div>
-              <p className="font-semibold text-amber-700 dark:text-amber-400">
-                Personal email detected
+              <p className="font-semibold text-destructive">
+                Authentication could not be completed
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                PUKart is exclusively restricted to students, faculty, and research scholars. Please sign in with your official university account:
+                There was an issue signing in with your Google account. Please try again with any valid email address.
               </p>
-              <div className="mt-2 inline-block rounded-lg bg-background px-3 py-1 text-xs font-mono font-bold text-primary border border-border">
-                @pondiuni.ac.in
-              </div>
             </div>
           </div>
         </div>
@@ -58,7 +55,7 @@ function AuthErrorContent() {
             onClick={handleRetryGoogle}
             className="h-12 w-full gap-2 rounded-xl bg-primary text-primary-foreground font-semibold shadow-md hover:bg-primary/90"
           >
-            <span>Switch to @pondiuni.ac.in Account</span>
+            <span>Try Again with Google</span>
             <ArrowRight className="size-4" />
           </Button>
 
@@ -73,7 +70,7 @@ function AuthErrorContent() {
         </div>
 
         <div className="mt-6 border-t border-border pt-4 text-xs text-muted-foreground">
-          Need assistance with university credentials?{' '}
+          Need help?{' '}
           <a href="/help" className="text-primary hover:underline font-semibold">
             Campus Help Center
           </a>

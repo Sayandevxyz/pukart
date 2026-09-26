@@ -10,7 +10,7 @@ export default function HelpPage() {
   const faqs = [
     {
       q: 'Who can register and trade on PUKart?',
-      a: 'PUKart is exclusively accessible to current students, faculty, and research scholars of Pondicherry University. Sign-in is restricted solely to official @pondiuni.ac.in Google accounts.',
+      a: 'PUKart is accessible to students, faculty, and scholars. Anyone with a valid Google account can sign in and trade.',
     },
     {
       q: 'How does payment work for campus listings?',

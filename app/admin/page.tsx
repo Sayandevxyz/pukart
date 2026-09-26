@@ -302,7 +302,7 @@ export default function AdminDashboardPage() {
                         const u = await getAdminUsers(e.target.value)
                         setUsers(u)
                       }}
-                      placeholder="Search users by name or @pondiuni.ac.in email..."
+                      placeholder="Search users by name or email..."
                       className="h-11 w-full rounded-xl border border-border bg-background pl-9 pr-4 text-xs outline-none focus:border-accent"
                     />
                   </div>

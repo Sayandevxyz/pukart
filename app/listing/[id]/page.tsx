@@ -516,13 +516,13 @@ export default function ListingDetailPage() {
                   <span>Seller & Contact Info Protected</span>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  To prevent spam and safeguard student privacy, seller contact numbers, WhatsApp, and academic department details are visible only to verified Pondicherry University students.
+                  To prevent spam and safeguard privacy, seller contact numbers, WhatsApp, and academic details are visible only to signed-in users.
                 </p>
                 <Link
                   href={`/sign-in?redirect=${encodeURIComponent(`/listing/${listing.id}`)}`}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 px-4 text-xs font-bold text-primary-foreground shadow-md hover:opacity-95 active:scale-98 transition"
                 >
-                  <Lock size={14} /> Sign In with @pondiuni.ac.in to View Contact Info
+                  <Lock size={14} /> Sign In to View Contact Info
                 </Link>
               </div>
             ) : (

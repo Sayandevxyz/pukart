@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() })
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized. Sign in with your @pondiuni.ac.in account.' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized. Please sign in to upload.' }, { status: 401 })
     }
 
     const formData = await request.formData()
