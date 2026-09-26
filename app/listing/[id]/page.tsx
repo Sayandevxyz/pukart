@@ -537,11 +537,8 @@ export default function ListingDetailPage() {
                       onClick={handleViewSellerProfile}
                       className="font-bold text-primary hover:text-accent truncate block text-base text-left"
                     >
-                      {listing.sellerName || 'Verified PU Student'}
+                      {listing.sellerName || 'Verified Seller'}
                     </button>
-                    <p className="flex items-center gap-1 text-xs font-semibold text-accent mt-0.5">
-                      <ShieldCheck size={14} /> Verified Pondicherry University
-                    </p>
                     {listing.seller?.department && (
                       <p className="text-xs text-muted-foreground truncate">
                         {listing.seller.department} {listing.seller.year ? `· Year ${listing.seller.year}` : ''}

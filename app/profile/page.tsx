@@ -385,7 +385,7 @@ function ProfilePageInner() {
                 <h1 className="font-serif text-2xl font-bold text-primary">{session.user.name}</h1>
                 <p className="text-xs text-muted-foreground">{session.user.email}</p>
                 <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-0.5 text-[10px] font-bold text-accent">
-                  <ShieldCheck size={12} /> Verified Pondicherry University Account
+                  <ShieldCheck size={12} /> Verified Account
                 </span>
               </div>
             </div>

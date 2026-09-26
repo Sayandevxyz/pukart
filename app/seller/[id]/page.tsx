@@ -105,7 +105,7 @@ export default function SellerProfilePage() {
           </div>
           <h1 className="mt-4 text-2xl font-bold text-foreground">Student Profile Protected</h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            To protect campus safety and privacy, seller profiles, hostel locations, and reviews are only visible to verified Pondicherry University students.
+            To protect campus safety and privacy, seller profiles, hostel locations, and reviews are only visible to signed-in users.
           </p>
           <Link
             href={`/sign-in?redirect=${encodeURIComponent(`/seller/${sellerId}`)}`}
