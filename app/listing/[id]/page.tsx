@@ -26,7 +26,6 @@ import {
   Flag,
   UserCheck,
   Phone,
-  PhoneCall,
   Copy,
   Check,
   Lock,
@@ -589,22 +588,16 @@ export default function ListingDetailPage() {
                     </p>
 
                     {!isOwner && (
-                      <div className="grid grid-cols-2 gap-2 pt-1">
-                        <a
-                          href={`tel:${cleanPhoneDigits.length === 10 ? `+91${cleanPhoneDigits}` : `+${cleanPhoneDigits}`}`}
-                          className="flex items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-90 transition"
-                        >
-                          <PhoneCall size={13} /> Call Seller
-                        </a>
+                      <div className="pt-1">
                         <a
                           href={`https://wa.me/${formattedPhoneForWa}?text=${encodeURIComponent(
                             `Hi ${listing.sellerName || 'there'}, I'm interested in your "${listing.title}" on PUKart (₹${listing.price}). Is it available?`
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition"
+                          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition"
                         >
-                          <MessageCircle size={13} /> WhatsApp
+                          <MessageCircle size={14} /> WhatsApp
                         </a>
                       </div>
                     )}

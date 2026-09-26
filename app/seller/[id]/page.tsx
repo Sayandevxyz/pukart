@@ -16,7 +16,6 @@ import {
   Heart,
   GraduationCap,
   Phone,
-  PhoneCall,
   Copy,
   Check,
 } from 'lucide-react'
@@ -203,12 +202,7 @@ export default function SellerProfilePage() {
                     )}
                   </button>
 
-                  <a
-                    href={`tel:${user.phone.replace(/\D/g, '').length === 10 ? `+91${user.phone.replace(/\D/g, '')}` : `+${user.phone.replace(/\D/g, '')}`}`}
-                    className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-90 transition"
-                  >
-                    <PhoneCall size={12} /> Call
-                  </a>
+
 
                   <a
                     href={`https://wa.me/${user.phone.replace(/\D/g, '').length === 10 ? `91${user.phone.replace(/\D/g, '')}` : user.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
