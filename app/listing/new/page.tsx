@@ -28,6 +28,7 @@ import Link from 'next/link'
 export default function NewListingPage() {
   const router = useRouter()
   const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
+  const [authChecking, setAuthChecking] = useState(true)
   const [loading, setLoading] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
@@ -71,8 +72,10 @@ export default function NewListingPage() {
           } else {
             setProfileIncomplete(null)
           }
+          setAuthChecking(false)
+          return
         }
-      } catch {
+
         const authRes = await authClient.getSession()
         if (authRes?.data?.user) {
           setSession(authRes.data as any)
@@ -91,8 +94,17 @@ export default function NewListingPage() {
           } else {
             setProfileIncomplete(null)
           }
+          setAuthChecking(false)
         } else {
-          router.push('/sign-in')
+          router.replace('/sign-in?redirect=' + encodeURIComponent('/listing/new'))
+        }
+      } catch {
+        const authRes = await authClient.getSession()
+        if (authRes?.data?.user) {
+          setSession(authRes.data as any)
+          setAuthChecking(false)
+        } else {
+          router.replace('/sign-in?redirect=' + encodeURIComponent('/listing/new'))
         }
       }
     }
@@ -226,6 +238,18 @@ export default function NewListingPage() {
       showToast(err.message || 'Failed to publish listing')
       setLoading(false)
     }
+  }
+
+  if (authChecking || !session?.user) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <Navbar />
+        <div className="flex h-[calc(100vh-120px)] flex-col items-center justify-center gap-3">
+          <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <p className="text-sm font-medium text-muted-foreground">Checking authentication...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

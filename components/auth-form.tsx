@@ -24,9 +24,10 @@ function AuthFormContent() {
     setError(null)
     setLoading(true)
     try {
+      const redirectUrl = searchParams?.get('redirect') || '/'
       const result = await authClient.signIn.social({
         provider: 'google',
-        callbackURL: '/',
+        callbackURL: redirectUrl,
       })
       if (result?.error) {
         setLoading(false)

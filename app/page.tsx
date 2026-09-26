@@ -278,7 +278,7 @@ function MarketplaceHome() {
                 <ChevronRight size={16} />
               </button>
               <Link
-                href="/listing/new"
+                href={session?.user ? "/listing/new" : `/sign-in?redirect=${encodeURIComponent('/listing/new')}`}
                 className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 backdrop-blur-md px-5 py-3 text-sm font-semibold text-white hover:bg-white/20 transition-all"
               >
                 <Plus size={16} />
@@ -632,7 +632,7 @@ function MarketplaceHome() {
             </p>
           </div>
           <Link
-            href="/listing/new"
+            href={session?.user ? "/listing/new" : `/sign-in?redirect=${encodeURIComponent('/listing/new')}`}
             className="w-fit rounded-xl bg-accent px-6 py-3.5 text-sm font-bold text-accent-foreground shadow-lg hover:opacity-95"
           >
             Sell on PUKart <Plus className="ml-1 inline" size={16} />
