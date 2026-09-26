@@ -355,7 +355,7 @@ export function Navbar({
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex w-full items-center justify-center rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground"
               >
-                Sign In with University mail
+                Sign In
               </Link>
               <div className="flex justify-around text-xs text-muted-foreground pt-2">
                 <Link href="/safety" onClick={() => setMobileMenuOpen(false)} className="hover:underline">
