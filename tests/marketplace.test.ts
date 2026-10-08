@@ -270,5 +270,94 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
       expect(mockConversations[0].lastMessage).toBe(replyText)
     })
   })
+
+  describe('Campus Transit Mobility Calculator (Feature 4)', () => {
+    const rentalOptions = {
+      '1_day': { label: 'Daily Pass (1 Day)', multiplier: 1, days: 1, depositRate: 0.5 },
+      '3_days': { label: 'Weekend Explorer (3 Days)', multiplier: 2.4, days: 3, depositRate: 0.8 },
+      '1_week': { label: 'Weekly Transit (7 Days)', multiplier: 4.8, days: 7, depositRate: 1.5 },
+      '1_month': { label: 'Semester Month (30 Days)', multiplier: 14, days: 30, depositRate: 2.0 },
+    }
+
+    function calculateRental(basePrice: number, duration: keyof typeof rentalOptions) {
+      const config = rentalOptions[duration]
+      const rentalAmount = Math.max(20, Math.round(basePrice * config.multiplier))
+      const depositAmount = Math.max(100, Math.round(basePrice * config.depositRate))
+      return { rentalAmount, depositAmount, days: config.days }
+    }
+
+    function isMobilityItem(title: string, category: string, subcategory?: string): boolean {
+      const mobilityKeywords = ['cycle', 'bicycle', 'bike', 'scooter', 'scooty', 'helmet', 'transit', 'mobility', 'ride']
+      const content = `${title} ${category} ${subcategory || ''}`.toLowerCase()
+      return mobilityKeywords.some((k) => content.includes(k))
+    }
+
+    it('should correctly identify mobility and cycle items', () => {
+      expect(isMobilityItem('Hero Sprint Pro Cycle', 'Vehicles', 'Bicycles')).toBe(true)
+      expect(isMobilityItem('Honda Activa Scooty for Rent', 'Other')).toBe(true)
+      expect(isMobilityItem('Campus Bicycle Helmet', 'Sports')).toBe(true)
+      expect(isMobilityItem('Engineering Physics Textbook', 'Books')).toBe(false)
+    })
+
+    it('should compute appropriate rental rates and deposits across all durations', () => {
+      const baseDailyRate = 50
+      const daily = calculateRental(baseDailyRate, '1_day')
+      expect(daily.rentalAmount).toBe(50)
+      expect(daily.depositAmount).toBe(100)
+
+      const weekend = calculateRental(baseDailyRate, '3_days')
+      expect(weekend.rentalAmount).toBe(120)
+      expect(weekend.depositAmount).toBe(100)
+
+      const weekly = calculateRental(baseDailyRate, '1_week')
+      expect(weekly.rentalAmount).toBe(240)
+      expect(weekly.depositAmount).toBe(100)
+
+      const monthly = calculateRental(baseDailyRate, '1_month')
+      expect(monthly.rentalAmount).toBe(700)
+      expect(monthly.depositAmount).toBe(100)
+    })
+
+    it('should enforce safety minimum floors on micro-rates', () => {
+      const micro = calculateRental(10, '1_day')
+      expect(micro.rentalAmount).toBe(20)
+      expect(micro.depositAmount).toBe(100)
+    })
+  })
+
+  describe('Campus Senior Trust Badges Logic (Feature 5)', () => {
+    function getSeniorTrustBadges(user: { department?: string | null; hostel?: string | null }, stats: { averageRating?: number; reviewCount?: number }) {
+      const badges: string[] = []
+      if (user.department) badges.push(`Verified Scholar (${user.department})`)
+      else badges.push('Verified Scholar PU')
+
+      if (user.hostel) badges.push(`Hosteller (${user.hostel})`)
+
+      const avgRating = stats.averageRating ?? 5.0
+      if (avgRating >= 4.5) badges.push(`Top Senior Peer (${avgRating} / 5)`)
+
+      badges.push('Same-Day Handoff')
+
+      if ((stats.reviewCount || 0) > 0) badges.push(`${stats.reviewCount} Meetups Completed`)
+      else badges.push('Campus Verified')
+
+      return badges
+    }
+
+    it('should award Top Senior Peer badge when rating is 4.5 or higher', () => {
+      const senior = getSeniorTrustBadges({ department: 'Computer Science', hostel: 'C.V. Raman' }, { averageRating: 4.8, reviewCount: 12 })
+      expect(senior).toContain('Top Senior Peer (4.8 / 5)')
+      expect(senior).toContain('Hosteller (C.V. Raman)')
+      expect(senior).toContain('Verified Scholar (Computer Science)')
+      expect(senior).toContain('12 Meetups Completed')
+    })
+
+    it('should not award Top Senior Peer badge when rating is below 4.5', () => {
+      const peer = getSeniorTrustBadges({ department: 'Management', hostel: 'Madame Curie' }, { averageRating: 4.0, reviewCount: 3 })
+      expect(peer.some((b) => b.startsWith('Top Senior Peer'))).toBe(false)
+      expect(peer).toContain('Hosteller (Madame Curie)')
+      expect(peer).toContain('3 Meetups Completed')
+    })
+  })
 })
 

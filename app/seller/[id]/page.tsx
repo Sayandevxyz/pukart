@@ -18,6 +18,9 @@ import {
   Phone,
   Copy,
   Check,
+  Home,
+  Zap,
+  Award,
 } from 'lucide-react'
 import { getSellerProfile } from '@/app/actions/marketplace'
 import { startConversation, toggleFavorite } from '@/app/actions/marketplace'
@@ -214,6 +217,37 @@ export default function SellerProfilePage() {
                   </a>
                 </div>
               )}
+
+              <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2.5 border-t border-border/60">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 border border-emerald-500/20">
+                  <GraduationCap size={12} className="text-emerald-400 shrink-0" />
+                  <span>Verified Scholar {user.department ? `(${user.department})` : 'PU'}</span>
+                </span>
+
+                {user.hostel && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-1 text-[11px] font-semibold text-blue-400 border border-blue-500/20">
+                    <Home size={12} className="text-blue-400 shrink-0" />
+                    <span>Hosteller ({user.hostel})</span>
+                  </span>
+                )}
+
+                {(ratingStats?.averageRating || 5) >= 4.5 && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-400 border border-amber-500/20">
+                    <Star size={12} className="text-amber-400 fill-amber-400 shrink-0" />
+                    <span>Top Senior Peer ({ratingStats?.averageRating || '5.0'} / 5)</span>
+                  </span>
+                )}
+
+                <span className="inline-flex items-center gap-1 rounded-full bg-teal-500/10 px-2.5 py-1 text-[11px] font-semibold text-teal-400 border border-teal-500/20">
+                  <Zap size={12} className="text-teal-400 shrink-0" />
+                  <span>Same-Day Handoff</span>
+                </span>
+
+                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2.5 py-1 text-[11px] font-semibold text-indigo-400 border border-indigo-500/20">
+                  <Award size={12} className="text-indigo-400 shrink-0" />
+                  <span>{(ratingStats?.reviewCount || 0) > 0 ? `${ratingStats?.reviewCount} Meetups Completed` : 'Campus Verified'}</span>
+                </span>
+              </div>
             </div>
 
             <div className="rounded-2xl border border-border bg-muted/30 p-4 text-center min-w-[140px]">

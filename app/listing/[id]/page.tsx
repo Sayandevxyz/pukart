@@ -29,6 +29,12 @@ import {
   Copy,
   Check,
   Lock,
+  Bike,
+  GraduationCap,
+  Home,
+  Zap,
+  Award,
+  Calculator,
 } from 'lucide-react'
 import {
   getListingById,
@@ -68,6 +74,7 @@ export default function ListingDetailPage() {
   const [actionLoading, setActionLoading] = useState(false)
 
   const [copiedPhone, setCopiedPhone] = useState(false)
+  const [rentalDuration, setRentalDuration] = useState<'1_day' | '3_days' | '1_week' | '1_month'>('1_day')
 
   function showToast(msg: string) {
     setToastMessage(msg)
@@ -322,6 +329,22 @@ export default function ListingDetailPage() {
   const cleanPhoneDigits = sellerPhone ? sellerPhone.replace(/\D/g, '') : ''
   const formattedPhoneForWa = cleanPhoneDigits.length === 10 ? `91${cleanPhoneDigits}` : cleanPhoneDigits
 
+  const isMobilityItem = listing && (
+    listing.type === 'rent' ||
+    ['Cycles', 'Scooty', 'Bikes'].includes(listing.category)
+  )
+
+  const rentalOptions: Record<string, { label: string; multiplier: number; days: number; depositRate: number }> = {
+    '1_day': { label: 'Daily (1 Day)', multiplier: 1, days: 1, depositRate: 0.5 },
+    '3_days': { label: 'Weekend Pass (3 Days)', multiplier: 2.4, days: 3, depositRate: 1.0 },
+    '1_week': { label: 'Weekly Transit (7 Days)', multiplier: 4.8, days: 7, depositRate: 1.5 },
+    '1_month': { label: 'Semester Month (30 Days)', multiplier: 14, days: 30, depositRate: 2.0 },
+  }
+
+  const selectedRentalConfig = rentalOptions[rentalDuration] || rentalOptions['1_day']
+  const calculatedRentalAmount = Math.max(20, Math.round(listing.price * selectedRentalConfig.multiplier))
+  const calculatedDepositAmount = Math.max(100, Math.round(listing.price * selectedRentalConfig.depositRate))
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
@@ -487,6 +510,81 @@ export default function ListingDetailPage() {
               </div>
             </div>
 
+            {isMobilityItem && (
+              <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 to-teal-950/20 p-5 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
+                      <Bike size={16} />
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-bold text-primary">Campus Transit & Mobility Rental</h3>
+                      <p className="text-[11px] text-muted-foreground">800-acre PU Campus Walk-Saver</p>
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30 uppercase tracking-wide">
+                    Green Ride
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-foreground flex items-center gap-1">
+                    <Calculator size={12} className="text-accent" />
+                    <span>Select Rental Duration:</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {Object.entries(rentalOptions).map(([key, config]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setRentalDuration(key as any)}
+                        className={`rounded-xl p-2.5 text-center text-xs font-bold transition border ${
+                          rentalDuration === key
+                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-500/30'
+                            : 'bg-card/80 text-muted-foreground border-border hover:bg-muted hover:text-foreground'
+                        }`}
+                      >
+                        <p className="truncate">{config.label.split(' (')[0]}</p>
+                        <p className="text-[10px] opacity-80">{config.days} Day{config.days > 1 ? 's' : ''}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3.5 space-y-2 text-xs">
+                  <div className="flex items-center justify-between font-semibold">
+                    <span className="text-muted-foreground">Est. Rental Cost ({selectedRentalConfig.label}):</span>
+                    <span className="text-sm font-extrabold text-primary">₹{calculatedRentalAmount.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex items-center justify-between font-medium text-slate-300">
+                    <span className="text-muted-foreground">Refundable Hostel Security Deposit:</span>
+                    <span className="font-bold text-accent">₹{calculatedDepositAmount.toLocaleString('en-IN')}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground pt-1 border-t border-border/50">
+                    * Deposit is 100% refunded in-person when returning the cycle/scooty at Central Library or your hostel quadrangle.
+                  </p>
+                </div>
+
+                {!isOwner && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!session?.user) {
+                        router.push(`/sign-in?redirect=${encodeURIComponent(`/listing/${listing.id}`)}`)
+                        return
+                      }
+                      setMeetupLocation('Central Library Cycle Stand')
+                      setBuyModalOpen(true)
+                    }}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-3 text-xs font-bold text-white shadow-md hover:from-emerald-500 hover:to-teal-500 transition active:scale-[0.99]"
+                  >
+                    <Bike size={14} />
+                    <span>Rent for {selectedRentalConfig.label} (₹{calculatedRentalAmount})</span>
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3">
               <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Description</h2>
               <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/90">
@@ -537,6 +635,37 @@ export default function ListingDetailPage() {
                       <Star size={11} fill="currentColor" />
                     </div>
                   )}
+                </div>
+
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 pt-2.5 border-t border-border/60">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 border border-emerald-500/20">
+                    <GraduationCap size={12} className="text-emerald-400 shrink-0" />
+                    <span>Verified Scholar {listing.seller?.department ? `(${listing.seller.department.slice(0, 20)})` : 'PU'}</span>
+                  </span>
+
+                  {listing.seller?.hostel && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-1 text-[11px] font-semibold text-blue-400 border border-blue-500/20">
+                      <Home size={12} className="text-blue-400 shrink-0" />
+                      <span>Hosteller ({listing.seller.hostel.slice(0, 18)})</span>
+                    </span>
+                  )}
+
+                  {(sellerStats?.averageRating || 5) >= 4.5 && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-400 border border-amber-500/20">
+                      <Star size={12} className="text-amber-400 fill-amber-400 shrink-0" />
+                      <span>Top Senior Peer ({sellerStats?.averageRating || '5.0'} / 5)</span>
+                    </span>
+                  )}
+
+                  <span className="inline-flex items-center gap-1 rounded-full bg-teal-500/10 px-2.5 py-1 text-[11px] font-semibold text-teal-400 border border-teal-500/20">
+                    <Zap size={12} className="text-teal-400 shrink-0" />
+                    <span>Same-Day Handoff</span>
+                  </span>
+
+                  <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2.5 py-1 text-[11px] font-semibold text-indigo-400 border border-indigo-500/20">
+                    <Award size={12} className="text-indigo-400 shrink-0" />
+                    <span>{(sellerStats?.reviewCount || 0) > 0 ? `${sellerStats?.reviewCount} Meetups Completed` : 'Campus Verified'}</span>
+                  </span>
                 </div>
 
                 {sellerPhone ? (

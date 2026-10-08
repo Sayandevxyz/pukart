@@ -51,9 +51,13 @@ Student Browse / Search ➔ Item Detail ➔ In-App Chat / Make Offer ➔ Handoff
 - **Transaction & Order Management**:
   - Dedicated dashboard tracking incoming requests, active exchanges, and completed history.
   - Campus meetup location selection and cash / peer-to-peer UPI settlement tracking.
-- **Reputation & Safety**:
+- **Reputation, Safety & Senior Trust Badges**:
   - Mutual rating and review system visible on seller profile cards.
+  - Campus Senior Trust Badges (`Verified Scholar`, `Hosteller`, `Top Senior Peer` >= 4.5★, `Same-Day Handoff`, `Meetups Completed`).
   - Reporting mechanism for suspicious listings with admin moderation tools.
+- **Campus Transit & Green Mobility Rental (Feature 4 & 5)**:
+  - Purpose-built mobility estimator for Pondicherry University's expansive 800-acre campus.
+  - Supports flexible durations (Daily Pass, Weekend 3-Day, Weekly Transit, Semester Month) with refundable hostel security deposit protection and 1-click rental proposals.
 
 ---
 
@@ -77,7 +81,7 @@ Student Browse / Search ➔ Item Detail ➔ In-App Chat / Make Offer ➔ Handoff
 - **Database & ORM**: PostgreSQL via [Drizzle ORM](https://orm.drizzle.team/)
 - **Authentication**: [better-auth](https://better-auth.com/)
 - **Storage & Analytics**: Vercel Blob & Vercel Analytics
-- **Test Runner**: [Vitest](https://vitest.dev/) (48 unit, security, and integration tests)
+- **Test Runner**: [Vitest](https://vitest.dev/) (53 unit, security, and integration tests)
 
 ---
 
