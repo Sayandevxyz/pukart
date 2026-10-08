@@ -45,7 +45,6 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [toastMessage, setToastMessage] = useState('')
 
-  // Data states
   const [stats, setStats] = useState<any>(null)
   const [users, setUsers] = useState<any[]>([])
   const [userQuery, setUserQuery] = useState('')
@@ -55,7 +54,6 @@ export default function AdminDashboardPage() {
   const [reportFilter, setReportFilter] = useState('all')
   const [categories, setCategories] = useState<any[]>([])
 
-  // New Category Form
   const [newCatName, setNewCatName] = useState('')
   const [newCatSlug, setNewCatSlug] = useState('')
   const [newCatIcon, setNewCatIcon] = useState('ShoppingBag')
@@ -190,7 +188,6 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Tab Navigation */}
         <div className="mt-6 flex gap-2 overflow-x-auto border-b border-border pb-3 text-xs sm:text-sm font-semibold">
           {[
             { id: 'dashboard', label: 'Overview Metrics', icon: Layers },
@@ -221,7 +218,7 @@ export default function AdminDashboardPage() {
           <div className="py-20 text-center text-sm text-muted-foreground animate-pulse">Loading administration data...</div>
         ) : (
           <div className="mt-6">
-            {/* 1. OVERVIEW DASHBOARD */}
+            
             {activeTab === 'dashboard' && stats && (
               <div className="space-y-8">
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -289,7 +286,6 @@ export default function AdminDashboardPage() {
               </div>
             )}
 
-            {/* 2. USERS MANAGEMENT */}
             {activeTab === 'users' && (
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -359,7 +355,6 @@ export default function AdminDashboardPage() {
               </div>
             )}
 
-            {/* 3. LISTINGS MODERATION */}
             {activeTab === 'listings' && (
               <div className="space-y-4">
                 <div className="flex gap-2">
@@ -443,7 +438,6 @@ export default function AdminDashboardPage() {
               </div>
             )}
 
-            {/* 4. REPORTS MODERATION */}
             {activeTab === 'reports' && (
               <div className="space-y-4">
                 <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
@@ -502,7 +496,6 @@ export default function AdminDashboardPage() {
               </div>
             )}
 
-            {/* 5. CATEGORIES MANAGEMENT */}
             {activeTab === 'categories' && (
               <div className="grid gap-6 md:grid-cols-3">
                 <div className="rounded-2xl border border-border bg-card p-5 space-y-4 md:col-span-1">

@@ -9,15 +9,13 @@ import {
   index,
 } from "drizzle-orm/pg-core"
 
-// ---------- Better Auth tables (do not rename columns) ----------
-
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("emailVerified").notNull().default(false),
   image: text("image"),
-  role: text("role").notNull().default("user"), // 'user' | 'admin'
+  role: text("role").notNull().default("user"), 
   isSuspended: boolean("isSuspended").notNull().default(false),
   department: text("department"),
   course: text("course"),
@@ -70,8 +68,6 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
 
-// ---------- PUKart App Tables ----------
-
 export const universities = pgTable("universities", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -107,14 +103,14 @@ export const listings = pgTable(
     price: integer("price").notNull(),
     originalPrice: integer("originalPrice"),
     priceUnit: text("priceUnit").default("item"),
-    type: text("type").notNull().default("sell"), // 'sell' | 'rent' | 'service' | 'accommodation'
+    type: text("type").notNull().default("sell"), 
     categoryId: integer("categoryId").references(() => categories.id, { onDelete: "set null" }),
     category: text("category").notNull(),
-    condition: text("condition").notNull().default("good"), // 'brand_new' | 'like_new' | 'good' | 'fair' | 'poor'
-    imageUrl: text("imageUrl"), // Primary thumbnail
+    condition: text("condition").notNull().default("good"), 
+    imageUrl: text("imageUrl"), 
     location: text("location").default("Pondicherry University"),
     phone: text("phone"),
-    status: text("status").notNull().default("active"), // 'active' | 'reserved' | 'sold' | 'rented' | 'archived'
+    status: text("status").notNull().default("active"), 
     featured: boolean("featured").notNull().default(false),
     viewsCount: integer("viewsCount").notNull().default(0),
     aiFlagged: boolean("aiFlagged").notNull().default(false),
@@ -209,7 +205,7 @@ export const offers = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     amount: integer("amount").notNull(),
     counterAmount: integer("counterAmount"),
-    status: text("status").notNull().default("pending"), // 'pending' | 'accepted' | 'rejected' | 'countered' | 'withdrawn'
+    status: text("status").notNull().default("pending"), 
     message: text("message"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
@@ -235,9 +231,9 @@ export const transactions = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     offerId: integer("offerId").references(() => offers.id, { onDelete: "set null" }),
-    status: text("status").notNull().default("inquiry"), // 'inquiry' | 'negotiating' | 'requested' | 'accepted' | 'completed' | 'rejected' | 'cancelled' | 'disputed'
+    status: text("status").notNull().default("inquiry"), 
     amount: integer("amount").notNull(),
-    paymentMethod: text("paymentMethod").notNull().default("meetup_cash"), // 'meetup_cash' | 'upi' | 'razorpay'
+    paymentMethod: text("paymentMethod").notNull().default("meetup_cash"), 
     meetupLocation: text("meetupLocation"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
@@ -264,7 +260,7 @@ export const reviews = pgTable(
     recipientId: text("recipientId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    rating: integer("rating").notNull(), // 1 - 5
+    rating: integer("rating").notNull(), 
     body: text("body").notNull(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
   },
@@ -301,7 +297,7 @@ export const notifications = pgTable(
     userId: text("userId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    kind: text("kind").notNull(), // 'message' | 'favorite' | 'offer' | 'offer_accepted' | 'offer_rejected' | 'transaction' | 'review' | 'moderation'
+    kind: text("kind").notNull(), 
     title: text("title").notNull(),
     body: text("body").notNull(),
     link: text("link"),
@@ -325,7 +321,7 @@ export const reports = pgTable(
     reportedUserId: text("reportedUserId").references(() => user.id, { onDelete: "set null" }),
     reason: text("reason").notNull(),
     details: text("details"),
-    status: text("status").notNull().default("open"), // 'open' | 'reviewing' | 'resolved' | 'dismissed'
+    status: text("status").notNull().default("open"), 
     adminNotes: text("adminNotes"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
@@ -364,8 +360,6 @@ export const blockedUsers = pgTable(
   (t) => [unique().on(t.userId, t.blockedUserId)]
 )
 
-// ---------- Type Exports ----------
-
 export type User = typeof user.$inferSelect
 export type University = typeof universities.$inferSelect
 export type Category = typeof categories.$inferSelect
@@ -381,4 +375,4 @@ export type Notification = typeof notifications.$inferSelect
 export type Report = typeof reports.$inferSelect
 export type Profile = typeof profiles.$inferSelect
 export type BlockedUser = typeof blockedUsers.$inferSelect
-
+

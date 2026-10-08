@@ -32,8 +32,6 @@ import {
   checkProfileCompletion,
 } from '@/lib/constants/campus'
 
-// ---------- Searchable Select Component ----------
-
 function SearchableSelect({
   label,
   icon: Icon,
@@ -61,7 +59,6 @@ function SearchableSelect({
     ? allOpts.filter((o) => o.toLowerCase().includes(search.toLowerCase()))
     : allOpts
 
-  // Group filtered options back into categories if using groups
   const filteredGroups = groups
     ? groups
       .map((g) => ({
@@ -97,12 +94,11 @@ function SearchableSelect({
 
       {open && (
         <>
-          {/* Backdrop */}
+          
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
 
-          {/* Dropdown */}
           <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-64 overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
-            {/* Search */}
+            
             <div className="flex items-center gap-2 border-b border-border px-3 py-2">
               <Search size={13} className="text-muted-foreground" />
               <input
@@ -174,8 +170,6 @@ function SearchableSelect({
   )
 }
 
-// ---------- Profile Page ----------
-
 function ProfilePageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -216,7 +210,7 @@ function ProfilePageInner() {
         if (u.hostel) setHostel(u.hostel)
       }
     } catch {
-      // If server action fails, fall back to authClient session
+      
       const authRes = await authClient.getSession()
       if (authRes?.data?.user) {
         setSession(authRes.data)
@@ -227,7 +221,7 @@ function ProfilePageInner() {
   }
 
   useEffect(() => {
-    // Show banner if redirected from /listing/new
+    
     if (redirectTo) {
       setShowRedirectBanner(true)
     }
@@ -238,7 +232,6 @@ function ProfilePageInner() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    // Validate required fields
     const completion = checkProfileCompletion({
       department,
       course,
@@ -253,7 +246,7 @@ function ProfilePageInner() {
 
     setSaving(true)
     try {
-      // Combine bio and meetup preference for storage
+      
       const combinedBio = meetupPreference
         ? `${bio}\n---meetup---\n${meetupPreference}`
         : bio
@@ -267,12 +260,10 @@ function ProfilePageInner() {
         hostel,
       })
 
-      // Reload authoritative profile
       await loadProfile()
 
       showToast('Profile updated successfully!')
 
-      // If redirected from listing page, go back after short delay
       if (redirectTo) {
         window.setTimeout(() => {
           router.push(redirectTo)
@@ -307,7 +298,6 @@ function ProfilePageInner() {
     hostel,
   })
 
-  // Build grouped options for the searchable selects
   const departmentGroups = SCHOOLS_AND_DEPARTMENTS.map((s) => ({
     label: s.school,
     options: s.departments,
@@ -337,7 +327,7 @@ function ProfilePageInner() {
       )}
 
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Redirect Banner */}
+        
         {showRedirectBanner && (
           <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-200">
             <AlertTriangle size={20} className="mt-0.5 shrink-0 text-amber-400" />
@@ -353,7 +343,6 @@ function ProfilePageInner() {
           </div>
         )}
 
-        {/* Profile Completion Indicator */}
         {!completion.isComplete && (
           <div className="mb-6 rounded-2xl border border-accent/20 bg-accent/5 p-4">
             <div className="flex items-center gap-2 text-xs font-bold text-accent">
@@ -375,7 +364,7 @@ function ProfilePageInner() {
         )}
 
         <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm">
-          {/* Header */}
+          
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
             <div className="flex items-center gap-4">
               <div className="flex size-16 items-center justify-center rounded-2xl bg-primary text-2xl font-bold text-primary-foreground">
@@ -398,10 +387,9 @@ function ProfilePageInner() {
             </button>
           </div>
 
-          {/* Profile Form */}
           <form onSubmit={handleSubmit} className="mt-6 space-y-5">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {/* Department / School */}
+              
               <SearchableSelect
                 label="Department / School"
                 icon={Building}
@@ -412,7 +400,6 @@ function ProfilePageInner() {
                 required
               />
 
-              {/* Degree / Program */}
               <SearchableSelect
                 label="Degree / Program"
                 icon={GraduationCap}
@@ -423,7 +410,6 @@ function ProfilePageInner() {
                 required
               />
 
-              {/* Year of Study */}
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
                   <Calendar size={13} className="text-accent" />
@@ -444,7 +430,6 @@ function ProfilePageInner() {
                 </select>
               </div>
 
-              {/* Campus Hostel */}
               <SearchableSelect
                 label="Campus Hostel"
                 icon={Home}
@@ -456,7 +441,6 @@ function ProfilePageInner() {
               />
             </div>
 
-            {/* Phone (optional) */}
             <div>
               <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
                 <Phone size={13} className="text-accent" />
@@ -472,7 +456,6 @@ function ProfilePageInner() {
               />
             </div>
 
-            {/* Campus Bio */}
             <div>
               <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
                 <UserRound size={13} className="text-accent" />
@@ -487,7 +470,6 @@ function ProfilePageInner() {
               />
             </div>
 
-            {/* Meetup Preferences */}
             <div>
               <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
                 <MapPin size={13} className="text-accent" />

@@ -104,7 +104,6 @@ function MarketplaceHome() {
   const availableTypes = useMemo(() => getTypesForCategory(activeCategory), [activeCategory])
   const availableConditions = useMemo(() => getConditionsForCategory(activeCategory), [activeCategory])
 
-  // SWR for server-side listings with search query & filters
   const apiUrl = useMemo(() => {
     const p = new URLSearchParams()
     if (query) p.set('q', query)
@@ -164,7 +163,7 @@ function MarketplaceHome() {
     setQuery(newQuery)
     setIsAiMode(aiMode)
     setPage(1)
-    // When searching, reset category & sub-filters so results aren't wrongly filtered
+    
     if (newQuery) {
       setActiveCategory('All')
       setActiveType('All')
@@ -193,7 +192,6 @@ function MarketplaceHome() {
         )}
       </AnimatePresence>
 
-      {/* Category Pills Strip */}
       <div className="border-b border-border bg-card/60">
         <nav
           className="mx-auto flex max-w-[1440px] items-center gap-1.5 overflow-x-auto px-4 py-2.5 text-xs font-bold sm:px-6 lg:px-8"
@@ -244,10 +242,9 @@ function MarketplaceHome() {
         </nav>
       </div>
 
-      {/* Hero Banner with Dark Green Emerald Gradient & Campus Trust Badges */}
       <section id="home" className="mx-auto max-w-[1440px] px-4 pt-4 sm:px-6 lg:px-8">
         <div className="relative min-h-[320px] overflow-hidden rounded-3xl bg-gradient-to-br from-[#03150e] via-[#062c1d] to-[#041d13] text-white sm:min-h-[380px] shadow-2xl border border-emerald-800/40">
-          {/* Radiant Ambient Light Backgrounds */}
+          
           <div className="absolute -top-24 -left-24 size-96 rounded-full bg-emerald-500/25 blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -right-24 size-96 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
           <div className="absolute top-1/2 left-1/3 size-72 rounded-full bg-teal-500/20 blur-3xl pointer-events-none" />
@@ -303,7 +300,6 @@ function MarketplaceHome() {
               )}
             </div>
 
-            {/* Campus Trust Points */}
             <div className="mt-8 flex flex-wrap items-center gap-4 text-xs font-medium text-slate-300 border-t border-white/10 pt-4">
               <span className="flex items-center gap-1.5">
                 <ShieldCheck size={15} className="text-emerald-400" />
@@ -319,7 +315,6 @@ function MarketplaceHome() {
         </div>
       </section>
 
-      {/* Shop By Category: Modern Interactive Cards */}
       <section className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-5">
           <div>
@@ -361,7 +356,6 @@ function MarketplaceHome() {
         </div>
       </section>
 
-      {/* Live Campus Deals Section */}
       <section id="deals" className="bg-muted/45 py-8 sm:py-10">
         <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -377,7 +371,6 @@ function MarketplaceHome() {
               </p>
             </div>
 
-            {/* Dynamic Server Filter Selectors Tailored Per Category */}
             <div className="flex flex-wrap items-center gap-2">
               <select
                 value={activeType}
@@ -428,7 +421,6 @@ function MarketplaceHome() {
             </div>
           </div>
 
-          {/* Listings Grid */}
           {isLoading ? (
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-6">
               {Array.from({ length: 6 }).map((_, index) => (
@@ -463,7 +455,7 @@ function MarketplaceHome() {
                     className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-lg flex flex-col justify-between"
                   >
                     <div>
-                      {/* Image Thumbnail */}
+                      
                       <Link
                         href={`/listing/${item.id}`}
                         className="relative block aspect-square cursor-pointer overflow-hidden bg-muted"
@@ -496,7 +488,6 @@ function MarketplaceHome() {
                         </button>
                       </Link>
 
-                      {/* Content */}
                       <div className="p-3">
                         <Link
                           href={`/listing/${item.id}`}
@@ -505,14 +496,12 @@ function MarketplaceHome() {
                           {item.title}
                         </Link>
 
-                        {/* Honest Condition (no fake 5.0 ratings) */}
                         <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
                           <span className="capitalize font-medium">
                             {item.condition ? item.condition.replace('_', ' ') : 'Condition unspecified'}
                           </span>
                         </div>
 
-                        {/* Real Price */}
                         <div className="mt-2 flex items-baseline gap-2">
                           <span className="text-base font-extrabold text-primary">
                             ₹{item.price.toLocaleString('en-IN')}
@@ -566,7 +555,6 @@ function MarketplaceHome() {
             </div>
           )}
 
-          {/* Pagination Controls */}
           {data?.hasMore && (
             <div className="mt-8 text-center">
               <button
@@ -580,7 +568,6 @@ function MarketplaceHome() {
         </div>
       </section>
 
-      {/* Safety & Trust Pillars */}
       <section className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid gap-5 md:grid-cols-3">
           <div className="flex gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm">
@@ -621,7 +608,6 @@ function MarketplaceHome() {
         </div>
       </section>
 
-      {/* Call to action Banner */}
       <section className="border-t border-border bg-primary py-10 text-primary-foreground">
         <div className="mx-auto flex max-w-[1440px] flex-col gap-6 px-4 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
           <div>
@@ -640,7 +626,6 @@ function MarketplaceHome() {
         </div>
       </section>
 
-      {/* Footer */}
       <Footer />
     </main>
   )

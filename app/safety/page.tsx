@@ -24,7 +24,6 @@ export default function SafetyPage() {
             </p>
           </div>
 
-          {/* 4 Golden Rules */}
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-2">
               <div className="flex size-10 items-center justify-center rounded-xl bg-accent/20 text-accent">
@@ -67,7 +66,6 @@ export default function SafetyPage() {
             </div>
           </div>
 
-          {/* Safe Campus Locations Table */}
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
             <h2 className="font-bold text-lg text-primary">Recommended Campus Handoff Locations</h2>
             <div className="grid gap-3 sm:grid-cols-3 text-xs">

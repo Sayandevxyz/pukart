@@ -32,7 +32,6 @@ export default function TransactionsPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'buying' | 'selling'>('all')
   const [toastMessage, setToastMessage] = useState('')
 
-  // Review modal state
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
   const [selectedTx, setSelectedTx] = useState<any>(null)
   const [rating, setRating] = useState(5)
@@ -128,7 +127,6 @@ export default function TransactionsPage() {
           </div>
         </div>
 
-        {/* Tab filters */}
         <div className="mt-6 flex gap-2 border-b border-border pb-3 text-sm font-semibold">
           {[
             { id: 'all', label: `All Deals (${transactions.length})` },
@@ -224,7 +222,6 @@ export default function TransactionsPage() {
                     </div>
                   </div>
 
-                  {/* Campus Meetup Guidelines info */}
                   {tx.status === 'accepted' && (
                     <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3 text-xs text-blue-900 flex items-start gap-2">
                       <ShieldCheck className="size-4 shrink-0 mt-0.5 text-blue-700" />
@@ -237,7 +234,6 @@ export default function TransactionsPage() {
                     </div>
                   )}
 
-                  {/* Actions based on role and status */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border">
                     <div className="flex gap-2">
                       <Link
@@ -249,7 +245,7 @@ export default function TransactionsPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {/* Seller incoming request actions */}
+                      
                       {isSeller && (tx.status === 'requested' || tx.status === 'inquiry') && (
                         <>
                           <button
@@ -267,7 +263,6 @@ export default function TransactionsPage() {
                         </>
                       )}
 
-                      {/* Accepted State Actions */}
                       {tx.status === 'accepted' && (
                         <>
                           <button
@@ -285,7 +280,6 @@ export default function TransactionsPage() {
                         </>
                       )}
 
-                      {/* Completed: Two-Way Review */}
                       {tx.status === 'completed' && (
                         <button
                           onClick={() => {
@@ -306,7 +300,6 @@ export default function TransactionsPage() {
         )}
       </main>
 
-      {/* TWO-WAY REVIEW MODAL */}
       {reviewModalOpen && selectedTx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-200">

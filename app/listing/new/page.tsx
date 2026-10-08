@@ -34,7 +34,6 @@ export default function NewListingPage() {
   const [toastMessage, setToastMessage] = useState('')
   const [profileIncomplete, setProfileIncomplete] = useState<string[] | null>(null)
 
-  // Form State
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState('Books')
   const [condition, setCondition] = useState('good')
@@ -140,7 +139,6 @@ export default function NewListingPage() {
 
       const data = await res.json()
 
-      // Handle AI content moderation rejection
       if (data.moderationWarning) {
         setModerationWarning(
           data.reason ||
@@ -256,7 +254,6 @@ export default function NewListingPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
-      {/* Profile Incomplete Blocking Modal */}
       {profileIncomplete && profileIncomplete.length > 0 && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
           <div className="mx-4 max-w-md rounded-3xl border border-border bg-card p-8 shadow-2xl">
@@ -320,7 +317,7 @@ export default function NewListingPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* AI Content Moderation Warning */}
+          
           {moderationWarning && (
             <div className="rounded-2xl border-2 border-destructive/50 bg-destructive/10 p-5 shadow-md animate-in fade-in slide-in-from-top duration-300">
               <div className="flex items-start gap-3">
@@ -345,7 +342,6 @@ export default function NewListingPage() {
             </div>
           )}
 
-          {/* Section 1: Photos */}
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -394,7 +390,6 @@ export default function NewListingPage() {
             {uploading && <p className="text-xs font-semibold text-accent animate-pulse">Uploading and validating images...</p>}
           </div>
 
-          {/* Section 2: Details */}
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-5">
             <h2 className="text-base font-bold text-foreground">Listing Information</h2>
 
@@ -468,7 +463,6 @@ export default function NewListingPage() {
               </div>
             </div>
 
-            {/* Description & AI Button */}
             <div>
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
@@ -495,7 +489,6 @@ export default function NewListingPage() {
             </div>
           </div>
 
-          {/* Section 3: Pricing & Meetup */}
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold text-foreground">Price & Campus Meetup</h2>

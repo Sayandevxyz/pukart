@@ -2,7 +2,6 @@ import { Pool } from 'pg'
 import fs from 'node:fs'
 import path from 'node:path'
 
-// Helper to load env files when running outside Next.js runtime
 function loadEnv() {
   const envFiles = ['.env.local', '.env']
   for (const file of envFiles) {

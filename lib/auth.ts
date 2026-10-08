@@ -1,10 +1,6 @@
 import { betterAuth } from 'better-auth'
 import { pool } from '@/lib/db'
 
-/**
- * Validator for email addresses.
- * Accepts any standard valid email format.
- */
 export function isValidEmail(email?: string | null): boolean {
   if (!email || typeof email !== 'string') return false
   const clean = email.trim().toLowerCase()
@@ -15,13 +11,8 @@ export function isValidEmail(email?: string | null): boolean {
   return domain.includes('.') && domain.length >= 3 && !domain.startsWith('.') && !domain.endsWith('.')
 }
 
-// Backwards-compatible alias for existing imports across the codebase
 export const isValidPondiUniEmail = isValidEmail
 
-
-/**
- * Helper to check if a user has admin privileges based on DB role or configured admin emails.
- */
 export function isUserAdmin(email?: string | null, role?: string | null): boolean {
   if (role === 'admin') return true
   if (!email) return false
@@ -87,7 +78,7 @@ export const auth = betterAuth({
       },
     },
   },
-  // Email and password login/signup disabled per PUKart security policy
+  
   emailAndPassword: {
     enabled: false,
   },
@@ -128,8 +119,8 @@ export const auth = betterAuth({
     ...(process.env.V0_SANDBOX_URL ? [process.env.V0_SANDBOX_URL] : []),
   ],
   session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // 1 day
+    expiresIn: 60 * 60 * 24 * 7, 
+    updateAge: 60 * 60 * 24, 
   },
   ...(process.env.NODE_ENV === 'development'
     ? {

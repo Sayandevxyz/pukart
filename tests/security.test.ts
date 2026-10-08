@@ -71,15 +71,15 @@ describe('Security & Authorization Boundary Tests', () => {
 
     function canModifyTransaction(tx: TransactionRecord, userId: string, action: 'accept' | 'complete' | 'cancel'): boolean {
       if (action === 'accept') {
-        // Only seller can accept
+        
         return tx.sellerId === userId && ['requested', 'inquiry', 'negotiating'].includes(tx.status)
       }
       if (action === 'complete') {
-        // Only accepted transactions can be marked complete by participants
+        
         return (tx.sellerId === userId || tx.buyerId === userId) && tx.status === 'accepted'
       }
       if (action === 'cancel') {
-        // Only pending/accepted transactions can be cancelled, by either party
+        
         return (tx.sellerId === userId || tx.buyerId === userId) && !['completed', 'rejected', 'cancelled'].includes(tx.status)
       }
       return false
@@ -139,7 +139,7 @@ describe('Security & Authorization Boundary Tests', () => {
 
     it('should deny admin rights to normal users unless configured in admin emails', () => {
       expect(isUserAdmin('student@pondiuni.ac.in', 'user')).toBe(false)
-      expect(isUserAdmin('admin@pondiuni.ac.in', 'user')).toBe(true) // default admin email
+      expect(isUserAdmin('admin@pondiuni.ac.in', 'user')).toBe(true) 
     })
 
     it('should deny admin rights when email is null or missing', () => {

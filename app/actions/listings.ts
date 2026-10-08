@@ -22,7 +22,6 @@ export async function getListingById(id: number) {
   try {
     if (!Number.isInteger(id) || id < 1) return null
 
-    // Check if viewer is an authenticated Pondicherry University student
     let isAuthenticatedStudent = false
     try {
       const session = await auth.api.getSession({ headers: await headers() })
@@ -62,7 +61,6 @@ export async function getListingById(id: number) {
       .where(eq(listingImages.listingId, id))
       .orderBy(listingImages.displayOrder)
 
-    // If viewer is NOT signed in, protect seller details & phone number
     const rawListing = rows[0].listing
     const rawSeller = rows[0].seller
 
@@ -118,7 +116,6 @@ export async function createListing(input: {
 }) {
   const user = await getAuthenticatedUser()
 
-  // Backend profile completion check
   const [userProfile] = await db.select().from(userTable).where(eq(userTable.id, user.id)).limit(1)
   if (userProfile) {
     const profileCheck = checkProfileCompletion({
@@ -150,7 +147,6 @@ export async function createListing(input: {
   const allImages = (input.images && input.images.length > 0 ? input.images : input.imageUrl ? [input.imageUrl] : []).filter(Boolean)
   const primaryImage = allImages[0] || input.imageUrl || null
 
-  // If user provided a phone number and their profile didn't have one, update user profile as well
   if (input.phone?.trim() && !userProfile?.phone) {
     try {
       await db.update(userTable).set({ phone: input.phone.trim().slice(0, 25) }).where(eq(userTable.id, user.id))
@@ -215,7 +211,6 @@ export async function updateListing(
   const user = await getAuthenticatedUser()
   if (!Number.isInteger(id) || id < 1) throw new Error('Invalid listing ID')
 
-  // Check ownership or admin
   const [existing] = await db.select().from(listings).where(eq(listings.id, id)).limit(1)
   if (!existing) throw new Error('Listing not found')
 

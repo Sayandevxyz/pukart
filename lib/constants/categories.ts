@@ -1,7 +1,3 @@
-// ============================================================
-// PUKart Category Schema & Dynamic Options Config
-// Defines tailored Types & Conditions / Attributes per Category
-// ============================================================
 
 export interface FilterOption {
   value: string
@@ -11,8 +7,8 @@ export interface FilterOption {
 export interface CategoryConfig {
   name: string
   label: string
-  typeLabel: string // e.g. "Listing Type", "Meal Type", "Service Category"
-  conditionLabel: string // e.g. "Condition", "Freshness", "Billing Mode"
+  typeLabel: string 
+  conditionLabel: string 
   titlePlaceholder: string
   descriptionPlaceholder?: string
   types: FilterOption[]
@@ -290,10 +286,6 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
   },
 }
 
-/**
- * Get the types list for a selected category.
- * If "All" or unknown category, returns standard default types.
- */
 export function getTypesForCategory(category?: string | null): FilterOption[] {
   if (!category || category === 'All' || !CATEGORY_CONFIGS[category]) {
     return DEFAULT_TYPES
@@ -301,10 +293,6 @@ export function getTypesForCategory(category?: string | null): FilterOption[] {
   return CATEGORY_CONFIGS[category].types
 }
 
-/**
- * Get the conditions list for a selected category.
- * If "All" or unknown category, returns standard default conditions.
- */
 export function getConditionsForCategory(category?: string | null): FilterOption[] {
   if (!category || category === 'All' || !CATEGORY_CONFIGS[category]) {
     return DEFAULT_CONDITIONS
@@ -312,9 +300,6 @@ export function getConditionsForCategory(category?: string | null): FilterOption
   return CATEGORY_CONFIGS[category].conditions
 }
 
-/**
- * Get form-friendly options for listing creation/editing (excluding 'All')
- */
 export function getFormOptionsForCategory(category?: string | null) {
   const config = category && CATEGORY_CONFIGS[category] ? CATEGORY_CONFIGS[category] : null
   const types = (config?.types || DEFAULT_TYPES).filter((t) => t.value !== 'All')

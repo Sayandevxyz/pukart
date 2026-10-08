@@ -22,9 +22,6 @@ export interface AIScamCheckResult {
   confidence: number
 }
 
-/**
- * Generate a campus-tailored listing description.
- */
 export async function generateProductDescription(input: {
   title: string
   category: string
@@ -34,7 +31,6 @@ export async function generateProductDescription(input: {
 }): Promise<string> {
   const { title, category, condition, originalPrice, highlights } = input
 
-  // If AI API is configured via AI Gateway or OpenAI/Gemini endpoint
   const apiKey = process.env.AI_GATEWAY_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY
   if (apiKey) {
     try {
@@ -71,11 +67,10 @@ Include key features, state of item, and campus pickup readiness.`,
         if (content) return content
       }
     } catch {
-      // Fallback to intelligent generator if external API unavailable
+      
     }
   }
 
-  // Intelligent campus-tailored generator
   const conditionNotes: Record<string, string> = {
     brand_new: 'This item is completely brand new and unused, in its original packaging.',
     like_new: 'Gently used with almost no signs of wear. Kept in pristine condition throughout the semester.',
@@ -93,9 +88,6 @@ ${note} ${highlights ? `Key highlights include: ${highlights}.` : 'Perfect for P
 Available for handoff anywhere on PU campus (Science Complex, Central Library, Silver Jubilee Campus, or Hostel Mess). Price is negotiable for serious student buyers.`
 }
 
-/**
- * Recommend a fair price for student campus trade.
- */
 export function calculatePriceRecommendation(input: {
   category: string
   condition: string
@@ -129,10 +121,6 @@ export function calculatePriceRecommendation(input: {
   }
 }
 
-/**
- * Natural language search parser.
- * Converts queries like "coding laptop under 30000" into structured search params.
- */
 export function parseNaturalLanguageSearch(rawQuery: string): AISearchResult {
   const query = rawQuery.trim()
   if (!query) return { query: '' }
@@ -145,7 +133,6 @@ export function parseNaturalLanguageSearch(rawQuery: string): AISearchResult {
 
   const lower = query.toLowerCase()
 
-  // Match price expressions: "under 25000", "below ₹30,000", "< 500", "between 500 and 2000"
   const underMatch = lower.match(/(?:under|below|less than|<|max(?:imum)?)\s*(?:₹|rs\.?|inr)?\s*([0-9]+(?:,[0-9]+)*)/i)
   if (underMatch) {
     maxPrice = Number.parseInt(underMatch[1].replace(/,/g, ''), 10)
@@ -162,14 +149,12 @@ export function parseNaturalLanguageSearch(rawQuery: string): AISearchResult {
     maxPrice = Number.parseInt(betweenMatch[2], 10)
   }
 
-  // Type extraction
   if (/\b(?:rent|rental|to rent|for rent|monthly)\b/i.test(lower)) {
     type = 'rent'
   } else if (/\b(?:buy|purchase|for sale|to buy)\b/i.test(lower)) {
     type = 'sell'
   }
 
-  // Category matching
   if (/\b(?:book|books|novel|textbook|notes|gate|semester|syllabus|author)\b/i.test(lower)) {
     extractedCategory = 'Books'
   } else if (/\b(?:laptop|phone|mobile|electronics|charger|earphone|headphone|calculator|keyboard|mouse|monitor|ipad|tablet)\b/i.test(lower)) {
@@ -190,12 +175,10 @@ export function parseNaturalLanguageSearch(rawQuery: string): AISearchResult {
     extractedCategory = 'Services'
   }
 
-  // Condition matching
   if (/\b(?:brand new|sealed|unopened)\b/i.test(lower)) condition = 'brand_new'
   else if (/\b(?:like new|mint)\b/i.test(lower)) condition = 'like_new'
   else if (/\b(?:good condition|used)\b/i.test(lower)) condition = 'good'
 
-  // Clean keywords for remaining search
   const cleanKeywords = query
     .replace(/(?:under|below|less than|above|greater than|<|>|min|max|between|and|to)\s*(?:₹|rs\.?|inr)?\s*[0-9]+(?:,[0-9]+)*/gi, '')
     .replace(/\b(?:find|search|show me|looking for|cheap|affordable|best|for rent|to buy|buy|rent)\b/gi, '')
@@ -212,30 +195,22 @@ export function parseNaturalLanguageSearch(rawQuery: string): AISearchResult {
   }
 }
 
-/**
- * AI Scam Detection for Marketplace listings.
- * Detects suspicious payment links, off-platform OTP requests, and abnormal patterns.
- */
 export function checkListingForScam(title: string, description: string): AIScamCheckResult {
   const combined = `${title} ${description}`.toLowerCase()
   const flaggedReasons: string[] = []
 
-  // Check 1: Requesting upfront payments or OTPs before campus meetup
   if (/\b(?:send otp|share otp|advance token|pay advance before meetup|google pay qr code to unlock)\b/i.test(combined)) {
     flaggedReasons.push('Soliciting advance payment or OTP prior to campus verification')
   }
 
-  // Check 2: External suspicious links / phishing domains
   if (/(?:bit\.ly|tinyurl\.com|t\.me\/|wa\.me\/|t\.co\/|goo\.gl)/i.test(combined)) {
     flaggedReasons.push('Contains shortlinks or external redirect URLs')
   }
 
-  // Check 3: Phone number obfuscation or suspicious contact evasion
   if (/(?:call me on|whatsapp at)\s*[0-9\s-]{10,14}/i.test(combined) && /\b(?:gift card|crypto|western union)\b/i.test(combined)) {
     flaggedReasons.push('Mentions non-standard payment schemes (crypto, giftcards)')
   }
 
-  // Check 4: Prohibited items (alcohol, narcotics, weapons, academic cheating services)
   if (/\b(?:whiskey|vodka|weed|ganja|drugs|knife|gun|exam leak|fake certificate)\b/i.test(combined)) {
     flaggedReasons.push('Contains prohibited campus contraband or academic violation keywords')
   }
@@ -257,8 +232,6 @@ export function checkListingForScam(title: string, description: string): AIScamC
   }
 }
 
-// ─── AI Image Content Moderation ────────────────────────────────────────────
-
 export interface AIImageModerationResult {
   rejected: boolean
   reason: string | null
@@ -266,10 +239,6 @@ export interface AIImageModerationResult {
   details: string[]
 }
 
-/**
- * Blocklist of keywords commonly found in NSFW/sexual/violent filenames.
- * These patterns detect deliberately named inappropriate files.
- */
 const NSFW_FILENAME_PATTERNS = [
   /\b(?:nsfw|xxx|porn|nude|naked|sex|hentai|erotic|onlyfans|explicit)\b/i,
   /\b(?:gore|murder|torture|beheading|violence|assault)\b/i,
@@ -277,10 +246,6 @@ const NSFW_FILENAME_PATTERNS = [
   /\b(?:weapon|firearms|ar-?15|ak-?47|pistol|ammunition)\b/i,
 ]
 
-/**
- * JPEG marker analysis — detects Exif/JFIF comment fields that may contain NSFW tool signatures.
- * Many AI-generated NSFW images carry tool watermarks in Exif metadata.
- */
 const NSFW_EXIF_SIGNATURES = [
   'stable diffusion nsfw',
   'novelai nsfw',
@@ -292,24 +257,12 @@ const NSFW_EXIF_SIGNATURES = [
   'nudify',
 ]
 
-/**
- * AI Image Content Moderation Engine for PUKart.
- *
- * Performs a multi-layer check on uploaded images:
- *   1. Filename keyword scan — catches obviously named inappropriate files
- *   2. Embedded metadata / Exif comment scan — catches AI-generated NSFW images
- *   3. Pixel-level skin-tone ratio analysis — heuristic for excessive nudity
- *
- * This runs server-side at upload time. Flagged images are blocked immediately
- * and the user receives a warning.
- */
 export function moderateImageContent(
   filename: string,
   buffer: Uint8Array
 ): AIImageModerationResult {
   const issues: string[] = []
 
-  // ── Layer 1: Filename keyword scan ──────────────────────────────────────
   const lowerFilename = filename.toLowerCase()
   for (const pattern of NSFW_FILENAME_PATTERNS) {
     if (pattern.test(lowerFilename)) {
@@ -318,8 +271,6 @@ export function moderateImageContent(
     }
   }
 
-  // ── Layer 2: Embedded metadata / Exif text scan ─────────────────────────
-  // Extract readable ASCII strings from the first 16KB of the file (metadata region)
   const metadataRegion = buffer.slice(0, Math.min(buffer.length, 16384))
   const metadataText = extractReadableText(metadataRegion).toLowerCase()
 
@@ -330,7 +281,6 @@ export function moderateImageContent(
     }
   }
 
-  // Check for NSFW-related IPTC/XMP keywords in metadata
   const nsfwMetaKeywords = ['adult', 'explicit', 'nsfw', 'nude', 'sexual', 'pornographic']
   for (const kw of nsfwMetaKeywords) {
     if (metadataText.includes(`<dc:subject>${kw}`) || metadataText.includes(`keyword>${kw}`)) {
@@ -339,9 +289,6 @@ export function moderateImageContent(
     }
   }
 
-  // ── Layer 3: Pixel-level skin-tone ratio heuristic ──────────────────────
-  // For JPEG/PNG: Sample raw pixel bytes and estimate skin-tone pixel ratio.
-  // A very high ratio (>65%) combined with low color variance suggests nudity.
   const skinAnalysis = analyzeSkinToneRatio(buffer)
   if (skinAnalysis.skinRatio > 0.65 && skinAnalysis.colorVariance < 0.15) {
     issues.push(
@@ -349,11 +296,10 @@ export function moderateImageContent(
     )
   }
 
-  // ── Verdict ─────────────────────────────────────────────────────────────
   if (issues.length > 0) {
     return {
       rejected: true,
-      reason: issues[0], // Primary reason shown to user
+      reason: issues[0], 
       warningLevel: issues.length >= 2 ? 'rejected' : 'warning',
       details: issues,
     }
@@ -367,14 +313,11 @@ export function moderateImageContent(
   }
 }
 
-/**
- * Extract printable ASCII text from a binary buffer (for metadata scanning).
- */
 function extractReadableText(buf: Uint8Array): string {
   const chars: string[] = []
   for (let i = 0; i < buf.length; i++) {
     const byte = buf[i]
-    // Printable ASCII range (space to tilde)
+    
     if (byte >= 0x20 && byte <= 0x7e) {
       chars.push(String.fromCharCode(byte))
     } else if (chars.length > 0 && chars[chars.length - 1] !== ' ') {
@@ -384,34 +327,22 @@ function extractReadableText(buf: Uint8Array): string {
   return chars.join('')
 }
 
-/**
- * Skin-tone ratio heuristic using raw byte sampling.
- *
- * Samples bytes from the decoded image data region (skipping headers)
- * and checks if RGB triplets fall within common skin-tone ranges.
- *
- * Skin-tone HSL heuristic:
- *   H: 0-50 (warm tones)
- *   S: 15-75% (moderate saturation)
- *   L: 20-80% (not too dark or light)
- */
 function analyzeSkinToneRatio(buffer: Uint8Array): {
   skinRatio: number
   colorVariance: number
 } {
-  // Skip header region — start sampling from ~20% into the file
+  
   const startOffset = Math.floor(buffer.length * 0.2)
-  const endOffset = Math.min(buffer.length, startOffset + 50000) // Sample up to 50KB of pixel data
+  const endOffset = Math.min(buffer.length, startOffset + 50000) 
 
   if (endOffset - startOffset < 300) {
-    return { skinRatio: 0, colorVariance: 1 } // Too small to analyze
+    return { skinRatio: 0, colorVariance: 1 } 
   }
 
   let skinPixels = 0
   let totalSamples = 0
   const colorBuckets = new Set<number>()
 
-  // Sample every 3 bytes as an approximate RGB triplet
   for (let i = startOffset; i < endOffset - 2; i += 3) {
     const r = buffer[i]
     const g = buffer[i + 1]
@@ -419,11 +350,9 @@ function analyzeSkinToneRatio(buffer: Uint8Array): {
 
     totalSamples++
 
-    // Color variance: bucket colors into 8x8x8 grid
     const bucket = (Math.floor(r / 32) << 6) | (Math.floor(g / 32) << 3) | Math.floor(b / 32)
     colorBuckets.add(bucket)
 
-    // Skin-tone detection in RGB space (Peer/Kovac model simplified)
     if (
       r > 95 && g > 40 && b > 20 &&
       r > g && r > b &&
@@ -436,9 +365,9 @@ function analyzeSkinToneRatio(buffer: Uint8Array): {
   }
 
   const skinRatio = totalSamples > 0 ? skinPixels / totalSamples : 0
-  // Color variance: ratio of unique color buckets to maximum possible (512 = 8^3)
+  
   const colorVariance = colorBuckets.size / 512
 
   return { skinRatio, colorVariance }
 }
-
+

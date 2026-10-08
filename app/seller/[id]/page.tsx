@@ -156,7 +156,7 @@ export default function SellerProfilePage() {
       )}
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Profile Header Card */}
+        
         <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
             <div className="flex size-20 sm:size-24 shrink-0 items-center justify-center rounded-3xl bg-primary text-3xl font-bold text-primary-foreground shadow-lg">
@@ -202,8 +202,6 @@ export default function SellerProfilePage() {
                     )}
                   </button>
 
-
-
                   <a
                     href={`https://wa.me/${user.phone.replace(/\D/g, '').length === 10 ? `91${user.phone.replace(/\D/g, '')}` : user.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
                       `Hi ${user.name || 'there'}, I found your profile on PUKart and would like to inquire about your campus listings.`
@@ -218,7 +216,6 @@ export default function SellerProfilePage() {
               )}
             </div>
 
-            {/* Rating Summary */}
             <div className="rounded-2xl border border-border bg-muted/30 p-4 text-center min-w-[140px]">
               <div className="flex items-center justify-center gap-1 text-2xl font-black text-primary">
                 <span>{ratingStats?.averageRating ?? 'New'}</span>
@@ -231,7 +228,6 @@ export default function SellerProfilePage() {
           </div>
         </div>
 
-        {/* Section: Active Listings */}
         <div className="mt-10 space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -299,7 +295,6 @@ export default function SellerProfilePage() {
           )}
         </div>
 
-        {/* Section: Reviews List */}
         <div className="mt-12 space-y-4">
           <h2 className="text-xl font-bold text-primary">Student Reviews ({ratingStats?.reviews?.length || 0})</h2>
           {ratingStats?.reviews && ratingStats.reviews.length > 0 ? (

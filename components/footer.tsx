@@ -26,7 +26,7 @@ export function Footer() {
     <footer className="border-t border-border bg-card/50 backdrop-blur-xs">
       <div className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-          {/* Brand */}
+          
           <div className="space-y-3 md:col-span-1">
             <Link href="/" className="font-serif text-2xl font-bold tracking-tight text-primary">
               PU<span className="text-accent">K</span>art
@@ -36,7 +36,6 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Quick Links */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Explore</h3>
             <ul className="space-y-2 text-xs text-muted-foreground">
@@ -63,7 +62,6 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Safety & Support */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Trust & Support</h3>
             <ul className="space-y-2 text-xs text-muted-foreground">
@@ -82,7 +80,6 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Contact Details */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Contact & Community</h3>
             <p className="text-xs text-muted-foreground">
@@ -114,7 +111,6 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom copyright */}
         <div className="mt-8 border-t border-border/60 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} PUKart. Built exclusively for Pondicherry University.</p>
           <div className="flex items-center gap-4">

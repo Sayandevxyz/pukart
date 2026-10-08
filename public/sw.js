@@ -1,4 +1,4 @@
-// PuKart Service Worker - Unregister & Clean up
+
 self.addEventListener('install', function () {
   self.skipWaiting()
 })

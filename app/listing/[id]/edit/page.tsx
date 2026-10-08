@@ -27,7 +27,6 @@ export default function EditListingPage() {
   const [saving, setSaving] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
 
-  // Form State
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState('Books')
   const [condition, setCondition] = useState('good')
@@ -213,7 +212,7 @@ export default function EditListingPage() {
         </div>
 
         <form onSubmit={handleSave} className="space-y-8">
-          {/* Images */}
+          
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
             <h2 className="text-base font-bold text-foreground">Manage Photos</h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
@@ -252,7 +251,6 @@ export default function EditListingPage() {
             </div>
           </div>
 
-          {/* Details */}
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-5">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-foreground">Title</label>

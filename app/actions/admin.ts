@@ -27,7 +27,6 @@ async function requireAdmin() {
   return session.user
 }
 
-// 1. Dashboard Metrics
 export async function getAdminDashboardStats() {
   await requireAdmin()
 
@@ -107,7 +106,6 @@ export async function setUserRole(userId: string, role: 'user' | 'admin') {
   return updated
 }
 
-// 3. Listings Moderation
 export async function getAdminListings(statusFilter?: string) {
   await requireAdmin()
 
@@ -147,7 +145,6 @@ export async function adminModerateListing(
   return { success: true }
 }
 
-// 4. Reports Moderation
 export async function getAdminReports(statusFilter?: string) {
   await requireAdmin()
 
@@ -183,7 +180,6 @@ export async function updateReportStatus(
   return updated
 }
 
-// 5. Categories Management
 export async function getAdminCategories() {
   await requireAdmin()
   return db.select().from(categories).orderBy(categories.order)

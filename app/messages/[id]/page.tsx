@@ -38,7 +38,6 @@ export default function ConversationChatPage() {
   const [toastMessage, setToastMessage] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Offer modal in chat
   const [offerModalOpen, setOfferModalOpen] = useState(false)
   const [offerAmount, setOfferAmount] = useState('')
 
@@ -70,7 +69,6 @@ export default function ConversationChatPage() {
       }
     }).catch(() => router.push('/sign-in'))
 
-    // Fast poll for new messages in active chat
     const interval = setInterval(loadConversation, 4000)
     return () => clearInterval(interval)
   }, [conversationId, router])
@@ -164,7 +162,7 @@ export default function ConversationChatPage() {
       )}
 
       <main className="mx-auto flex flex-1 w-full max-w-4xl flex-col px-4 py-4 sm:px-6">
-        {/* Chat Header with other user details & listing snapshot */}
+        
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -192,7 +190,6 @@ export default function ConversationChatPage() {
             </button>
           </div>
 
-          {/* Listing Context Banner */}
           {listing && (
             <div className="flex items-center justify-between gap-3 rounded-xl border border-border/80 bg-muted/40 p-3">
               <div className="flex items-center gap-3 min-w-0">
@@ -229,7 +226,6 @@ export default function ConversationChatPage() {
           )}
         </div>
 
-        {/* Message Stream */}
         <div className="my-4 flex-1 space-y-3 overflow-y-auto rounded-2xl border border-border bg-muted/20 p-4 min-h-[360px] max-h-[58vh]">
           {messages.length === 0 ? (
             <div className="py-12 text-center text-xs text-muted-foreground">
@@ -263,7 +259,6 @@ export default function ConversationChatPage() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Message Composer */}
         <form onSubmit={handleSend} className="flex items-center gap-2">
           <input
             value={inputText}
@@ -281,7 +276,6 @@ export default function ConversationChatPage() {
         </form>
       </main>
 
-      {/* IN-CHAT MAKE OFFER MODAL */}
       {offerModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-200">

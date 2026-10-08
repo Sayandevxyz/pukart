@@ -98,7 +98,7 @@ export function Navbar({
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-background/95 backdrop-blur-xl transition">
       <div className="mx-auto flex max-w-[1440px] items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8">
-        {/* Brand Logo */}
+        
         <Link href="/" className="flex shrink-0 items-center gap-2.5 group" aria-label="PUKart Home">
           <img
             src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-EScoY3Dr9cDuwfPiUrfIsTl2QOCJT5.png"
@@ -115,7 +115,6 @@ export function Navbar({
           </div>
         </Link>
 
-        {/* Global Search Bar */}
         <form
           onSubmit={(e) => handleSearchSubmit(e, false)}
           className="relative hidden max-w-2xl flex-1 md:flex items-center"
@@ -151,7 +150,6 @@ export function Navbar({
           </div>
         </form>
 
-        {/* Navigation Action Buttons */}
         <div className="ml-auto hidden items-center gap-1.5 lg:flex">
           {session?.user ? (
             <>
@@ -245,7 +243,6 @@ export function Navbar({
           )}
         </div>
 
-        {/* Mobile Menu Trigger */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="ml-auto rounded-xl p-2 text-foreground lg:hidden hover:bg-muted"
@@ -255,7 +252,6 @@ export function Navbar({
         </button>
       </div>
 
-      {/* Mobile Search input */}
       <div className="px-4 pb-3 md:hidden">
         <form onSubmit={(e) => handleSearchSubmit(e, false)} className="relative flex items-center">
           <Search className="absolute left-3.5 text-muted-foreground" size={16} />
@@ -275,7 +271,6 @@ export function Navbar({
         </form>
       </div>
 
-      {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
         <div className="border-t border-border bg-card px-5 py-6 lg:hidden space-y-4 animate-in slide-in-from-top duration-200">
           {session?.user ? (

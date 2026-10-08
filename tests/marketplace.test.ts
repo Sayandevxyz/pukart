@@ -50,7 +50,7 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
 
     it('should allow seller to accept requested transaction', () => {
       expect(canTransition('requested', 'accepted', true)).toBe(true)
-      expect(canTransition('requested', 'accepted', false)).toBe(false) // buyer cannot accept their own request
+      expect(canTransition('requested', 'accepted', false)).toBe(false) 
     })
 
     it('should allow completed status only after accepted meetup', () => {
@@ -244,7 +244,6 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
       )
       expect(unreadForSeller.length).toBe(1)
 
-      // Simulate seller opening chat
       unreadForSeller.forEach((m) => {
         m.readAt = new Date()
       })
@@ -272,6 +271,4 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
     })
   })
 })
-
-
-
+

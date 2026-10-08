@@ -43,10 +43,6 @@ function sanitizeText(value: unknown, min: number, max: number): string {
   return clean
 }
 
-// ==========================================
-// 1. FAVORITES SYSTEM (Priority 6)
-// ==========================================
-
 export async function toggleFavorite(listingId: number) {
   try {
     const user = await currentUser()
@@ -66,13 +62,11 @@ export async function toggleFavorite(listingId: number) {
       return { success: true, saved: false }
     }
 
-    // Verify listing exists
     const [targetListing] = await db.select().from(listings).where(eq(listings.id, listingId)).limit(1)
     if (!targetListing) return { success: false, error: 'Listing does not exist' }
 
     await db.insert(favorites).values({ userId: user.id, listingId })
 
-    // Send notification to listing owner if it is someone else
     if (targetListing.userId !== user.id) {
       try {
         const safeTitle = (targetListing.title || '').replace(/["""]/g, "'").slice(0, 100)
@@ -465,7 +459,6 @@ export async function respondToOffer(offerId: number, action: 'accept' | 'reject
         .where(eq(offers.id, offerId))
         .returning()
 
-      // Automatically create transaction in 'accepted' status
       const [tx] = await db
         .insert(transactions)
         .values({
@@ -478,10 +471,8 @@ export async function respondToOffer(offerId: number, action: 'accept' | 'reject
         })
         .returning()
 
-      // Update listing to reserved
       await db.update(listings).set({ status: 'reserved' }).where(eq(listings.id, offer.listingId))
 
-      // Notify other party
       const targetUserId = offer.sellerId === user.id ? offer.buyerId : offer.sellerId
       try {
         await db.insert(notifications).values({
@@ -560,10 +551,6 @@ export async function respondToOffer(offerId: number, action: 'accept' | 'reject
   }
 }
 
-// ==========================================
-// 4. TRANSACTIONS STATE MACHINE (Priority 8)
-// ==========================================
-
 export async function requestTransaction(listingId: number, paymentMethod = 'meetup_cash', meetupLocation = 'Pondicherry University Campus') {
   try {
     const user = await currentUser()
@@ -591,7 +578,6 @@ export async function requestTransaction(listingId: number, paymentMethod = 'mee
       })
       .returning()
 
-    // Notify seller (non-blocking)
     try {
       const safeTitle = (listing.title || '').replace(/["""]/g, "'").slice(0, 100)
       await db.insert(notifications).values({

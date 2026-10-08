@@ -58,7 +58,6 @@ export default function HelpPage() {
             ))}
           </div>
 
-          {/* Direct Support & Contact */}
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
             <div>
               <h2 className="font-bold text-lg text-primary flex items-center gap-2">
@@ -107,4 +106,4 @@ export default function HelpPage() {
     </div>
   )
 }
-
+

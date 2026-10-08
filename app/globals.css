@@ -45,10 +45,6 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ========================================================
-   PUKart Dark Green & Emerald Campus Theme
-   ======================================================== */
-
 :root {
   color-scheme: light;
   --background: #f2fbf6;
@@ -94,7 +90,6 @@
   --ring: #34d399;
 }
 
-/* Glassmorphism & Dark Green Utilities */
 .glass-panel {
   background: rgba(8, 33, 23, 0.85);
   backdrop-filter: blur(16px);

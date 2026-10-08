@@ -106,7 +106,6 @@ export default function MyListingsPage() {
           </Link>
         </div>
 
-        {/* Tab Filter Bar */}
         <div className="mt-6 flex gap-2 overflow-x-auto border-b border-border pb-3 text-xs sm:text-sm font-semibold">
           {[
             { id: 'all', label: 'All Items' },
@@ -133,7 +132,6 @@ export default function MyListingsPage() {
           ))}
         </div>
 
-        {/* Listings List */}
         {loading ? (
           <div className="py-20 text-center text-sm text-muted-foreground animate-pulse">Loading your listings...</div>
         ) : listings.length === 0 ? (
@@ -196,7 +194,6 @@ export default function MyListingsPage() {
                   </div>
                 </div>
 
-                {/* Actions & Status Changers */}
                 <div className="flex flex-wrap items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
                   <select
                     value={item.status}

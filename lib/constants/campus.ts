@@ -1,9 +1,3 @@
-// ============================================================
-// Pondicherry University — Main Campus Data
-// Excludes Karaikal & Port Blair campuses
-// ============================================================
-
-// ---------- Schools & Departments ----------
 
 export interface SchoolData {
   school: string
@@ -113,12 +107,9 @@ export const SCHOOLS_AND_DEPARTMENTS: SchoolData[] = [
   },
 ]
 
-/** Flat list of all departments (sorted alphabetically) */
 export const ALL_DEPARTMENTS: string[] = SCHOOLS_AND_DEPARTMENTS.flatMap(
   (s) => s.departments
 ).sort((a, b) => a.localeCompare(b))
-
-// ---------- Degrees & Programs ----------
 
 export interface DegreeGroup {
   category: string
@@ -195,12 +186,9 @@ export const DEGREES_AND_PROGRAMS: DegreeGroup[] = [
   },
 ]
 
-/** Flat list of all programs */
 export const ALL_PROGRAMS: string[] = DEGREES_AND_PROGRAMS.flatMap(
   (g) => g.programs
 )
-
-// ---------- Campus Hostels (Main Campus) ----------
 
 export interface HostelGroup {
   category: string
@@ -249,10 +237,7 @@ export const CAMPUS_HOSTELS: HostelGroup[] = [
   },
 ]
 
-/** Flat list of all hostels */
 export const ALL_HOSTELS: string[] = CAMPUS_HOSTELS.flatMap((g) => g.hostels)
-
-// ---------- Meetup Locations ----------
 
 export const MEETUP_LOCATIONS: string[] = [
   'Central Library Entrance',
@@ -270,8 +255,6 @@ export const MEETUP_LOCATIONS: string[] = [
   'Guest House',
   'Mahatma Gandhi Statue',
 ]
-
-// ---------- Profile Completion Helper ----------
 
 export interface ProfileCompletionResult {
   isComplete: boolean

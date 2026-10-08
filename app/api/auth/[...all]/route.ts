@@ -8,7 +8,6 @@ export async function GET(request: NextRequest) {
   try {
     const res = await handler.GET(request)
 
-    // Intercept error redirects during OAuth callback to show personal email warning
     const location = res.headers.get('location')
     if (
       location &&
@@ -38,4 +37,4 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
+

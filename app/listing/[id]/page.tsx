@@ -58,7 +58,6 @@ export default function ListingDetailPage() {
   const [loading, setLoading] = useState(true)
   const [toastMessage, setToastMessage] = useState('')
 
-  // Modals
   const [offerModalOpen, setOfferModalOpen] = useState(false)
   const [offerAmount, setOfferAmount] = useState('')
   const [offerNote, setOfferNote] = useState('')
@@ -107,7 +106,6 @@ export default function ListingDetailPage() {
         setLoading(false)
       })
 
-    // Check if saved in favorites
     fetch('/api/favorites')
       .then((r) => r.json())
       .then((d) => {
@@ -337,7 +335,6 @@ export default function ListingDetailPage() {
         </div>
       )}
 
-      {/* Breadcrumb navigation */}
       <div className="border-b border-border bg-card/40">
         <div className="mx-auto flex max-w-[1440px] items-center gap-2 px-4 py-3 text-xs font-semibold text-muted-foreground sm:px-6 lg:px-8">
           <Link href="/" className="hover:text-primary">
@@ -354,9 +351,9 @@ export default function ListingDetailPage() {
 
       <main className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-12">
-          {/* LEFT: Image Gallery (7 cols on lg) */}
+          
           <div className="space-y-4 lg:col-span-7">
-            {/* Main Active Image */}
+            
             <div className="relative aspect-square sm:aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-muted">
               <Image
                 src={images[activeImageIndex] || '/images/campus-marketplace.png'}
@@ -367,7 +364,6 @@ export default function ListingDetailPage() {
                 sizes="(max-width: 1024px) 100vw, 60vw"
               />
 
-              {/* Status Badge */}
               <div className="absolute left-4 top-4 flex gap-2">
                 <span className="rounded-lg bg-accent px-3 py-1 text-xs font-bold uppercase tracking-wider text-accent-foreground shadow">
                   {listing.type}
@@ -379,7 +375,6 @@ export default function ListingDetailPage() {
                 )}
               </div>
 
-              {/* Floating Favorite & Share */}
               <div className="absolute right-4 top-4 flex gap-2">
                 <button
                   onClick={handleShare}
@@ -397,7 +392,6 @@ export default function ListingDetailPage() {
                 </button>
               </div>
 
-              {/* Navigation Arrows for Multiple Images */}
               {images.length > 1 && (
                 <>
                   <button
@@ -418,7 +412,6 @@ export default function ListingDetailPage() {
               )}
             </div>
 
-            {/* Thumbnail Strip */}
             {images.length > 1 && (
               <div className="flex gap-3 overflow-x-auto pb-2">
                 {images.map((img: string, idx: number) => (
@@ -435,7 +428,6 @@ export default function ListingDetailPage() {
               </div>
             )}
 
-            {/* Campus Safe Meetup Banner */}
             <div className="rounded-2xl border border-accent/20 bg-accent/5 p-5">
               <div className="flex items-center gap-2.5 text-sm font-bold text-primary">
                 <ShieldCheck className="size-5 text-accent shrink-0" />
@@ -447,7 +439,6 @@ export default function ListingDetailPage() {
             </div>
           </div>
 
-          {/* RIGHT: Product Info & Actions (5 cols on lg) */}
           <div className="space-y-6 lg:col-span-5">
             <div>
               <div className="flex items-center justify-between">
@@ -461,7 +452,6 @@ export default function ListingDetailPage() {
               </h1>
             </div>
 
-            {/* Pricing Details */}
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-2">
               <p className="text-xs font-semibold text-muted-foreground">Price</p>
               <div className="flex items-baseline gap-3">
@@ -485,7 +475,6 @@ export default function ListingDetailPage() {
               </p>
             </div>
 
-            {/* Condition & Attributes */}
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-xl border border-border bg-card p-3.5">
                 <p className="text-xs font-medium text-muted-foreground">Condition</p>
@@ -499,7 +488,6 @@ export default function ListingDetailPage() {
               </div>
             </div>
 
-            {/* Product Description */}
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3">
               <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Description</h2>
               <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/90">
@@ -507,7 +495,6 @@ export default function ListingDetailPage() {
               </p>
             </div>
 
-            {/* Seller Profile Card — Protected for Logged-In Students */}
             {!session?.user ? (
               <div className="rounded-2xl border border-accent/30 bg-accent/5 p-5 space-y-3.5 shadow-sm">
                 <div className="flex items-center gap-2.5 text-sm font-bold text-foreground">
@@ -553,7 +540,6 @@ export default function ListingDetailPage() {
                   )}
                 </div>
 
-                {/* Seller Phone / Direct Call & WhatsApp Contact Box */}
                 {sellerPhone ? (
                   <div className="rounded-xl border border-border bg-card p-3.5 space-y-2.5">
                     <div className="flex items-center justify-between">

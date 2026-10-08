@@ -6,21 +6,16 @@ import { moderateImageContent } from '@/lib/ai'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024 
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
-/**
- * Validates file signature (magic bytes) to prevent extension spoofing.
- */
 function isValidImageSignature(buffer: Uint8Array): boolean {
   if (buffer.length < 12) return false
 
-  // JPEG: FF D8 FF
   if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
     return true
   }
 
-  // PNG: 89 50 4E 47 0D 0A 1A 0A
   if (
     buffer[0] === 0x89 &&
     buffer[1] === 0x50 &&
@@ -34,7 +29,6 @@ function isValidImageSignature(buffer: Uint8Array): boolean {
     return true
   }
 
-  // WebP: RIFF .... WEBP
   if (
     buffer[0] === 0x52 &&
     buffer[1] === 0x49 &&
@@ -93,7 +87,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: `Security check failed: File ${file.name} does not match valid image signature.` }, { status: 400 })
       }
 
-      // ── AI Content Moderation: Check for NSFW/Sexual/Violent content ───
       const moderation = moderateImageContent(file.name, buffer)
       if (moderation.rejected) {
         console.warn(
@@ -113,13 +106,12 @@ export async function POST(request: NextRequest) {
       const ext = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/png' ? 'png' : 'webp'
       const filename = `${crypto.randomUUID()}.${ext}`
 
-      // Check if Vercel Blob is configured
       if (process.env.BLOB_READ_WRITE_TOKEN) {
         const pathname = `listings/${session.user.id}/${filename}`
         const blob = await put(pathname, file, { access: 'public', addRandomSuffix: false })
         uploadedUrls.push(blob.url)
       } else {
-        // Local file storage fallback
+        
         const uploadDir = path.join(process.cwd(), 'public', 'uploads', session.user.id)
         await fs.mkdir(uploadDir, { recursive: true })
         const targetPath = path.join(uploadDir, filename)
@@ -138,4 +130,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Image upload failed. Please try again.' }, { status: 500 })
   }
 }
-
+

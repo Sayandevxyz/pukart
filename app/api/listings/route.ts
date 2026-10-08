@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
     let minPrice = Math.max(0, Number.parseInt(params.get('minPrice') ?? '0', 10) || 0)
     let maxPrice = Number.parseInt(params.get('maxPrice') ?? '', 10)
 
-    // Handle Natural Language / AI Search
     if (aiSearch && rawQuery) {
       const parsed = parseNaturalLanguageSearch(rawQuery)
       rawQuery = parsed.query
@@ -37,9 +36,7 @@ export async function GET(request: NextRequest) {
     const conditions = [eq(listings.status, status)]
 
     if (rawQuery) {
-      // Split query into individual words for fuzzy multi-word matching
-      // e.g. "RRB NTPC" matches "RRB - NTPC - English Medium" because
-      // each word is matched independently with AND logic
+      
       const words = rawQuery
         .split(/\s+/)
         .map((w) => w.trim())
@@ -57,7 +54,7 @@ export async function GET(request: NextRequest) {
           )
         }
       } else {
-        // Single short word or original query fallback
+        
         conditions.push(
           or(
             ilike(listings.title, `%${rawQuery}%`),
@@ -89,7 +86,6 @@ export async function GET(request: NextRequest) {
       conditions.push(lte(listings.price, maxPrice))
     }
 
-    // Determine sorting
     let orderByClause = desc(listings.createdAt)
     if (sortParam === 'price_asc' || sortParam === 'Price low-high') {
       orderByClause = asc(listings.price)
