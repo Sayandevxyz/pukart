@@ -22,7 +22,7 @@ import { generateProductDescription, calculatePriceRecommendation } from '@/lib/
 import { authClient } from '@/lib/auth-client'
 import { checkProfileCompletion } from '@/lib/constants/campus'
 import { getFormOptionsForCategory } from '@/lib/constants/categories'
-import { AlertTriangle, UserRound, Phone, Bike } from 'lucide-react'
+import { AlertTriangle, UserRound, Phone } from 'lucide-react'
 import Link from 'next/link'
 
 export default function NewListingPage() {
