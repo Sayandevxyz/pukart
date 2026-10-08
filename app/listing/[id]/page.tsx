@@ -84,11 +84,11 @@ export default function ListingDetailPage() {
   useEffect(() => {
     authClient.getSession().then((res) => {
       if (res?.data) setSession(res.data as any)
-    }).catch(() => {})
+    }).catch(() => { })
 
     if (!listingId || isNaN(listingId)) return
 
-    incrementListingViews(listingId).catch(() => {})
+    incrementListingViews(listingId).catch(() => { })
 
     getListingById(listingId)
       .then(async (data) => {
@@ -113,7 +113,7 @@ export default function ListingDetailPage() {
           setIsSaved(true)
         }
       })
-      .catch(() => {})
+      .catch(() => { })
   }, [listingId])
 
   async function handleToggleFavorite() {
@@ -351,9 +351,9 @@ export default function ListingDetailPage() {
 
       <main className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-12">
-          
+
           <div className="space-y-4 lg:col-span-7">
-            
+
             <div className="relative aspect-square sm:aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-muted">
               <Image
                 src={images[activeImageIndex] || '/images/campus-marketplace.png'}
@@ -418,9 +418,8 @@ export default function ListingDetailPage() {
                   <button
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition ${
-                      activeImageIndex === idx ? 'border-accent shadow-md ring-2 ring-accent/20' : 'border-border/70 opacity-70 hover:opacity-100'
-                    }`}
+                    className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition ${activeImageIndex === idx ? 'border-accent shadow-md ring-2 ring-accent/20' : 'border-border/70 opacity-70 hover:opacity-100'
+                      }`}
                   >
                     <Image src={img} alt={`Thumbnail ${idx + 1}`} fill className="object-cover" />
                   </button>
@@ -508,7 +507,7 @@ export default function ListingDetailPage() {
                   href={`/sign-in?redirect=${encodeURIComponent(`/listing/${listing.id}`)}`}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 px-4 text-xs font-bold text-primary-foreground shadow-md hover:opacity-95 active:scale-98 transition"
                 >
-                  <Lock size={14} /> Sign In to View Contact Info
+                  <Lock size={14} /> Sign In to Buy, Sell & Rent
                 </Link>
               </div>
             ) : (
