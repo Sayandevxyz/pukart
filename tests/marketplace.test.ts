@@ -323,6 +323,38 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
       expect(micro.rentalAmount).toBe(20)
       expect(micro.depositAmount).toBe(100)
     })
+
+    it('should only show mobility rental to signed-in users when seller explicitly configured rental price', () => {
+      function resolveRentalDailyRate(listing: { type: string; price: number; rentPrice?: number | null }): number {
+        if (listing.rentPrice && listing.rentPrice > 0) return listing.rentPrice
+        if (listing.type === 'rent' || listing.type === 'monthly_rent') return listing.price
+        return 0
+      }
+
+      function shouldShowMobilityRental(
+        user: { id: string } | null,
+        listing: { type: string; price: number; rentPrice?: number | null }
+      ): boolean {
+        if (!user) return false
+        return resolveRentalDailyRate(listing) > 0
+      }
+
+      // Unauthenticated visitor (guest) -> NEVER shown
+      expect(shouldShowMobilityRental(null, { type: 'sell', price: 37000 })).toBe(false)
+      expect(shouldShowMobilityRental(null, { type: 'rent', price: 400 })).toBe(false)
+
+      // Signed-in user, but listing is SELL-only (e.g., Gixxer bike for ₹37,000) -> NEVER treat ₹37,000 as rent
+      expect(shouldShowMobilityRental({ id: 'user_1' }, { type: 'sell', price: 37000 })).toBe(false)
+      expect(resolveRentalDailyRate({ type: 'sell', price: 37000 })).toBe(0)
+
+      // Signed-in user, listing is SELL for ₹37,000 but seller set daily rentPrice of ₹400
+      expect(shouldShowMobilityRental({ id: 'user_1' }, { type: 'sell', price: 37000, rentPrice: 400 })).toBe(true)
+      expect(resolveRentalDailyRate({ type: 'sell', price: 37000, rentPrice: 400 })).toBe(400)
+
+      // Signed-in user, listing is RENTAL for ₹500/day
+      expect(shouldShowMobilityRental({ id: 'user_1' }, { type: 'rent', price: 500 })).toBe(true)
+      expect(resolveRentalDailyRate({ type: 'rent', price: 500 })).toBe(500)
+    })
   })
 
   describe('Campus Senior Trust Badges Logic (Feature 5)', () => {

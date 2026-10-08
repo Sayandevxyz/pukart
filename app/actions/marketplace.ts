@@ -538,7 +538,7 @@ export async function respondToOffer(offerId: number, action: 'accept' | 'reject
   }
 }
 
-export async function requestTransaction(listingId: number, paymentMethod = 'meetup_cash', meetupLocation = 'Pondicherry University Campus') {
+export async function requestTransaction(listingId: number, paymentMethod = 'meetup_cash', meetupLocation = 'Pondicherry University Campus', amount?: number) {
   try {
     const user = await currentUser()
     if (!user) return { success: false, error: 'Please sign in' }
@@ -558,7 +558,7 @@ export async function requestTransaction(listingId: number, paymentMethod = 'mee
         listingId,
         buyerId: user.id,
         sellerId: listing.userId,
-        amount: listing.price,
+        amount: (amount && amount > 0) ? amount : listing.price,
         status: 'requested',
         paymentMethod,
         meetupLocation: sanitizeText(meetupLocation, 2, 200),
@@ -566,12 +566,14 @@ export async function requestTransaction(listingId: number, paymentMethod = 'mee
       .returning()
 
     try {
+      const finalAmount = (amount && amount > 0) ? amount : listing.price
+      const isRental = Boolean(amount && amount !== listing.price)
       const safeTitle = (listing.title || '').replace(/["""]/g, "'").slice(0, 100)
       await db.insert(notifications).values({
         userId: listing.userId,
         kind: 'transaction',
-        title: 'Purchase Request Received',
-        body: `${user.name || 'A student'} requested to buy ${safeTitle} for ₹${listing.price.toLocaleString('en-IN')}`.slice(0, 200),
+        title: isRental ? 'Rental Request Received' : 'Purchase Request Received',
+        body: `${user.name || 'A student'} requested ${isRental ? 'to rent' : 'to buy'} ${safeTitle} for ₹${finalAmount.toLocaleString('en-IN')}`.slice(0, 200),
         link: `/transactions`,
       })
     } catch (notifErr) {

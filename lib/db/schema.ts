@@ -103,6 +103,7 @@ export const listings = pgTable(
     price: integer("price").notNull(),
     originalPrice: integer("originalPrice"),
     priceUnit: text("priceUnit").default("item"),
+    rentPrice: integer("rentPrice"),
     type: text("type").notNull().default("sell"), 
     categoryId: integer("categoryId").references(() => categories.id, { onDelete: "set null" }),
     category: text("category").notNull(),

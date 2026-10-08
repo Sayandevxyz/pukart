@@ -107,6 +107,7 @@ export async function GET(request: NextRequest) {
         price: listings.price,
         originalPrice: listings.originalPrice,
         priceUnit: listings.priceUnit,
+        rentPrice: listings.rentPrice,
         type: listings.type,
         category: listings.category,
         condition: listings.condition,

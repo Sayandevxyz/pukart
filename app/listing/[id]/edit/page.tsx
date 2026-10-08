@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   Trash2,
   Phone,
+  Bike,
 } from 'lucide-react'
 import { getListingById, updateListing, deleteListing } from '@/app/actions/listings'
 import { generateProductDescription } from '@/lib/ai'
@@ -33,6 +34,7 @@ export default function EditListingPage() {
   const [type, setType] = useState('sell')
   const [price, setPrice] = useState('')
   const [originalPrice, setOriginalPrice] = useState('')
+  const [rentPrice, setRentPrice] = useState('')
   const [location, setLocation] = useState('Pondicherry University')
   const [phone, setPhone] = useState('')
   const [description, setDescription] = useState('')
@@ -69,6 +71,7 @@ export default function EditListingPage() {
         setType(item.type || 'sell')
         setPrice(String(item.price))
         setOriginalPrice(item.originalPrice ? String(item.originalPrice) : '')
+        setRentPrice(item.rentPrice ? String(item.rentPrice) : '')
         setLocation(item.location || 'Pondicherry University')
         setPhone(item.phone || '')
         setDescription(item.description)
@@ -141,6 +144,7 @@ export default function EditListingPage() {
         description,
         price: priceNum,
         originalPrice: originalPrice ? Number(originalPrice) : undefined,
+        rentPrice: rentPrice ? Number(rentPrice) : undefined,
         category,
         condition,
         type,
@@ -333,13 +337,16 @@ export default function EditListingPage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">Price (₹ INR)</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                  {type === 'rent' ? 'Daily Rental Rate (₹/day)' : 'Price (₹ INR)'} <span className="text-destructive">*</span>
+                </label>
                 <input
                   required
                   type="number"
                   min="1"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
+                  placeholder={type === 'rent' ? 'e.g. 50 (Cycle) or 400 (Bike/Scooty)' : 'e.g. 1200'}
                   className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-4 text-base font-bold outline-none focus:border-accent"
                 />
               </div>
@@ -351,10 +358,39 @@ export default function EditListingPage() {
                   min="1"
                   value={originalPrice}
                   onChange={(e) => setOriginalPrice(e.target.value)}
+                  placeholder="e.g. 2400 (Shows discount %)"
                   className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm font-medium outline-none focus:border-accent"
                 />
               </div>
             </div>
+
+            {['Cycles', 'Bikes', 'Scooty'].includes(category) && type === 'sell' && (
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex size-6 items-center justify-center rounded-md bg-emerald-500/20 text-emerald-400">
+                    <Bike size={14} />
+                  </span>
+                  <label className="text-xs font-bold text-foreground">
+                    Offer Campus Transit Daily Rental as well? (Optional)
+                  </label>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Set a daily rental rate (e.g. ₹50–₹100 for cycles, ₹400–₹500 for bikes/scooty). If left empty, this item will strictly be for sale and won&apos;t show a daily rental option.
+                </p>
+                <div className="relative mt-1">
+                  <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-bold text-muted-foreground">₹</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10000"
+                    value={rentPrice}
+                    onChange={(e) => setRentPrice(e.target.value)}
+                    placeholder="e.g. 400 or 500 / day"
+                    className="h-11 w-full rounded-xl border border-border bg-background pl-8 pr-4 text-sm font-semibold outline-none focus:border-accent"
+                  />
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-foreground">Location</label>

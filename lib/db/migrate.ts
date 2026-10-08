@@ -370,6 +370,7 @@ export async function runMigrations() {
       ALTER TABLE "listings" ADD COLUMN IF NOT EXISTS "sellerName" text NOT NULL DEFAULT 'PU Student';
       ALTER TABLE "listings" ADD COLUMN IF NOT EXISTS "originalPrice" integer;
       ALTER TABLE "listings" ADD COLUMN IF NOT EXISTS "priceUnit" text NOT NULL DEFAULT 'INR';
+      ALTER TABLE "listings" ADD COLUMN IF NOT EXISTS "rentPrice" integer;
       ALTER TABLE "listings" ADD COLUMN IF NOT EXISTS "type" text NOT NULL DEFAULT 'sell';
       ALTER TABLE "listings" ADD COLUMN IF NOT EXISTS "condition" text NOT NULL DEFAULT 'good';
       ALTER TABLE "listings" ADD COLUMN IF NOT EXISTS "imageUrl" text;
