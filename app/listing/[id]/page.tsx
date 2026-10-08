@@ -40,6 +40,7 @@ import {
   getListingById,
   setListingStatus,
   incrementListingViews,
+  setListingDailyRentPrice,
 } from '@/app/actions/listings'
 import {
   toggleFavorite,
@@ -53,6 +54,26 @@ import { authClient } from '@/lib/auth-client'
 import { OfferModal } from '@/components/listing/offer-modal'
 import { BuyModal } from '@/components/listing/buy-modal'
 import { ReportModal } from '@/components/listing/report-modal'
+
+function extractDailyRentPrice(item: any): number {
+  if (!item) return 350
+  const unit = item.priceUnit || ''
+  const match = unit.match(/daily_?(\d+)/i) || unit.match(/(\d+)/)
+  if (match) {
+    const parsed = parseInt(match[1], 10)
+    if (parsed >= 20 && parsed <= 10000) return parsed
+  }
+  if (item.category === 'Scooty' || item.category === 'Bikes') {
+    return 350
+  }
+  if (item.category === 'Cycles') {
+    return 80
+  }
+  if (item.type === 'rent' && item.price >= 50 && item.price <= 1000) {
+    return item.price
+  }
+  return 350
+}
 
 export default function ListingDetailPage() {
   const params = useParams()
@@ -78,6 +99,9 @@ export default function ListingDetailPage() {
 
   const [copiedPhone, setCopiedPhone] = useState(false)
   const [rentalDuration, setRentalDuration] = useState<'1_day' | '3_days' | '1_week' | '1_month'>('1_day')
+  const [customDailyPrice, setCustomDailyPrice] = useState<string>('')
+  const [savingCustomPrice, setSavingCustomPrice] = useState(false)
+  const [isRentalPurchase, setIsRentalPurchase] = useState(false)
 
   function showToast(msg: string) {
     setToastMessage(msg)
@@ -104,6 +128,8 @@ export default function ListingDetailPage() {
       .then(async (data) => {
         if (data) {
           setListing(data)
+          const initialDaily = extractDailyRentPrice(data)
+          setCustomDailyPrice(String(initialDaily))
           if (data.userId) {
             const stats = await getUserRatingStats(data.userId)
             setSellerStats(stats)
@@ -187,6 +213,7 @@ export default function ListingDetailPage() {
       router.push(`/sign-in?redirect=${encodeURIComponent(`/listing/${listingId}`)}`)
       return
     }
+    setIsRentalPurchase(false)
     setBuyModalOpen(true)
   }
 
@@ -337,16 +364,18 @@ export default function ListingDetailPage() {
     ['Cycles', 'Scooty', 'Bikes'].includes(listing.category)
   )
 
-  const rentalOptions: Record<string, { label: string; multiplier: number; days: number; depositRate: number }> = {
-    '1_day': { label: 'Daily (1 Day)', multiplier: 1, days: 1, depositRate: 0.5 },
-    '3_days': { label: 'Weekend Pass (3 Days)', multiplier: 2.4, days: 3, depositRate: 1.0 },
-    '1_week': { label: 'Weekly Transit (7 Days)', multiplier: 4.8, days: 7, depositRate: 1.5 },
-    '1_month': { label: 'Semester Month (30 Days)', multiplier: 14, days: 30, depositRate: 2.0 },
+  const baseDailyRentalPrice = extractDailyRentPrice(listing)
+
+  const rentalOptions: Record<string, { label: string; multiplier: number; days: number }> = {
+    '1_day': { label: 'Daily (1 Day)', multiplier: 1, days: 1 },
+    '3_days': { label: 'Weekend Pass (3 Days)', multiplier: 2.4, days: 3 },
+    '1_week': { label: 'Weekly Transit (7 Days)', multiplier: 4.8, days: 7 },
+    '1_month': { label: 'Semester Month (30 Days)', multiplier: 14, days: 30 },
   }
 
   const selectedRentalConfig = rentalOptions[rentalDuration] || rentalOptions['1_day']
-  const calculatedRentalAmount = Math.max(20, Math.round(listing.price * selectedRentalConfig.multiplier))
-  const calculatedDepositAmount = Math.max(100, Math.round(listing.price * selectedRentalConfig.depositRate))
+  const calculatedRentalAmount = Math.max(20, Math.round(baseDailyRentalPrice * selectedRentalConfig.multiplier))
+  const calculatedDepositAmount = Math.max(200, Math.min(1000, Math.round(baseDailyRentalPrice * 1.5)))
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -530,6 +559,89 @@ export default function ListingDetailPage() {
                   </span>
                 </div>
 
+                {/* SELLER PRICING CUSTOMIZATION CONTROLS */}
+                {isOwner && (
+                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/30 p-3.5 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                        <Sparkles size={13} className="text-accent" />
+                        Seller Control: Customize 1-Day Rental Price
+                      </span>
+                      <span className="text-xs font-extrabold text-white">Current: ₹{baseDailyRentalPrice}/day</span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-[11px] text-muted-foreground mr-1">PU Presets:</span>
+                      {[350, 400, 450, 500].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={async () => {
+                            setSavingCustomPrice(true)
+                            try {
+                              await setListingDailyRentPrice(listing.id, preset)
+                              setListing({ ...listing, priceUnit: `daily_${preset}` })
+                              setCustomDailyPrice(String(preset))
+                              showToast(`Daily rental price updated to ₹${preset}/day!`)
+                            } catch (err: any) {
+                              showToast(err.message || 'Failed to update rental price')
+                            } finally {
+                              setSavingCustomPrice(false)
+                            }
+                          }}
+                          disabled={savingCustomPrice}
+                          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition border ${
+                            baseDailyRentalPrice === preset
+                              ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-extrabold shadow-sm'
+                              : 'bg-card/80 text-muted-foreground border-border hover:bg-muted hover:text-foreground'
+                          }`}
+                        >
+                          ₹{preset}/day
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">₹</span>
+                        <input
+                          type="number"
+                          min="50"
+                          max="5000"
+                          value={customDailyPrice}
+                          onChange={(e) => setCustomDailyPrice(e.target.value)}
+                          placeholder="Custom ₹/day (e.g. 400)"
+                          className="h-9 w-full rounded-lg border border-border bg-background pl-7 pr-3 text-xs font-bold text-foreground outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        disabled={savingCustomPrice || !customDailyPrice || Number(customDailyPrice) === baseDailyRentalPrice}
+                        onClick={async () => {
+                          const val = Number(customDailyPrice)
+                          if (!val || val < 50 || val > 5000) {
+                            showToast('Enter a fair daily rate between ₹50 and ₹5,000')
+                            return
+                          }
+                          setSavingCustomPrice(true)
+                          try {
+                            await setListingDailyRentPrice(listing.id, val)
+                            setListing({ ...listing, priceUnit: `daily_${val}` })
+                            showToast(`Daily rental price set to ₹${val}/day!`)
+                          } catch (err: any) {
+                            showToast(err.message || 'Failed to update')
+                          } finally {
+                            setSavingCustomPrice(false)
+                          }
+                        }}
+                        className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition disabled:opacity-50"
+                      >
+                        {savingCustomPrice ? 'Saving...' : 'Save Rate'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-foreground flex items-center gap-1">
                     <Calculator size={12} className="text-accent" />
@@ -577,6 +689,7 @@ export default function ListingDetailPage() {
                         return
                       }
                       setMeetupLocation('Central Library Cycle Stand')
+                      setIsRentalPurchase(true)
                       setBuyModalOpen(true)
                     }}
                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-3 text-xs font-bold text-white shadow-md hover:from-emerald-500 hover:to-teal-500 transition active:scale-[0.99]"
@@ -828,7 +941,7 @@ export default function ListingDetailPage() {
         isOpen={buyModalOpen}
         onClose={() => setBuyModalOpen(false)}
         onSubmit={handleBuyRequestSubmit}
-        listingPrice={listing?.price || 0}
+        listingPrice={isRentalPurchase ? calculatedRentalAmount : (listing?.price || 0)}
         meetupLocation={meetupLocation}
         setMeetupLocation={setMeetupLocation}
         actionLoading={actionLoading}

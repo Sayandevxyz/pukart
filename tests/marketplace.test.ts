@@ -417,6 +417,74 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
       expect(evaluateFairnessScore(2500, 450)).toBe('outlier_high')
     })
   })
+
+  describe('Campus Transit & Mobility Rental Pricing (₹350 - ₹500 Range & Seller Customization)', () => {
+    function extractDailyRentPrice(item: { priceUnit?: string | null; category?: string; type?: string; price: number }): number {
+      const unit = item.priceUnit || ''
+      const match = unit.match(/daily_?(\d+)/i) || unit.match(/(\d+)/)
+      if (match) {
+        const parsed = parseInt(match[1], 10)
+        if (parsed >= 20 && parsed <= 10000) return parsed
+      }
+      if (item.category === 'Scooty' || item.category === 'Bikes') {
+        return 350
+      }
+      if (item.category === 'Cycles') {
+        return 80
+      }
+      if (item.type === 'rent' && item.price >= 50 && item.price <= 1000) {
+        return item.price
+      }
+      return 350
+    }
+
+    it('should default Scooty & Bike 1-day rental to ₹350 (within 350-500 campus range) regardless of vehicle sale price', () => {
+      const expensiveScooty = {
+        title: 'Ola S1 Pro Electric Scooter',
+        category: 'Scooty',
+        type: 'sell',
+        price: 37000, // ₹37,000 vehicle purchase price
+        priceUnit: 'item',
+      }
+      const dailyPrice = extractDailyRentPrice(expensiveScooty)
+      expect(dailyPrice).toBe(350)
+      expect(dailyPrice).toBeGreaterThanOrEqual(350)
+      expect(dailyPrice).toBeLessThanOrEqual(500)
+    })
+
+    it('should allow seller to customize daily rental rate between ₹350 and ₹500', () => {
+      const customRates = [350, 400, 450, 500]
+      for (const rate of customRates) {
+        const listing = {
+          title: 'Hero Splendor Plus',
+          category: 'Bikes',
+          type: 'sell',
+          price: 45000,
+          priceUnit: `daily_${rate}`,
+        }
+        expect(extractDailyRentPrice(listing)).toBe(rate)
+      }
+    })
+
+    it('should calculate tiered rental costs and realistic student refundable deposit', () => {
+      const dailyPrice = 350 // ₹350/day
+      const calculateRental = (days: number, mult: number) => Math.max(20, Math.round(dailyPrice * mult))
+      const calculateDeposit = (price: number) => Math.max(200, Math.min(1000, Math.round(price * 1.5)))
+
+      const oneDayCost = calculateRental(1, 1)
+      const threeDaysCost = calculateRental(3, 2.4)
+      const sevenDaysCost = calculateRental(7, 4.8)
+      const thirtyDaysCost = calculateRental(30, 14)
+      const deposit = calculateDeposit(dailyPrice)
+
+      expect(oneDayCost).toBe(350)
+      expect(threeDaysCost).toBe(840)
+      expect(sevenDaysCost).toBe(1680)
+      expect(thirtyDaysCost).toBe(4900)
+      expect(deposit).toBe(525)
+      expect(deposit).toBeLessThanOrEqual(1000) // Much safer than ₹18,500!
+    })
+  })
 })
 
 

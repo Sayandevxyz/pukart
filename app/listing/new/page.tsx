@@ -43,6 +43,7 @@ export default function NewListingPage() {
   const [location, setLocation] = useState('Pondicherry University')
   const [phone, setPhone] = useState('')
   const [description, setDescription] = useState('')
+  const [dailyRentPrice, setDailyRentPrice] = useState('350')
   const [images, setImages] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [priceInsight, setPriceInsight] = useState<string | null>(null)
@@ -229,6 +230,7 @@ export default function NewListingPage() {
         phone: phone.trim() || undefined,
         images,
         imageUrl: images[0],
+        dailyRentPrice: (['Cycles', 'Scooty', 'Bikes'].includes(category) || type === 'rent') && dailyRentPrice ? Number(dailyRentPrice) : undefined,
       })
       showToast('Listing published successfully!')
       router.push(`/listing/${listing.id}`)
@@ -536,6 +538,50 @@ export default function NewListingPage() {
             {priceInsight && (
               <div className="rounded-xl border border-accent/20 bg-accent/10 p-3 text-xs text-foreground">
                 {priceInsight}
+              </div>
+            )}
+
+            {(['Cycles', 'Scooty', 'Bikes'].includes(category) || type === 'rent') && (
+              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400">
+                      Daily Rental Rate (₹/day)
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">
+                      For student campus mobility. Recommended PU rate: ₹350 - ₹500/day.
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-white">₹{dailyRentPrice || '350'}/day</span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] text-muted-foreground">PU Presets:</span>
+                  {['350', '400', '450', '500'].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setDailyRentPrice(val)}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-bold transition border ${
+                        dailyRentPrice === val
+                          ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-sm'
+                          : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground'
+                      }`}
+                    >
+                      ₹{val}/day
+                    </button>
+                  ))}
+                </div>
+
+                <input
+                  type="number"
+                  min="50"
+                  max="5000"
+                  value={dailyRentPrice}
+                  onChange={(e) => setDailyRentPrice(e.target.value)}
+                  placeholder="Custom daily rate e.g. 400"
+                  className="h-10 w-full rounded-xl border border-border bg-background px-3 text-xs font-bold outline-none focus:border-emerald-500"
+                />
               </div>
             )}
 

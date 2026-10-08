@@ -113,6 +113,8 @@ export async function createListing(input: {
   images?: string[]
   location?: string
   phone?: string
+  dailyRentPrice?: number
+  priceUnit?: string
 }) {
   const user = await getAuthenticatedUser()
 
@@ -147,6 +149,10 @@ export async function createListing(input: {
   const allImages = (input.images && input.images.length > 0 ? input.images : input.imageUrl ? [input.imageUrl] : []).filter(Boolean)
   const primaryImage = allImages[0] || input.imageUrl || null
 
+  const resolvedPriceUnit = input.dailyRentPrice && input.dailyRentPrice > 0
+    ? `daily_${input.dailyRentPrice}`
+    : (input.priceUnit || 'item')
+
   if (input.phone?.trim() && !userProfile?.phone) {
     try {
       await db.update(userTable).set({ phone: input.phone.trim().slice(0, 25) }).where(eq(userTable.id, user.id))
@@ -164,6 +170,7 @@ export async function createListing(input: {
       description,
       price: input.price,
       originalPrice: input.originalPrice && input.originalPrice > 0 ? input.originalPrice : null,
+      priceUnit: resolvedPriceUnit,
       type,
       category,
       condition,
@@ -206,6 +213,8 @@ export async function updateListing(
     images?: string[]
     location?: string
     phone?: string
+    dailyRentPrice?: number
+    priceUnit?: string
   }
 ) {
   const user = await getAuthenticatedUser()
@@ -234,6 +243,10 @@ export async function updateListing(
   const allImages = (input.images && input.images.length > 0 ? input.images : input.imageUrl ? [input.imageUrl] : []).filter(Boolean)
   const primaryImage = allImages[0] || input.imageUrl || existing.imageUrl
 
+  const resolvedPriceUnit = input.dailyRentPrice && input.dailyRentPrice > 0
+    ? `daily_${input.dailyRentPrice}`
+    : (input.priceUnit !== undefined ? input.priceUnit : existing.priceUnit)
+
   const [updated] = await db
     .update(listings)
     .set({
@@ -241,6 +254,7 @@ export async function updateListing(
       description,
       price: input.price,
       originalPrice: input.originalPrice && input.originalPrice > 0 ? input.originalPrice : null,
+      priceUnit: resolvedPriceUnit,
       category,
       condition,
       type,
@@ -251,6 +265,7 @@ export async function updateListing(
     })
     .where(eq(listings.id, id))
     .returning()
+
 
   if (input.images && input.images.length > 0) {
     await db.delete(listingImages).where(eq(listingImages.listingId, id))
@@ -268,6 +283,35 @@ export async function updateListing(
   revalidatePath(`/listing/${id}`)
   revalidatePath('/my-listings')
   return updated
+}
+
+export async function setListingDailyRentPrice(listingId: number, dailyPrice: number) {
+  const user = await getAuthenticatedUser()
+  if (!Number.isInteger(listingId) || listingId < 1) throw new Error('Invalid listing ID')
+  if (!Number.isInteger(dailyPrice) || dailyPrice < 20 || dailyPrice > 10000) {
+    throw new Error('Daily rental price must be an integer between ₹20 and ₹10,000')
+  }
+
+  const [existing] = await db.select().from(listings).where(eq(listings.id, listingId)).limit(1)
+  if (!existing) throw new Error('Listing not found')
+  const isAdmin = isUserAdmin(user.email, (user as { role?: string }).role)
+  if (existing.userId !== user.id && !isAdmin) {
+    throw new Error('Forbidden: You can only customize rental price for your own listings.')
+  }
+
+  const encodedUnit = `daily_${dailyPrice}`
+  const [updated] = await db
+    .update(listings)
+    .set({
+      priceUnit: encodedUnit,
+      updatedAt: new Date(),
+    })
+    .where(eq(listings.id, listingId))
+    .returning()
+
+  revalidatePath(`/listing/${listingId}`)
+  revalidatePath('/')
+  return { success: true, dailyPrice, priceUnit: encodedUnit, listing: updated }
 }
 
 export async function setListingStatus(id: number, status: 'active' | 'reserved' | 'sold' | 'rented' | 'archived') {
