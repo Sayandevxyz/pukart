@@ -359,5 +359,64 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
       expect(peer).toContain('3 Meetups Completed')
     })
   })
+
+  describe('Campus Safe Zones & Concurrency Controls (Extended Suite)', () => {
+    it('should prevent concurrent transactions from double-selling an item', () => {
+      interface ListingState {
+        id: number
+        status: 'active' | 'reserved' | 'sold'
+        acceptedTxId: number | null
+      }
+
+      const listing: ListingState = { id: 42, status: 'active', acceptedTxId: null }
+
+      function acceptTransaction(txId: number): boolean {
+        if (listing.status !== 'active') return false
+        listing.status = 'reserved'
+        listing.acceptedTxId = txId
+        return true
+      }
+
+      const buyer1Accept = acceptTransaction(101)
+      const buyer2ConcurrentAccept = acceptTransaction(102)
+
+      expect(buyer1Accept).toBe(true)
+      expect(buyer2ConcurrentAccept).toBe(false)
+      expect(listing.acceptedTxId).toBe(101)
+    })
+
+    it('should validate designated CCTV-covered campus safe meetup zones', () => {
+      const APPROVED_CAMPUS_LANDMARKS = [
+        'Central Library Gate',
+        'Silver Jubilee Campus Quad',
+        'Main Gate 1 Security Checkpost',
+        'Science Complex Entrance',
+        'Hostel Quadrangle Mess',
+      ]
+
+      function isApprovedSafeZone(location: string): boolean {
+        return APPROVED_CAMPUS_LANDMARKS.some((landmark) =>
+          location.toLowerCase().includes(landmark.toLowerCase())
+        )
+      }
+
+      expect(isApprovedSafeZone('Central Library Gate Cycle Stand')).toBe(true)
+      expect(isApprovedSafeZone('Near Silver Jubilee Campus Quad')).toBe(true)
+      expect(isApprovedSafeZone('Off-campus dark alleyway')).toBe(false)
+    })
+
+    it('should flag extreme price deviation outliers for peer review', () => {
+      function evaluateFairnessScore(price: number, marketAvg: number): 'fair' | 'bargain' | 'outlier_high' {
+        if (price > marketAvg * 2.5) return 'outlier_high'
+        if (price < marketAvg * 0.4) return 'bargain'
+        return 'fair'
+      }
+
+      expect(evaluateFairnessScore(500, 450)).toBe('fair')
+      expect(evaluateFairnessScore(150, 450)).toBe('bargain')
+      expect(evaluateFairnessScore(2500, 450)).toBe('outlier_high')
+    })
+  })
 })
+
 

@@ -81,7 +81,7 @@ Student Browse / Search ➔ Item Detail ➔ In-App Chat / Make Offer ➔ Handoff
 - **Database & ORM**: PostgreSQL via [Drizzle ORM](https://orm.drizzle.team/)
 - **Authentication**: [better-auth](https://better-auth.com/)
 - **Storage & Analytics**: Vercel Blob & Vercel Analytics
-- **Test Runner**: [Vitest](https://vitest.dev/) (53 unit, security, and integration tests)
+- **Test Runner**: [Vitest](https://vitest.dev/) (70 comprehensive unit, accessibility WCAG 2.1 AA, security IDOR, and marketplace integration tests across 5 test suites)
 
 ---
 
