@@ -45,9 +45,17 @@ const rawBaseUrl =
           ? 'https://terminus-ruddy.vercel.app'
           : 'http://localhost:3000'))
 
+const authSecret =
+  process.env.BETTER_AUTH_SECRET || 'pukart_secure_campus_marketplace_secret_2026_pondicherry_university'
+if (process.env.NODE_ENV === 'production' && !process.env.BETTER_AUTH_SECRET) {
+  console.warn(
+    '[SECURITY WARNING] BETTER_AUTH_SECRET environment variable is missing in production. Generate a strong secret via `openssl rand -base64 32`.'
+  )
+}
+
 export const auth = betterAuth({
   database: pool,
-  secret: process.env.BETTER_AUTH_SECRET || 'pukart_secure_campus_marketplace_secret_2026_pondicherry_university',
+  secret: authSecret,
   baseURL: rawBaseUrl,
   user: {
     additionalFields: {
@@ -97,7 +105,7 @@ export const auth = betterAuth({
         return {
           email,
           name: profile.name || 'Campus User',
-          image: profile.picture || null,
+          image: profile.picture || undefined,
         }
       },
     },

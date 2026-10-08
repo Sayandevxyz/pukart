@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
@@ -111,17 +112,17 @@ function AuthFormContent() {
           </div>
 
           <div className="mt-6 flex items-center justify-center gap-4 text-xs text-muted-foreground">
-            <a href="/safety" className="hover:text-primary underline">
+            <Link href="/safety" className="hover:text-primary underline transition-colors">
               Safety Guidelines
-            </a>
-            <span>•</span>
-            <a href="/help" className="hover:text-primary underline">
+            </Link>
+            <span aria-hidden="true">•</span>
+            <Link href="/help" className="hover:text-primary underline transition-colors">
               Campus Help
-            </a>
-            <span>•</span>
-            <a href="/" className="hover:text-primary underline">
+            </Link>
+            <span aria-hidden="true">•</span>
+            <Link href="/" className="hover:text-primary underline transition-colors">
               Browse Guest
-            </a>
+            </Link>
           </div>
         </div>
       </Card>

@@ -36,33 +36,46 @@ export function Navbar({
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
 
   useEffect(() => {
-    authClient.getSession().then((res) => {
-      if (res?.data) {
-        setSession(res.data as unknown as { user?: { id: string; name?: string; email?: string; role?: string; image?: string } })
-      }
-    }).catch(() => { })
+    let interval: NodeJS.Timeout | null = null
 
-    function loadCounts() {
-      // Load favorites count
-      fetch('/api/favorites')
-        .then((r) => r.json())
-        .then((d) => {
-          if (d?.listingIds) setFavoriteCount(d.listingIds.length)
-        })
-        .catch(() => { })
+    authClient
+      .getSession()
+      .then((res) => {
+        if (res?.data) {
+          const userSession = res.data as unknown as {
+            user?: { id: string; name?: string; email?: string; role?: string; image?: string }
+          }
+          setSession(userSession)
 
-      // Load notifications count
-      fetch('/api/notifications')
-        .then((r) => r.json())
-        .then((d) => {
-          if (typeof d?.unreadCount === 'number') setUnreadNotificationCount(d.unreadCount)
-        })
-        .catch(() => { })
+          if (userSession?.user) {
+            function loadCounts() {
+              if (typeof document !== 'undefined' && document.hidden) return
+
+              fetch('/api/favorites')
+                .then((r) => r.json())
+                .then((d) => {
+                  if (d?.listingIds) setFavoriteCount(d.listingIds.length)
+                })
+                .catch(() => {})
+
+              fetch('/api/notifications')
+                .then((r) => r.json())
+                .then((d) => {
+                  if (typeof d?.unreadCount === 'number') setUnreadNotificationCount(d.unreadCount)
+                })
+                .catch(() => {})
+            }
+
+            loadCounts()
+            interval = setInterval(loadCounts, 30000)
+          }
+        }
+      })
+      .catch(() => {})
+
+    return () => {
+      if (interval) clearInterval(interval)
     }
-
-    loadCounts()
-    const interval = setInterval(loadCounts, 15000)
-    return () => clearInterval(interval)
   }, [])
 
   function handleSearchSubmit(e: React.FormEvent, isAi = false) {

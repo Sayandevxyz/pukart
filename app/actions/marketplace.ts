@@ -124,6 +124,9 @@ export async function getMyFavorites() {
 export async function startConversation(listingId: number, initialMessage?: string) {
   try {
     const user = await currentUser()
+    if (!user) {
+      return { success: false, error: 'Please sign in to start a conversation' }
+    }
     if (!Number.isInteger(listingId) || listingId < 1) {
       return { success: false, error: 'Invalid listing ID' }
     }
@@ -395,6 +398,7 @@ export async function blockUser(targetUserId: string) {
 export async function makeOffer(listingId: number, amount: number, message?: string) {
   try {
     const user = await currentUser()
+    if (!user) return { success: false, error: 'Please sign in to make an offer' }
     if (!Number.isInteger(listingId) || listingId < 1) return { success: false, error: 'Invalid listing' }
     if (!Number.isInteger(amount) || amount <= 0 || amount > 10000000) return { success: false, error: 'Invalid offer amount in INR' }
 

@@ -176,7 +176,7 @@ function MarketplaceHome() {
   const listings = data?.listings || []
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main id="main-content" className="min-h-screen bg-background text-foreground">
       <Navbar initialQuery={query} onSearch={handleNavbarSearch} />
 
       <AnimatePresence>

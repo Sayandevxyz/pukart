@@ -64,17 +64,20 @@ export async function getAdminDashboardStats() {
   }
 }
 
-// 2. Users Management
 export async function getAdminUsers(query?: string) {
   await requireAdmin()
 
-  let q = db.select().from(userTable)
-  if (query && query.trim()) {
-    const clean = `%${query.trim()}%`
-    q = db.select().from(userTable).where(or(ilike(userTable.name, clean), ilike(userTable.email, clean)))
-  }
+  const clean = query?.trim()
+  const whereClause = clean
+    ? or(ilike(userTable.name, `%${clean}%`), ilike(userTable.email, `%${clean}%`))
+    : undefined
 
-  return q.orderBy(desc(userTable.createdAt)).limit(100)
+  return db
+    .select()
+    .from(userTable)
+    .where(whereClause)
+    .orderBy(desc(userTable.createdAt))
+    .limit(100)
 }
 
 export async function setUserSuspension(userId: string, isSuspended: boolean) {
@@ -108,12 +111,15 @@ export async function setUserRole(userId: string, role: 'user' | 'admin') {
 export async function getAdminListings(statusFilter?: string) {
   await requireAdmin()
 
-  let q = db.select().from(listings)
-  if (statusFilter && statusFilter !== 'all') {
-    q = db.select().from(listings).where(eq(listings.status, statusFilter))
-  }
+  const whereClause =
+    statusFilter && statusFilter !== 'all' ? eq(listings.status, statusFilter) : undefined
 
-  return q.orderBy(desc(listings.createdAt)).limit(150)
+  return db
+    .select()
+    .from(listings)
+    .where(whereClause)
+    .orderBy(desc(listings.createdAt))
+    .limit(150)
 }
 
 export async function adminModerateListing(
@@ -145,12 +151,15 @@ export async function adminModerateListing(
 export async function getAdminReports(statusFilter?: string) {
   await requireAdmin()
 
-  let q = db.select().from(reports)
-  if (statusFilter && statusFilter !== 'all') {
-    q = db.select().from(reports).where(eq(reports.status, statusFilter))
-  }
+  const whereClause =
+    statusFilter && statusFilter !== 'all' ? eq(reports.status, statusFilter) : undefined
 
-  return q.orderBy(desc(reports.createdAt)).limit(100)
+  return db
+    .select()
+    .from(reports)
+    .where(whereClause)
+    .orderBy(desc(reports.createdAt))
+    .limit(100)
 }
 
 export async function updateReportStatus(

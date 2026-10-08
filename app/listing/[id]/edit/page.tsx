@@ -73,7 +73,7 @@ export default function EditListingPage() {
         setLocation(item.location || 'Pondicherry University')
         setPhone(item.phone || '')
         setDescription(item.description)
-        setImages(item.images && item.images.length > 0 ? item.images : [item.imageUrl].filter(Boolean))
+        setImages(item.images && item.images.length > 0 ? item.images : (item.imageUrl ? [item.imageUrl] : []))
       }
       setLoading(false)
     }).catch((err) => {
