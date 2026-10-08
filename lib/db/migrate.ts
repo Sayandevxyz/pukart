@@ -39,7 +39,6 @@ export async function runMigrations() {
   try {
     console.log('[db] Starting database migration & schema sync on Neon Postgres...')
 
-    // 1. Better Auth tables
     await client.query(`
       CREATE TABLE IF NOT EXISTS "user" (
         "id" text PRIMARY KEY,
@@ -96,7 +95,6 @@ export async function runMigrations() {
       );
     `)
 
-    // 2. Universities & Categories
     await client.query(`
       CREATE TABLE IF NOT EXISTS "universities" (
         "id" serial PRIMARY KEY,
@@ -121,7 +119,6 @@ export async function runMigrations() {
       );
     `)
 
-    // 3. Listings & Listing Images
     await client.query(`
       CREATE TABLE IF NOT EXISTS "listings" (
         "id" serial PRIMARY KEY,
@@ -158,7 +155,6 @@ export async function runMigrations() {
       );
     `)
 
-    // 4. Safe Alterations if columns were added later
     await client.query(`
       DO $$ BEGIN
         ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "role" text NOT NULL DEFAULT 'user';
@@ -210,7 +206,6 @@ export async function runMigrations() {
       END $$;
     `)
 
-    // 5. Conversations & Messages
     await client.query(`
       CREATE TABLE IF NOT EXISTS "conversations" (
         "id" serial PRIMARY KEY,
@@ -234,7 +229,6 @@ export async function runMigrations() {
       );
     `)
 
-    // 6. Offers & Transactions
     await client.query(`
       CREATE TABLE IF NOT EXISTS "offers" (
         "id" serial PRIMARY KEY,
@@ -264,7 +258,6 @@ export async function runMigrations() {
       );
     `)
 
-    // 7. Reviews, Favorites, Notifications, Reports, Profiles, Blocked Users
     await client.query(`
       CREATE TABLE IF NOT EXISTS "reviews" (
         "id" serial PRIMARY KEY,
@@ -339,7 +332,6 @@ export async function runMigrations() {
       );
     `)
 
-    // 8. Performance Indexes
     await client.query(`
       CREATE INDEX IF NOT EXISTS "listings_status_idx" ON "listings" ("status");
       CREATE INDEX IF NOT EXISTS "listings_user_id_idx" ON "listings" ("userId");
@@ -359,7 +351,6 @@ export async function runMigrations() {
       CREATE INDEX IF NOT EXISTS "push_subs_user_idx" ON "push_subscriptions" ("userId");
     `)
 
-    // 8.5 Ensure all columns exist on pre-existing tables
     await client.query(`
       -- User table columns
       ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "department" text;
@@ -427,7 +418,6 @@ export async function runMigrations() {
       ALTER TABLE "reports" ADD COLUMN IF NOT EXISTS "updatedAt" timestamp NOT NULL DEFAULT NOW();
     `);
 
-    // 9. Seed default universities & categories
     await client.query(`
       INSERT INTO "universities" ("name", "slug", "domain", "city", "state", "active")
       VALUES ('Pondicherry University', 'pondiuni', 'pondiuni.ac.in', 'Puducherry', 'Puducherry', true)

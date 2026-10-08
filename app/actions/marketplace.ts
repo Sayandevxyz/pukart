@@ -111,9 +111,6 @@ export async function getMyFavorites() {
   }
 }
 
-// ==========================================
-// 2. CHAT & MESSAGING SYSTEM (Priority 7)
-// ==========================================
 
 export async function startConversation(listingId: number, initialMessage?: string) {
   try {
@@ -138,7 +135,6 @@ export async function startConversation(listingId: number, initialMessage?: stri
       return { success: false, error: 'You are the seller of this listing' }
     }
 
-    // Check if buyer is blocked by seller or vice versa
     const blocked = await db
       .select()
       .from(blockedUsers)
@@ -153,7 +149,6 @@ export async function startConversation(listingId: number, initialMessage?: stri
       return { success: false, error: 'Communication is blocked between these accounts.' }
     }
 
-    // Find existing conversation
     const existing = await db
       .select()
       .from(conversations)
@@ -175,7 +170,6 @@ export async function startConversation(listingId: number, initialMessage?: stri
       conversation = created
     }
 
-    // Only if a non-empty initialMessage was explicitly provided, insert it
     if (initialMessage && initialMessage.trim()) {
       const cleanContent = sanitizeText(initialMessage, 1, 2000)
       await db.insert(messages).values({
@@ -234,7 +228,6 @@ export async function getMyConversations() {
       .where(or(eq(conversations.buyerId, user.id), eq(conversations.sellerId, user.id)))
       .orderBy(desc(conversations.lastMessageAt))
 
-    // Also fetch seller information
     const sellerIds = [...new Set(rows.map((r) => r.conversation.sellerId))]
     const sellers = sellerIds.length > 0
       ? await db.select().from(userTable).where(inArray(userTable.id, sellerIds))
@@ -280,14 +273,12 @@ export async function getConversationById(conversationId: number) {
     const otherUserId = conversation.buyerId === user.id ? conversation.sellerId : conversation.buyerId
     const [otherUser] = await db.select().from(userTable).where(eq(userTable.id, otherUserId)).limit(1)
 
-    // Fetch messages
     const msgList = await db
       .select()
       .from(messages)
       .where(eq(messages.conversationId, conversationId))
       .orderBy(messages.createdAt)
 
-    // Mark unread messages as read
     try {
       await db
         .update(messages)
@@ -385,9 +376,6 @@ export async function blockUser(targetUserId: string) {
   }
 }
 
-// ==========================================
-// 3. MAKE OFFER SYSTEM (Priority 9)
-// ==========================================
 
 export async function makeOffer(listingId: number, amount: number, message?: string) {
   try {
@@ -412,7 +400,6 @@ export async function makeOffer(listingId: number, amount: number, message?: str
       })
       .returning()
 
-    // Notify seller (non-blocking)
     try {
       const safeTitle = (listing.title || '').replace(/["""]/g, "'").slice(0, 100)
       await db.insert(notifications).values({
@@ -660,19 +647,16 @@ export async function updateTransactionStatus(
 
     if (!isBuyer && !isSeller) return { success: false, error: 'Forbidden: Unauthorized transaction access' }
 
-    // State Machine Validation
     if (newStatus === 'accepted') {
       if (!isSeller) return { success: false, error: 'Only the seller can accept a purchase request' }
       if (!['inquiry', 'requested', 'negotiating'].includes(tx.status)) {
         return { success: false, error: `Cannot transition from ${tx.status} to accepted` }
       }
-      // Mark listing as reserved
       await db.update(listings).set({ status: 'reserved' }).where(eq(listings.id, tx.listingId))
     } else if (newStatus === 'completed') {
       if (!['accepted'].includes(tx.status)) {
         return { success: false, error: 'Transaction must be accepted before marking as completed' }
       }
-      // Mark listing as sold
       await db.update(listings).set({ status: 'sold' }).where(eq(listings.id, tx.listingId))
     } else if (newStatus === 'rejected') {
       if (!isSeller) return { success: false, error: 'Only the seller can reject a transaction request' }
@@ -680,7 +664,6 @@ export async function updateTransactionStatus(
       if (['completed', 'rejected'].includes(tx.status)) {
         return { success: false, error: 'Completed or rejected transactions cannot be cancelled' }
       }
-      // If listing was reserved, return it to active
       await db.update(listings).set({ status: 'active' }).where(and(eq(listings.id, tx.listingId), eq(listings.status, 'reserved')))
     }
 
@@ -690,7 +673,6 @@ export async function updateTransactionStatus(
       .where(eq(transactions.id, id))
       .returning()
 
-    // Send status change notification to the other party
     const otherPartyId = isBuyer ? tx.sellerId : tx.buyerId
     try {
       await db.insert(notifications).values({
@@ -712,9 +694,6 @@ export async function updateTransactionStatus(
   }
 }
 
-// ==========================================
-// 5. REVIEWS SYSTEM (Priority 10)
-// ==========================================
 
 export async function leaveReview(input: {
   transactionId: number
@@ -743,7 +722,6 @@ export async function leaveReview(input: {
 
     const recipientId = isBuyer ? tx.sellerId : tx.buyerId
 
-    // Check duplicate review
     const existing = await db
       .select()
       .from(reviews)
@@ -806,9 +784,6 @@ export async function getUserRatingStats(userId: string) {
   }
 }
 
-// ==========================================
-// 6. NOTIFICATIONS SYSTEM (Priority 11)
-// ==========================================
 
 export async function getNotifications() {
   try {
@@ -858,9 +833,6 @@ export async function markAllNotificationsRead() {
   }
 }
 
-// ==========================================
-// 7. REPORTS & MODERATION (Priority 13)
-// ==========================================
 
 export async function reportListing(listingId: number, reason: string, details?: string) {
   try {
@@ -920,9 +892,6 @@ export async function reportUser(reportedUserId: string, reason: string, details
   }
 }
 
-// ==========================================
-// 8. PROFILE ACTIONS
-// ==========================================
 
 export async function saveProfile(input: {
   department?: string
@@ -943,7 +912,6 @@ export async function saveProfile(input: {
     const phone = input.phone ? sanitizeText(input.phone, 0, 20) : null
     const hostel = input.hostel ? sanitizeText(input.hostel, 0, 100) : null
 
-    // Update user record
     await db
       .update(userTable)
       .set({
@@ -957,7 +925,6 @@ export async function saveProfile(input: {
       })
       .where(eq(userTable.id, user.id))
 
-    // Update profile record for backwards compatibility
     const values = {
       userId: user.id,
       department,
