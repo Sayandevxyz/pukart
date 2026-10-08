@@ -13,7 +13,6 @@ import {
   ShieldCheck,
   Package,
   Layers,
-  Sparkles,
   LogOut,
   Menu,
   X,
@@ -125,29 +124,18 @@ export function Navbar({
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Search marketplace"
             placeholder="Search books, laptops, cycles, hostel gear..."
-            className="h-11 w-full rounded-xl border border-border bg-muted/40 pl-10 pr-24 text-sm outline-none transition focus:border-accent focus:bg-background focus:ring-4 focus:ring-accent/15"
+            className="h-11 w-full rounded-xl border border-border bg-muted/40 pl-10 pr-10 text-sm outline-none transition focus:border-accent focus:bg-background focus:ring-4 focus:ring-accent/15"
           />
-          <div className="absolute right-1.5 flex items-center gap-1">
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="rounded-md p-1 text-muted-foreground hover:bg-muted"
-                aria-label="Clear"
-              >
-                <X size={14} />
-              </button>
-            )}
+          {searchQuery && (
             <button
               type="button"
-              onClick={(e) => handleSearchSubmit(e, true)}
-              title="AI Smart Search"
-              className="flex items-center gap-1 rounded-lg bg-accent/15 px-2.5 py-1 text-xs font-bold text-accent hover:bg-accent/25 transition"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 rounded-md p-1 text-muted-foreground hover:bg-muted"
+              aria-label="Clear"
             >
-              <Sparkles size={13} />
-              <span>AI</span>
+              <X size={15} />
             </button>
-          </div>
+          )}
         </form>
 
         <div className="ml-auto hidden items-center gap-1.5 lg:flex">
@@ -259,15 +247,18 @@ export function Navbar({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search campus marketplace..."
-            className="h-10 w-full rounded-xl border border-border bg-muted/40 pl-10 pr-20 text-sm outline-none focus:border-accent"
+            className="h-10 w-full rounded-xl border border-border bg-muted/40 pl-10 pr-10 text-sm outline-none focus:border-accent"
           />
-          <button
-            type="button"
-            onClick={(e) => handleSearchSubmit(e, true)}
-            className="absolute right-1.5 rounded-lg bg-accent/15 px-2.5 py-1 text-xs font-bold text-accent"
-          >
-            AI Search
-          </button>
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 rounded-md p-1 text-muted-foreground hover:bg-muted"
+              aria-label="Clear"
+            >
+              <X size={15} />
+            </button>
+          )}
         </form>
       </div>
 
