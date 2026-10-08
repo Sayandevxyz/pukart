@@ -117,7 +117,7 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <main id="main-content" className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-serif text-3xl font-bold text-primary">Campus Transactions & Deals</h1>

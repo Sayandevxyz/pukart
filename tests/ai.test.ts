@@ -3,6 +3,7 @@ import {
   parseNaturalLanguageSearch,
   calculatePriceRecommendation,
   checkListingForScam,
+  generateProductDescription,
 } from '../lib/ai'
 
 describe('AI Features & Natural Language Processing (Priority 14)', () => {
@@ -81,4 +82,32 @@ describe('AI Features & Natural Language Processing (Priority 14)', () => {
       expect(check.riskLevel).toBe('low')
     })
   })
+
+  describe('Automated Product Description Generator', () => {
+    it('should generate well-structured descriptions with campus handover readiness', async () => {
+      const desc = await generateProductDescription({
+        title: 'Casio fx-991EX Scientific Calculator',
+        category: 'Electronics',
+        condition: 'like_new',
+        originalPrice: 1500,
+        highlights: 'Original slipcase and battery included',
+      })
+      expect(desc).toContain('Casio fx-991EX Scientific Calculator')
+      expect(desc).toContain('like new')
+      expect(desc).toContain('Original slipcase and battery included')
+      expect(desc).toContain('PU campus')
+    })
+
+    it('should fallback gracefully when optional highlights are omitted', async () => {
+      const desc = await generateProductDescription({
+        title: 'Microeconomics Principles 8th Edition',
+        category: 'Books',
+        condition: 'good',
+      })
+      expect(desc).toContain('Microeconomics Principles 8th Edition')
+      expect(desc).toContain('good')
+      expect(desc).toContain('Pondicherry University')
+    })
+  })
 })
+

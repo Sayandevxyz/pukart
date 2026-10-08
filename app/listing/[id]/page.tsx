@@ -3,9 +3,10 @@
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import { Navbar } from '@/components/navbar'
+import type { ListingItem, UserRatingStats } from '@/lib/types'
 import {
   Heart,
   MapPin,
@@ -52,7 +53,7 @@ import { OfferModal } from '@/components/listing/offer-modal'
 import { BuyModal } from '@/components/listing/buy-modal'
 import { ReportModal } from '@/components/listing/report-modal'
 
-function extractDailyRentPrice(item: any): number {
+function extractDailyRentPrice(item: Partial<ListingItem> | null | undefined): number {
   if (!item) return 350
   const unit = item.priceUnit || ''
   const match = unit.match(/daily_?(\d+)/i) || unit.match(/(\d+)/)
@@ -66,7 +67,7 @@ function extractDailyRentPrice(item: any): number {
   if (item.category === 'Cycles') {
     return 80
   }
-  if (item.type === 'rent' && item.price >= 50 && item.price <= 1000) {
+  if (item.type === 'rent' && typeof item.price === 'number' && item.price >= 50 && item.price <= 1000) {
     return item.price
   }
   return 350
@@ -78,8 +79,8 @@ export default function ListingDetailPage() {
   const listingId = Number(params?.id)
 
   const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
-  const [listing, setListing] = useState<any>(null)
-  const [sellerStats, setSellerStats] = useState<{ averageRating: number | null; reviewCount: number } | null>(null)
+  const [listing, setListing] = useState<ListingItem | null>(null)
+  const [sellerStats, setSellerStats] = useState<UserRatingStats | null>(null)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [isSaved, setIsSaved] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -216,6 +217,7 @@ export default function ListingDetailPage() {
 
   function handleViewSellerProfile(e: React.MouseEvent) {
     e.preventDefault()
+    if (!listing) return
     if (!session?.user) {
       router.push(`/sign-in?redirect=${encodeURIComponent(`/seller/${listing.userId}`)}`)
       return
@@ -341,8 +343,10 @@ export default function ListingDetailPage() {
   const isOwner = session?.user?.id === listing.userId
   const images = listing.images && listing.images.length > 0 ? listing.images : [listing.imageUrl || '/images/campus-marketplace.png']
   const formattedDate = listing.createdAt ? new Date(listing.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently'
-  const hasDiscount = listing.originalPrice && listing.originalPrice > listing.price
-  const discountPercent = hasDiscount ? Math.round(((listing.originalPrice - listing.price) / listing.originalPrice) * 100) : 0
+  const hasDiscount = Boolean(listing.originalPrice && listing.originalPrice > listing.price)
+  const discountPercent = (hasDiscount && listing.originalPrice)
+    ? Math.round(((listing.originalPrice - listing.price) / listing.originalPrice) * 100)
+    : 0
 
 
   const isMobilityItem = listing && (
@@ -390,7 +394,7 @@ export default function ListingDetailPage() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+      <main id="main-content" className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-12">
 
           <div className="space-y-4 lg:col-span-7">
@@ -501,7 +505,7 @@ export default function ListingDetailPage() {
                 {hasDiscount && (
                   <>
                     <span className="text-base text-muted-foreground line-through">
-                      ₹{listing.originalPrice.toLocaleString('en-IN')}
+                      ₹{listing.originalPrice?.toLocaleString('en-IN')}
                     </span>
                     <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800">
                       {discountPercent}% OFF

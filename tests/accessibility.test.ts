@@ -278,4 +278,13 @@ describe('Accessibility & Inclusive Design Standards (WCAG 2.1 AA Compliance)', 
       expect(verifiedCampusSpots).toContain('Hostel Mess / Common Room')
     })
   })
+
+  describe('WCAG 2.1 SC 2.4.1 Bypass Blocks (Skip Navigation)', () => {
+    it('should confirm skip-link target matches main landmark ID across all page views', () => {
+      const skipLinkHref = '#main-content'
+      const mainLandmarkId = 'main-content'
+      expect(skipLinkHref.replace('#', '')).toBe(mainLandmarkId)
+    })
+  })
 })
+

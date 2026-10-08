@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState, Suspense } from 'react'
 import useSWR from 'swr'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
+import type { ListingItem } from '@/lib/types'
 import {
   BookOpen,
   Laptop,
@@ -117,7 +118,7 @@ function MarketplaceHome() {
     return `/api/listings?${p.toString()}`
   }, [query, activeCategory, activeType, activeCondition, sort, isAiMode, page])
 
-  const { data, error, isLoading, mutate } = useSWR<{ listings: any[]; count: number; hasMore: boolean }>(
+  const { data, error, isLoading, mutate } = useSWR<{ listings: ListingItem[]; count: number; hasMore: boolean }>(
     apiUrl,
     fetcher,
     { keepPreviousData: true }
@@ -440,9 +441,9 @@ function MarketplaceHome() {
             </div>
           ) : listings.length > 0 ? (
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-6">
-              {listings.map((item: any, index: number) => {
-                const hasDiscount = item.originalPrice && item.originalPrice > item.price
-                const discount = hasDiscount
+              {listings.map((item: ListingItem, index: number) => {
+                const hasDiscount = Boolean(item.originalPrice && item.originalPrice > item.price)
+                const discount = (hasDiscount && item.originalPrice)
                   ? Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)
                   : 0
 
@@ -509,7 +510,7 @@ function MarketplaceHome() {
                           {hasDiscount && (
                             <>
                               <span className="text-xs text-muted-foreground line-through">
-                                ₹{item.originalPrice.toLocaleString('en-IN')}
+                                ₹{item.originalPrice?.toLocaleString('en-IN')}
                               </span>
                               <span className="text-[10px] font-bold text-emerald-700">
                                 {discount}% off

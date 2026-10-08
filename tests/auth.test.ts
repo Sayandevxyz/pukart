@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { isValidPondiUniEmail, isUserAdmin } from '../lib/auth'
+import {
+  checkProfileCompletion,
+  ALL_HOSTELS,
+  MEETUP_LOCATIONS,
+  SCHOOLS_AND_DEPARTMENTS,
+  CAMPUS_HOSTELS,
+} from '../lib/constants/campus'
 
 describe('Authentication & Domain Verification (Priority 1)', () => {
   it('should accept valid emails (university and personal)', () => {
@@ -31,5 +38,91 @@ describe('Authentication & Domain Verification (Priority 1)', () => {
     expect(isUserAdmin('regular@pondiuni.ac.in', 'admin')).toBe(true)
     expect(isUserAdmin('student@pondiuni.ac.in', 'user')).toBe(false)
     expect(isUserAdmin(null, 'user')).toBe(false)
+  })
+})
+
+describe('Student Profile Verification & Campus Readiness', () => {
+  it('should recognize a fully completed Pondicherry University student profile', () => {
+    const profile = {
+      department: 'Computer Science',
+      course: 'M.Tech CSE',
+      year: 2,
+      hostel: 'Madame Curie Hostel',
+    }
+    const result = checkProfileCompletion(profile)
+    expect(result.isComplete).toBe(true)
+    expect(result.missingFields).toHaveLength(0)
+  })
+
+  it('should flag missing department and course', () => {
+    const incompleteProfile = {
+      department: '',
+      course: '',
+      year: 1,
+      hostel: 'Cauvery Hostel',
+    }
+    const result = checkProfileCompletion(incompleteProfile)
+    expect(result.isComplete).toBe(false)
+    expect(result.missingFields).toContain('Department / School')
+    expect(result.missingFields).toContain('Degree / Program')
+  })
+
+  it('should flag missing or invalid year of study', () => {
+    const zeroYearProfile = {
+      department: 'Physics',
+      course: 'M.Sc Physics',
+      year: 0,
+      hostel: 'Bharathi Hostel',
+    }
+    const nullYearProfile = {
+      department: 'Physics',
+      course: 'M.Sc Physics',
+      year: null,
+      hostel: 'Bharathi Hostel',
+    }
+    expect(checkProfileCompletion(zeroYearProfile).isComplete).toBe(false)
+    expect(checkProfileCompletion(zeroYearProfile).missingFields).toContain('Year of Study')
+    expect(checkProfileCompletion(nullYearProfile).isComplete).toBe(false)
+  })
+
+  it('should flag missing hostel accommodation for on-campus peer handoffs', () => {
+    const noHostelProfile = {
+      department: 'Management Studies',
+      course: 'MBA',
+      year: 1,
+      hostel: '   ',
+    }
+    const result = checkProfileCompletion(noHostelProfile)
+    expect(result.isComplete).toBe(false)
+    expect(result.missingFields).toContain('Campus Hostel')
+  })
+})
+
+describe('Campus Constants & PU Landmark Integrity', () => {
+  it('should contain verified Pondicherry University hostels across campus clusters', () => {
+    expect(CAMPUS_HOSTELS.length).toBeGreaterThanOrEqual(2)
+    expect(ALL_HOSTELS).toBeInstanceOf(Array)
+    expect(ALL_HOSTELS.length).toBeGreaterThanOrEqual(10)
+    expect(ALL_HOSTELS).toContain('Madame Curie Hostel')
+    expect(ALL_HOSTELS).toContain('Kaveri Hostel')
+    expect(ALL_HOSTELS).toContain('Ganga Hostel')
+  })
+
+  it('should define safe CCTV-covered campus meetup landmarks', () => {
+    expect(MEETUP_LOCATIONS).toBeInstanceOf(Array)
+    expect(MEETUP_LOCATIONS.length).toBeGreaterThanOrEqual(10)
+    expect(MEETUP_LOCATIONS).toContain('Central Library Entrance')
+    expect(MEETUP_LOCATIONS).toContain('Silver Jubilee Campus')
+    expect(MEETUP_LOCATIONS).toContain('Gate 1 / Main Gate')
+    expect(MEETUP_LOCATIONS).toContain('Hostel Mess Area')
+  })
+
+  it('should register Pondicherry University schools and academic departments', () => {
+    expect(SCHOOLS_AND_DEPARTMENTS).toBeInstanceOf(Array)
+    expect(SCHOOLS_AND_DEPARTMENTS.length).toBeGreaterThanOrEqual(5)
+    const schoolNames = SCHOOLS_AND_DEPARTMENTS.map((s) => s.school)
+    expect(schoolNames).toContain('School of Management')
+    expect(schoolNames).toContain('Ramanujan School of Mathematical Sciences')
+    expect(schoolNames).toContain('School of Life Sciences')
   })
 })

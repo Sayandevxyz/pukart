@@ -309,7 +309,7 @@ export default function NewListingPage() {
         </div>
       )}
 
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <main id="main-content" className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <span className="text-xs font-bold uppercase tracking-wider text-accent">Pondicherry University</span>
           <h1 className="mt-1 font-serif text-3xl font-bold text-primary sm:text-4xl">Sell an Item on PUKart</h1>
