@@ -40,7 +40,6 @@ export default function NewListingPage() {
   const [type, setType] = useState('sell')
   const [price, setPrice] = useState('')
   const [originalPrice, setOriginalPrice] = useState('')
-  const [rentPrice, setRentPrice] = useState('')
   const [location, setLocation] = useState('Pondicherry University')
   const [phone, setPhone] = useState('')
   const [description, setDescription] = useState('')
@@ -223,7 +222,6 @@ export default function NewListingPage() {
         description,
         price: priceNum,
         originalPrice: originalPrice ? Number(originalPrice) : undefined,
-        rentPrice: rentPrice ? Number(rentPrice) : undefined,
         category,
         condition,
         type,
@@ -506,7 +504,7 @@ export default function NewListingPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
-                  {type === 'rent' ? 'Daily Rental Rate (₹/day)' : 'Listing Price (₹ INR)'} <span className="text-destructive">*</span>
+                  Listing Price (₹ INR) <span className="text-destructive">*</span>
                 </label>
                 <input
                   required
@@ -515,7 +513,7 @@ export default function NewListingPage() {
                   max="10000000"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
-                  placeholder={type === 'rent' ? 'e.g. 50 (Cycle) or 400 (Bike/Scooty)' : 'e.g. 1200'}
+                  placeholder="e.g. 1200"
                   className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-4 text-base font-bold outline-none focus:border-accent"
                 />
               </div>
@@ -534,34 +532,6 @@ export default function NewListingPage() {
                 />
               </div>
             </div>
-
-            {['Cycles', 'Bikes', 'Scooty'].includes(category) && type === 'sell' && (
-              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="flex size-6 items-center justify-center rounded-md bg-emerald-500/20 text-emerald-400">
-                    <Bike size={14} />
-                  </span>
-                  <label className="text-xs font-bold text-foreground">
-                    Offer Campus Transit Daily Rental as well? (Optional)
-                  </label>
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Set a daily rental rate (e.g. ₹50–₹100 for cycles, ₹400–₹500 for bikes/scooty). If left empty, this item will strictly be for sale and won&apos;t show a daily rental option.
-                </p>
-                <div className="relative mt-1">
-                  <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-bold text-muted-foreground">₹</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max="10000"
-                    value={rentPrice}
-                    onChange={(e) => setRentPrice(e.target.value)}
-                    placeholder="e.g. 400 or 500 / day"
-                    className="h-11 w-full rounded-xl border border-border bg-background pl-8 pr-4 text-sm font-semibold outline-none focus:border-accent"
-                  />
-                </div>
-              </div>
-            )}
 
             {priceInsight && (
               <div className="rounded-xl border border-accent/20 bg-accent/10 p-3 text-xs text-foreground">

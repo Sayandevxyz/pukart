@@ -75,7 +75,6 @@ export default function ListingDetailPage() {
 
   const [copiedPhone, setCopiedPhone] = useState(false)
   const [rentalDuration, setRentalDuration] = useState<'1_day' | '3_days' | '1_week' | '1_month'>('1_day')
-  const [isRentalOrder, setIsRentalOrder] = useState(false)
 
   function showToast(msg: string) {
     setToastMessage(msg)
@@ -185,7 +184,6 @@ export default function ListingDetailPage() {
       router.push(`/sign-in?redirect=${encodeURIComponent(`/listing/${listingId}`)}`)
       return
     }
-    setIsRentalOrder(false)
     setBuyModalOpen(true)
   }
 
@@ -242,17 +240,16 @@ export default function ListingDetailPage() {
     }
     setActionLoading(true)
     try {
-      const amountToRequest = isRentalOrder ? calculatedRentalAmount : listing.price
-      const res = await requestTransaction(listingId, 'meetup_cash', meetupLocation, amountToRequest)
+      const res = await requestTransaction(listingId, 'meetup_cash', meetupLocation)
       if (res && res.success === false) {
-        showToast(res.error || 'Failed to send request')
+        showToast(res.error || 'Failed to send buy request')
       } else {
         setBuyModalOpen(false)
-        showToast(isRentalOrder ? 'Rental request sent! Check your transactions page.' : 'Purchase request sent! Check your transactions page.')
+        showToast('Purchase request sent! Check your transactions page.')
         router.push('/transactions')
       }
     } catch (err: any) {
-      showToast(err.message || 'Failed to send request')
+      showToast(err.message || 'Failed to send buy request')
     } finally {
       setActionLoading(false)
     }
@@ -332,18 +329,10 @@ export default function ListingDetailPage() {
   const cleanPhoneDigits = sellerPhone ? sellerPhone.replace(/\D/g, '') : ''
   const formattedPhoneForWa = cleanPhoneDigits.length === 10 ? `91${cleanPhoneDigits}` : cleanPhoneDigits
 
-  // Only available for rent if:
-  // 1) The seller explicitly set a dedicated rentPrice (> 0), OR
-  // 2) The listing was created as a rental (type === 'rent'), where listing.price is the per-day rental rate (e.g. 400 or 500)
-  // If an item is for sale (type === 'sell', like a ₹37,000 bike) and no rentPrice was set by seller, it is NOT for rent!
-  const sellerRentalDailyRate = listing?.rentPrice && Number(listing.rentPrice) > 0
-    ? Number(listing.rentPrice)
-    : (listing?.type === 'rent' || listing?.type === 'monthly_rent' ? Number(listing.price) : 0)
-
-  const hasSellerRentalRate = sellerRentalDailyRate > 0
-
-  // Requirement: Show Campus Transit & Mobility Rental ONLY to signed-in users AND only when seller explicitly set a rental price!
-  const isMobilityItem = Boolean(session?.user) && hasSellerRentalRate
+  const isMobilityItem = listing && (
+    listing.type === 'rent' ||
+    ['Cycles', 'Scooty', 'Bikes'].includes(listing.category)
+  )
 
   const rentalOptions: Record<string, { label: string; multiplier: number; days: number; depositRate: number }> = {
     '1_day': { label: 'Daily (1 Day)', multiplier: 1, days: 1, depositRate: 0.5 },
@@ -353,8 +342,8 @@ export default function ListingDetailPage() {
   }
 
   const selectedRentalConfig = rentalOptions[rentalDuration] || rentalOptions['1_day']
-  const calculatedRentalAmount = Math.max(20, Math.round(sellerRentalDailyRate * selectedRentalConfig.multiplier))
-  const calculatedDepositAmount = Math.max(100, Math.round(sellerRentalDailyRate * selectedRentalConfig.depositRate))
+  const calculatedRentalAmount = Math.max(20, Math.round(listing.price * selectedRentalConfig.multiplier))
+  const calculatedDepositAmount = Math.max(100, Math.round(listing.price * selectedRentalConfig.depositRate))
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -584,14 +573,13 @@ export default function ListingDetailPage() {
                         router.push(`/sign-in?redirect=${encodeURIComponent(`/listing/${listing.id}`)}`)
                         return
                       }
-                      setIsRentalOrder(true)
                       setMeetupLocation('Central Library Cycle Stand')
                       setBuyModalOpen(true)
                     }}
                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-3 text-xs font-bold text-white shadow-md hover:from-emerald-500 hover:to-teal-500 transition active:scale-[0.99]"
                   >
                     <Bike size={14} />
-                    <span>Rent for {selectedRentalConfig.label} (₹{calculatedRentalAmount.toLocaleString('en-IN')})</span>
+                    <span>Rent for {selectedRentalConfig.label} (₹{calculatedRentalAmount})</span>
                   </button>
                 )}
               </div>
@@ -879,13 +867,9 @@ export default function ListingDetailPage() {
       {buyModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-bold text-primary">
-              {isRentalOrder ? 'Confirm Campus Rental Request' : 'Confirm Purchase Request'}
-            </h3>
+            <h3 className="text-xl font-bold text-primary">Confirm Purchase Request</h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              {isRentalOrder
-                ? `Request ${selectedRentalConfig.label} rental for ₹${calculatedRentalAmount.toLocaleString('en-IN')} (Refundable deposit: ₹${calculatedDepositAmount.toLocaleString('en-IN')}) via Campus Meetup.`
-                : `Request purchase for ₹${listing.price.toLocaleString('en-IN')} via Campus Meetup.`}
+              Request purchase for ₹{listing.price.toLocaleString('en-IN')} via Campus Meetup.
             </p>
             <form onSubmit={handleBuyRequestSubmit} className="mt-5 space-y-4">
               <div>

@@ -106,7 +106,6 @@ export async function createListing(input: {
   description: string
   price: number
   originalPrice?: number
-  rentPrice?: number
   category: string
   type?: string
   condition?: string
@@ -165,7 +164,6 @@ export async function createListing(input: {
       description,
       price: input.price,
       originalPrice: input.originalPrice && input.originalPrice > 0 ? input.originalPrice : null,
-      rentPrice: input.rentPrice && input.rentPrice > 0 ? input.rentPrice : null,
       type,
       category,
       condition,
@@ -201,7 +199,6 @@ export async function updateListing(
     description: string
     price: number
     originalPrice?: number
-    rentPrice?: number
     category: string
     type?: string
     condition?: string
@@ -244,7 +241,6 @@ export async function updateListing(
       description,
       price: input.price,
       originalPrice: input.originalPrice && input.originalPrice > 0 ? input.originalPrice : null,
-      rentPrice: input.rentPrice !== undefined ? (input.rentPrice && input.rentPrice > 0 ? input.rentPrice : null) : existing.rentPrice,
       category,
       condition,
       type,
