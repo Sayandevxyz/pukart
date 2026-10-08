@@ -11,6 +11,20 @@ export const metadata: Metadata = {
   title: 'PUKart — Your Campus. Your Marketplace.',
   description: 'Buy, sell and rent with verified Pondicherry University students.',
   generator: 'PUKart',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'PUKart',
+  },
+  openGraph: {
+    title: 'PUKart — Your Campus. Your Marketplace.',
+    description: 'Verified peer marketplace and rental network for Pondicherry University students.',
+    url: 'https://pukart.shop',
+    siteName: 'PUKart',
+    locale: 'en_IN',
+    type: 'website',
+  },
   icons: {
     icon: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-EScoY3Dr9cDuwfPiUrfIsTl2QOCJT5.png',
     apple: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-EScoY3Dr9cDuwfPiUrfIsTl2QOCJT5.png',

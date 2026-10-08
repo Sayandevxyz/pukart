@@ -50,6 +50,9 @@ import {
   getUserRatingStats,
 } from '@/app/actions/marketplace'
 import { authClient } from '@/lib/auth-client'
+import { OfferModal } from '@/components/listing/offer-modal'
+import { BuyModal } from '@/components/listing/buy-modal'
+import { ReportModal } from '@/components/listing/report-modal'
 
 export default function ListingDetailPage() {
   const params = useParams()
@@ -808,157 +811,38 @@ export default function ListingDetailPage() {
       </main>
 
       {/* MAKE OFFER MODAL */}
-      {offerModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-bold text-primary">Make an Offer</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Listed at ₹{listing.price.toLocaleString('en-IN')}. Propose a fair counter-price to the student seller.
-            </p>
-            <form onSubmit={handleMakeOfferSubmit} className="mt-5 space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
-                  Offer Amount (₹ INR)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  required
-                  value={offerAmount}
-                  onChange={(e) => setOfferAmount(e.target.value)}
-                  placeholder="e.g. 1500"
-                  className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-4 text-base font-bold outline-none focus:border-accent"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
-                  Message for Seller (Optional)
-                </label>
-                <textarea
-                  value={offerNote}
-                  onChange={(e) => setOfferNote(e.target.value)}
-                  placeholder="e.g., Can meet at Library today at 4 PM"
-                  rows={2}
-                  className="mt-1.5 w-full rounded-xl border border-border bg-background p-3 text-sm outline-none focus:border-accent"
-                />
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setOfferModalOpen(false)}
-                  className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold hover:bg-muted"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="flex-1 rounded-xl bg-accent py-3 text-sm font-bold text-accent-foreground hover:opacity-90"
-                >
-                  {actionLoading ? 'Submitting...' : 'Send Offer'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <OfferModal
+        isOpen={offerModalOpen}
+        onClose={() => setOfferModalOpen(false)}
+        onSubmit={handleMakeOfferSubmit}
+        listingPrice={listing?.price || 0}
+        offerAmount={offerAmount}
+        setOfferAmount={setOfferAmount}
+        offerNote={offerNote}
+        setOfferNote={setOfferNote}
+        actionLoading={actionLoading}
+      />
 
       {/* BUY / PURCHASE REQUEST MODAL */}
-      {buyModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-bold text-primary">Confirm Purchase Request</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Request purchase for ₹{listing.price.toLocaleString('en-IN')} via Campus Meetup.
-            </p>
-            <form onSubmit={handleBuyRequestSubmit} className="mt-5 space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
-                  Preferred Campus Meetup Spot
-                </label>
-                <select
-                  value={meetupLocation}
-                  onChange={(e) => setMeetupLocation(e.target.value)}
-                  className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-3 text-sm font-semibold outline-none focus:border-accent"
-                >
-                  <option>Central Library Entrance</option>
-                  <option>Science Complex Gate</option>
-                  <option>Silver Jubilee Campus</option>
-                  <option>Gate 1 / Main Gate</option>
-                  <option>Gate 2 / East Gate</option>
-                  <option>Hostel Mess / Common Room</option>
-                </select>
-              </div>
-              <div className="rounded-xl bg-muted p-3 text-xs text-muted-foreground">
-                <p className="font-semibold text-foreground">Payment Method: Campus Cash / UPI on Meetup</p>
-                <p className="mt-1">You will inspect the item in person and pay the seller directly during the campus meetup.</p>
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setBuyModalOpen(false)}
-                  className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold hover:bg-muted"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90"
-                >
-                  {actionLoading ? 'Sending...' : 'Confirm Request'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <BuyModal
+        isOpen={buyModalOpen}
+        onClose={() => setBuyModalOpen(false)}
+        onSubmit={handleBuyRequestSubmit}
+        listingPrice={listing?.price || 0}
+        meetupLocation={meetupLocation}
+        setMeetupLocation={setMeetupLocation}
+        actionLoading={actionLoading}
+      />
 
       {/* REPORT MODAL */}
-      {reportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-bold text-destructive">Report Listing</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Help keep PUKart safe and honest for all Pondicherry University students.
-            </p>
-            <form onSubmit={handleReportSubmit} className="mt-5 space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
-                  Reason for Report
-                </label>
-                <select
-                  value={reportReason}
-                  onChange={(e) => setReportReason(e.target.value)}
-                  className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-destructive"
-                >
-                  <option>Suspicious pricing or advance payment requested</option>
-                  <option>Counterfeit or misrepresented product</option>
-                  <option>Prohibited item on campus</option>
-                  <option>Spam or duplicate listing</option>
-                  <option>Harassment or abusive content</option>
-                </select>
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setReportModalOpen(false)}
-                  className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold hover:bg-muted"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="flex-1 rounded-xl bg-destructive py-3 text-sm font-bold text-destructive-foreground hover:opacity-90"
-                >
-                  {actionLoading ? 'Reporting...' : 'Submit Report'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ReportModal
+        isOpen={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        onSubmit={handleReportSubmit}
+        reportReason={reportReason}
+        setReportReason={setReportReason}
+        actionLoading={actionLoading}
+      />
     </div>
   )
 }

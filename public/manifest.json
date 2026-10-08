@@ -1,0 +1,30 @@
+{
+  "name": "PUKart — Pondicherry University Campus Marketplace",
+  "short_name": "PUKart",
+  "description": "Verified peer-to-peer campus marketplace and transit rental network for Pondicherry University students.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#04130d",
+  "theme_color": "#10b981",
+  "scope": "/",
+  "categories": ["shopping", "education", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icon-light-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

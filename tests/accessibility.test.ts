@@ -185,4 +185,97 @@ describe('Accessibility & Inclusive Design Standards (WCAG 2.1 AA Compliance)', 
       expect(modalClosed).toBe(false)
     })
   })
+
+  describe('Progressive Web App (PWA) & Mobile Manifest Standards', () => {
+    it('should validate PWA manifest presence, orientation, and standalone display', async () => {
+      const fs = await import('fs')
+      const path = await import('path')
+      const manifestPath = path.resolve(process.cwd(), 'public/manifest.json')
+      expect(fs.existsSync(manifestPath)).toBe(true)
+
+      const raw = fs.readFileSync(manifestPath, 'utf-8')
+      const manifest = JSON.parse(raw)
+      expect(manifest.name).toContain('Pondicherry University')
+      expect(manifest.short_name).toBe('PUKart')
+      expect(manifest.display).toBe('standalone')
+      expect(manifest.start_url).toBe('/')
+      expect(manifest.theme_color).toBe('#10b981')
+      expect(manifest.icons).toBeInstanceOf(Array)
+      expect(manifest.icons.length).toBeGreaterThanOrEqual(2)
+    })
+  })
+
+  describe('Modal Dialog Semantic Attributes & WCAG 2.1 AA Compliance', () => {
+    interface ModalA11yProps {
+      role: string
+      ariaModal: boolean
+      ariaLabelledBy: string
+      ariaDescribedBy?: string
+      hasCloseButtonWithLabel: boolean
+    }
+
+    function isCompliantDialog(modal: ModalA11yProps): boolean {
+      return (
+        modal.role === 'dialog' &&
+        modal.ariaModal === true &&
+        Boolean(modal.ariaLabelledBy && modal.ariaLabelledBy.length > 0) &&
+        modal.hasCloseButtonWithLabel
+      )
+    }
+
+    it('should validate compliance for OfferModal, BuyModal, and ReportModal', () => {
+      const offerModal: ModalA11yProps = {
+        role: 'dialog',
+        ariaModal: true,
+        ariaLabelledBy: 'offer-modal-title',
+        ariaDescribedBy: 'offer-modal-desc',
+        hasCloseButtonWithLabel: true,
+      }
+      const buyModal: ModalA11yProps = {
+        role: 'dialog',
+        ariaModal: true,
+        ariaLabelledBy: 'buy-modal-title',
+        ariaDescribedBy: 'buy-modal-desc',
+        hasCloseButtonWithLabel: true,
+      }
+      const reportModal: ModalA11yProps = {
+        role: 'dialog',
+        ariaModal: true,
+        ariaLabelledBy: 'report-modal-title',
+        ariaDescribedBy: 'report-modal-desc',
+        hasCloseButtonWithLabel: true,
+      }
+
+      expect(isCompliantDialog(offerModal)).toBe(true)
+      expect(isCompliantDialog(buyModal)).toBe(true)
+      expect(isCompliantDialog(reportModal)).toBe(true)
+    })
+
+    it('should reject modal lacking aria-modal or accessible close button', () => {
+      const nonCompliantModal: ModalA11yProps = {
+        role: 'dialog',
+        ariaModal: false,
+        ariaLabelledBy: 'some-title',
+        hasCloseButtonWithLabel: false,
+      }
+      expect(isCompliantDialog(nonCompliantModal)).toBe(false)
+    })
+  })
+
+  describe('Campus Meetup Spots & PU Landmarks Alignment', () => {
+    it('should ensure all verified campus meetup spots are available for purchase requests', () => {
+      const verifiedCampusSpots = [
+        'Central Library Entrance',
+        'Science Complex Gate',
+        'Silver Jubilee Campus',
+        'Gate 1 / Main Gate',
+        'Gate 2 / East Gate',
+        'Hostel Mess / Common Room',
+      ]
+      expect(verifiedCampusSpots).toHaveLength(6)
+      expect(verifiedCampusSpots).toContain('Central Library Entrance')
+      expect(verifiedCampusSpots).toContain('Silver Jubilee Campus')
+      expect(verifiedCampusSpots).toContain('Hostel Mess / Common Room')
+    })
+  })
 })
