@@ -25,9 +25,6 @@ import {
   ShoppingBag,
   Flag,
   UserCheck,
-  Phone,
-  Copy,
-  Check,
   Lock,
   Bike,
   GraduationCap,
@@ -97,7 +94,6 @@ export default function ListingDetailPage() {
   const [reportReason, setReportReason] = useState('Suspicious pricing or advance payment requested')
   const [actionLoading, setActionLoading] = useState(false)
 
-  const [copiedPhone, setCopiedPhone] = useState(false)
   const [rentalDuration, setRentalDuration] = useState<'1_day' | '3_days' | '1_week' | '1_month'>('1_day')
   const [customDailyPrice, setCustomDailyPrice] = useState<string>('')
   const [savingCustomPrice, setSavingCustomPrice] = useState(false)
@@ -106,13 +102,6 @@ export default function ListingDetailPage() {
   function showToast(msg: string) {
     setToastMessage(msg)
     window.setTimeout(() => setToastMessage(''), 3000)
-  }
-
-  function handleCopyPhone(phoneStr: string) {
-    navigator.clipboard.writeText(phoneStr)
-    setCopiedPhone(true)
-    showToast('Phone number copied to clipboard!')
-    setTimeout(() => setCopiedPhone(false), 2500)
   }
 
   useEffect(() => {
@@ -355,9 +344,6 @@ export default function ListingDetailPage() {
   const hasDiscount = listing.originalPrice && listing.originalPrice > listing.price
   const discountPercent = hasDiscount ? Math.round(((listing.originalPrice - listing.price) / listing.originalPrice) * 100) : 0
 
-  const sellerPhone = listing.phone || listing.seller?.phone || null
-  const cleanPhoneDigits = sellerPhone ? sellerPhone.replace(/\D/g, '') : ''
-  const formattedPhoneForWa = cleanPhoneDigits.length === 10 ? `91${cleanPhoneDigits}` : cleanPhoneDigits
 
   const isMobilityItem = listing && (
     listing.type === 'rent' ||
@@ -784,59 +770,6 @@ export default function ListingDetailPage() {
                   </span>
                 </div>
 
-                {sellerPhone ? (
-                  <div className="rounded-xl border border-border bg-card p-3.5 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                        <Phone size={14} className="text-accent" />
-                        <span>Direct Contact Number</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleCopyPhone(sellerPhone)}
-                        className="flex items-center gap-1 text-[11px] font-semibold text-accent hover:underline"
-                      >
-                        {copiedPhone ? (
-                          <>
-                            <Check size={12} className="text-emerald-500" />
-                            <span className="text-emerald-500">Copied</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy size={12} />
-                            <span>Copy</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    <p className="text-sm font-extrabold tracking-wide text-primary">
-                      {sellerPhone.startsWith('+') ? sellerPhone : `+91 ${sellerPhone}`}
-                    </p>
-
-                    {!isOwner && (
-                      <div className="pt-1">
-                        <a
-                          href={`https://wa.me/${formattedPhoneForWa}?text=${encodeURIComponent(
-                            `Hi ${listing.sellerName || 'there'}, I'm interested in your "${listing.title}" on PUKart (₹${listing.price}). Is it available?`
-                          )}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition"
-                        >
-                          <MessageCircle size={14} /> WhatsApp
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                ) : isOwner ? (
-                  <div className="rounded-xl border border-dashed border-border bg-card/60 p-3 text-xs text-muted-foreground">
-                    <p>You haven&apos;t added a contact phone to this listing.</p>
-                    <Link href={`/listing/${listing.id}/edit`} className="font-bold text-accent hover:underline mt-1 inline-block">
-                      + Add Phone Number
-                    </Link>
-                  </div>
-                ) : null}
 
                 <button
                   type="button"
