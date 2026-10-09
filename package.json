@@ -8,9 +8,9 @@
     "start": "next start",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "lint": "tsc --noEmit",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "precommit": "npm run typecheck && npm test",
+    "precommit": "npm run lint && npm run typecheck && npm test",
     "db:migrate": "tsx lib/db/migrate.ts"
   },
   "dependencies": {
@@ -40,14 +40,19 @@
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
     "@vitest/coverage-v8": "^4.1.11",
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "postcss": "^8.5",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.12",
     "typescript": "5.7.3",
+    "typescript-eslint": "^8.71.1",
     "vitest": "^4.1.11"
   },
   "overrides": {
     "braces": "3.0.3",
+    "micromatch": "4.0.8",
+    "fast-glob": "^3.3.3",
     "hono": "4.13.7"
   }
 }
