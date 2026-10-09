@@ -18,19 +18,13 @@ import {
   Trophy,
   Utensils,
   BriefcaseBusiness,
-  ChevronLeft,
   ChevronRight,
   Heart,
   MapPin,
   Plus,
   Search,
   ShieldCheck,
-  Star,
   Sparkles,
-  ShoppingBag,
-  Clock,
-  Filter,
-  X,
   LogIn,
   User,
 } from 'lucide-react'
@@ -57,30 +51,6 @@ const categoriesList = [
   { name: 'Services', icon: BriefcaseBusiness, tint: 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30' },
 ]
 
-const banners = [
-  {
-    eyebrow: 'WELCOME TO PUKART',
-    title: 'Good finds are already nearby.',
-    copy: 'Buy, sell and rent within the Pondicherry University campus.',
-    action: 'Shop now',
-    image: '/images/campus-marketplace.png',
-  },
-  {
-    eyebrow: 'SELL SMARTER',
-    title: 'Turn unused into useful.',
-    copy: 'List your hostel essentials, textbooks and gadgets in minutes.',
-    action: 'Sell now',
-    image: '/images/student-selling.png',
-  },
-  {
-    eyebrow: 'BACK TO CAMPUS',
-    title: 'Deals made for student life.',
-    copy: 'Discover affordable products from verified PU students.',
-    action: 'Explore deals',
-    image: '/images/campus-marketplace.png',
-  },
-]
-
 function MarketplaceHome() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -96,7 +66,6 @@ function MarketplaceHome() {
   const [sort, setSort] = useState('newest')
   const [isAiMode, setIsAiMode] = useState(initialAi)
   const [page, setPage] = useState(1)
-  const [banner, setBanner] = useState(0)
   const [notice, setNotice] = useState('')
 
   const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)

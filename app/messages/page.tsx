@@ -8,23 +8,19 @@ import { Navbar } from '@/components/navbar'
 import {
   MessageCircle,
   ShieldCheck,
-  Search,
   ChevronRight,
-  Clock,
 } from 'lucide-react'
 import { getMyConversations } from '@/app/actions/marketplace'
 import { authClient } from '@/lib/auth-client'
 
 export default function MessagesInboxPage() {
   const router = useRouter()
-  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
   const [conversations, setConversations] = useState<Awaited<ReturnType<typeof getMyConversations>>>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     authClient.getSession().then((res) => {
       if (res?.data?.user) {
-        setSession(res.data)
         getMyConversations().then((data) => {
           setConversations(data)
           setLoading(false)

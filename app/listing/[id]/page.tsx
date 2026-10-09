@@ -18,13 +18,9 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
-  AlertTriangle,
-  Send,
   Edit,
-  CheckCircle,
   ShoppingBag,
   Flag,
-  UserCheck,
   Lock,
   Bike,
   GraduationCap,
@@ -638,11 +634,11 @@ export default function ListingDetailPage() {
                   </div>
                 )}
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-foreground flex items-center gap-1">
+                <div className="space-y-1.5" role="group" aria-labelledby="rental-duration-heading">
+                  <p id="rental-duration-heading" className="text-xs font-semibold text-foreground flex items-center gap-1">
                     <Calculator size={12} className="text-accent" />
                     <span>Select Rental Duration:</span>
-                  </label>
+                  </p>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {(Object.entries(RENTAL_OPTIONS) as [RentalDuration, (typeof RENTAL_OPTIONS)[RentalDuration]][]).map(([key, config]) => (
                       <button

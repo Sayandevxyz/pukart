@@ -8,13 +8,6 @@ import {
   Sparkles,
   Upload,
   X,
-  Plus,
-  ShieldCheck,
-  Tag,
-  IndianRupee,
-  Layers,
-  MapPin,
-  HelpCircle,
 } from 'lucide-react'
 import { createListing } from '@/app/actions/listings'
 import { getCurrentUserProfile } from '@/app/actions/marketplace'
@@ -408,10 +401,11 @@ export default function NewListingPage() {
             <h2 className="text-base font-bold text-foreground">Listing Information</h2>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+              <label htmlFor="new-title" className="block text-xs font-bold uppercase tracking-wider text-foreground">
                 Item Title <span className="text-destructive">*</span>
               </label>
               <input
+                id="new-title"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -423,8 +417,9 @@ export default function NewListingPage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">Category</label>
+                <label htmlFor="new-category" className="block text-xs font-bold uppercase tracking-wider text-foreground">Category</label>
                 <select
+                  id="new-category"
                   value={category}
                   onChange={(e) => handleCategoryChange(e.target.value)}
                   className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-3 text-sm font-semibold outline-none focus:border-accent"
@@ -443,10 +438,11 @@ export default function NewListingPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                <label htmlFor="new-condition" className="block text-xs font-bold uppercase tracking-wider text-foreground">
                   {formOptions.conditionLabel}
                 </label>
                 <select
+                  id="new-condition"
                   value={condition}
                   onChange={(e) => setCondition(e.target.value)}
                   className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-3 text-sm font-semibold outline-none focus:border-accent"
@@ -460,10 +456,11 @@ export default function NewListingPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                <label htmlFor="new-type" className="block text-xs font-bold uppercase tracking-wider text-foreground">
                   {formOptions.typeLabel}
                 </label>
                 <select
+                  id="new-type"
                   value={type}
                   onChange={(e) => setType(e.target.value)}
                   className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-3 text-sm font-semibold outline-none focus:border-accent"
@@ -479,7 +476,7 @@ export default function NewListingPage() {
 
             <div>
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                <label htmlFor="new-description" className="block text-xs font-bold uppercase tracking-wider text-foreground">
                   Description <span className="text-destructive">*</span>
                 </label>
                 <button
@@ -493,6 +490,7 @@ export default function NewListingPage() {
                 </button>
               </div>
               <textarea
+                id="new-description"
                 required
                 rows={5}
                 value={description}
@@ -517,10 +515,11 @@ export default function NewListingPage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                <label htmlFor="new-price" className="block text-xs font-bold uppercase tracking-wider text-foreground">
                   Listing Price (₹ INR) <span className="text-destructive">*</span>
                 </label>
                 <input
+                  id="new-price"
                   required
                   type="number"
                   min="1"
@@ -533,10 +532,11 @@ export default function NewListingPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                <label htmlFor="new-original-price" className="block text-xs font-bold uppercase tracking-wider text-foreground">
                   Original Retail Price (₹ Optional)
                 </label>
                 <input
+                  id="new-original-price"
                   type="number"
                   min="1"
                   value={originalPrice}
@@ -557,7 +557,7 @@ export default function NewListingPage() {
               <div className="rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400">
+                    <label htmlFor="new-daily-rent" className="block text-xs font-bold uppercase tracking-wider text-emerald-400">
                       Daily Rental Rate (₹/day)
                     </label>
                     <p className="text-[11px] text-muted-foreground">
@@ -586,6 +586,7 @@ export default function NewListingPage() {
                 </div>
 
                 <input
+                  id="new-daily-rent"
                   type="number"
                   min="50"
                   max="5000"
@@ -598,10 +599,11 @@ export default function NewListingPage() {
             )}
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+              <label htmlFor="new-location" className="block text-xs font-bold uppercase tracking-wider text-foreground">
                 Campus Location
               </label>
               <input
+                id="new-location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Science Complex / Silver Jubilee Campus / Central Library"
@@ -611,7 +613,7 @@ export default function NewListingPage() {
 
             <div>
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                <label htmlFor="new-phone" className="block text-xs font-bold uppercase tracking-wider text-foreground">
                   Phone / WhatsApp Number <span className="text-xs font-normal text-muted-foreground">(Shown to buyers for direct call / WhatsApp)</span>
                 </label>
               </div>
@@ -620,6 +622,7 @@ export default function NewListingPage() {
                   <Phone size={16} className="text-accent" />
                 </div>
                 <input
+                  id="new-phone"
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}

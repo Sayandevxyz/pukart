@@ -4,13 +4,13 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { Suspense } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertCircle, ShieldAlert, GraduationCap, ArrowRight } from 'lucide-react'
+import { AlertCircle, GraduationCap, ArrowRight } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 
 function AuthErrorContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const error = searchParams.get('error')
+  const _error = searchParams.get('error')
 
   async function handleRetryGoogle() {
     try {

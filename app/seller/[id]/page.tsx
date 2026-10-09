@@ -10,8 +10,6 @@ import {
   Star,
   MessageCircle,
   MapPin,
-  Calendar,
-  Layers,
   ShoppingBag,
   Heart,
   GraduationCap,
@@ -22,9 +20,9 @@ import {
   Zap,
   Award,
 } from 'lucide-react'
-import { getSellerProfile, startConversation, toggleFavorite } from '@/app/actions/marketplace'
+import { getSellerProfile, toggleFavorite } from '@/app/actions/marketplace'
 import { authClient } from '@/lib/auth-client'
-import type { ListingItem, ListingSeller, UserRatingStats, ReviewItem, SellerProfileData } from '@/lib/types'
+import type { ListingItem, ReviewItem, SellerProfileData } from '@/lib/types'
 
 export default function SellerProfilePage() {
   const params = useParams()
@@ -144,7 +142,6 @@ export default function SellerProfilePage() {
   }
 
   const { user, listings, ratingStats } = profileData
-  const joinedDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : '2026'
 
   return (
     <div className="min-h-screen bg-background text-foreground">

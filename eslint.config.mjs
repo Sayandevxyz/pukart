@@ -21,12 +21,8 @@ export default tseslint.config(
     },
     rules: {
       ...jsxA11y.configs.recommended.rules,
-      'jsx-a11y/label-has-associated-control': 'warn',
-      'jsx-a11y/click-events-have-key-events': 'warn',
-      'jsx-a11y/no-static-element-interactions': 'warn',
-      'jsx-a11y/no-autofocus': 'warn',
       '@typescript-eslint/no-unused-vars': [
-        'warn',
+        'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
       '@typescript-eslint/no-explicit-any': 'error',

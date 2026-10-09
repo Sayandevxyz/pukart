@@ -8,7 +8,7 @@
     "start": "next start",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "precommit": "npm run lint && npm run typecheck && npm test",
     "db:migrate": "tsx lib/db/migrate.ts"

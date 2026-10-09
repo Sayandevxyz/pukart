@@ -8,8 +8,6 @@ import { Navbar } from '@/components/navbar'
 import {
   Heart,
   MapPin,
-  ShoppingBag,
-  Trash2,
   ExternalLink,
 } from 'lucide-react'
 import { getMyFavorites, toggleFavorite } from '@/app/actions/marketplace'
@@ -19,7 +17,7 @@ type FavoriteItem = Awaited<ReturnType<typeof getMyFavorites>>[number]
 
 export default function FavoritesPage() {
   const router = useRouter()
-  const [session, setSession] = useState<{ user?: { id: string } } | null>(null)
+  const [_session, setSession] = useState<{ user?: { id: string } } | null>(null)
   const [favorites, setFavorites] = useState<FavoriteItem[]>([])
   const [loading, setLoading] = useState(true)
   const [toastMessage, setToastMessage] = useState('')

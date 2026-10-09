@@ -1,11 +1,11 @@
 'use server'
 
-import { and, desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, desc, eq, sql } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { auth, isValidPondiUniEmail, isUserAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { listings, listingImages, user as userTable, notifications } from '@/lib/db/schema'
+import { listings, listingImages, user as userTable } from '@/lib/db/schema'
 import { checkListingForScam } from '@/lib/ai'
 import { checkProfileCompletion } from '@/lib/constants/campus'
 

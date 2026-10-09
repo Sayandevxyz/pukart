@@ -23,11 +23,8 @@ import { saveProfile, getCurrentUserProfile } from '@/app/actions/marketplace'
 import { authClient } from '@/lib/auth-client'
 import {
   SCHOOLS_AND_DEPARTMENTS,
-  ALL_DEPARTMENTS,
   DEGREES_AND_PROGRAMS,
-  ALL_PROGRAMS,
   CAMPUS_HOSTELS,
-  ALL_HOSTELS,
   MEETUP_LOCATIONS,
   checkProfileCompletion,
 } from '@/lib/constants/campus'
@@ -95,7 +92,12 @@ function SearchableSelect({
       {open && (
         <>
           
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <button
+            type="button"
+            aria-label="Close dropdown"
+            className="fixed inset-0 z-40 cursor-default bg-transparent"
+            onClick={() => setOpen(false)}
+          />
 
           <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-64 overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
             
@@ -107,7 +109,6 @@ function SearchableSelect({
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search..."
                 className="flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
-                autoFocus
               />
             </div>
 
@@ -411,12 +412,13 @@ function ProfilePageInner() {
               />
 
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
+                <label htmlFor="profile-year-select" className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
                   <Calendar size={13} className="text-accent" />
                   Current Year of Study
                   <span className="text-red-400">*</span>
                 </label>
                 <select
+                  id="profile-year-select"
                   value={year}
                   onChange={(e) => setYear(e.target.value)}
                   className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3 text-xs font-semibold outline-none focus:border-accent"
@@ -442,12 +444,13 @@ function ProfilePageInner() {
             </div>
 
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
+              <label htmlFor="profile-phone-input" className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
                 <Phone size={13} className="text-accent" />
                 Phone Number
                 <span className="ml-1 text-[10px] font-normal text-muted-foreground">(optional)</span>
               </label>
               <input
+                id="profile-phone-input"
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -457,11 +460,12 @@ function ProfilePageInner() {
             </div>
 
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
+              <label htmlFor="profile-bio-input" className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
                 <UserRound size={13} className="text-accent" />
                 Campus Bio
               </label>
               <textarea
+                id="profile-bio-input"
                 rows={3}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
@@ -470,11 +474,11 @@ function ProfilePageInner() {
               />
             </div>
 
-            <div>
-              <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
+            <div role="group" aria-labelledby="profile-meetup-heading">
+              <p id="profile-meetup-heading" className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
                 <MapPin size={13} className="text-accent" />
                 Preferred Meetup Locations for Delivery
-              </label>
+              </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {MEETUP_LOCATIONS.map((loc) => (
                   <button

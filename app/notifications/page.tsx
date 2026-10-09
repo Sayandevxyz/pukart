@@ -27,7 +27,6 @@ type NotificationItem = Awaited<ReturnType<typeof getNotifications>>[number]
 
 export default function NotificationsPage() {
   const router = useRouter()
-  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(true)
   const [toastMessage, setToastMessage] = useState('')
@@ -56,7 +55,6 @@ export default function NotificationsPage() {
   useEffect(() => {
     authClient.getSession().then((res) => {
       if (res?.data?.user) {
-        setSession(res.data)
         loadNotifications()
       } else {
         router.push('/sign-in')

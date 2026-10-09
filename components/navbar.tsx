@@ -11,7 +11,6 @@ import {
   Plus,
   Search,
   UserRound,
-  ShieldCheck,
   Package,
   Layers,
   LogOut,

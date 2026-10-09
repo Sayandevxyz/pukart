@@ -7,15 +7,9 @@ import Image from 'next/image'
 import { Navbar } from '@/components/navbar'
 import {
   Layers,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  MapPin,
   Star,
   ShieldCheck,
   ExternalLink,
-  MessageCircle,
-  AlertCircle,
 } from 'lucide-react'
 import {
   getMyTransactions,
@@ -28,7 +22,6 @@ type TransactionEntry = Awaited<ReturnType<typeof getMyTransactions>>[number]
 
 export default function TransactionsPage() {
   const router = useRouter()
-  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
   const [transactions, setTransactions] = useState<TransactionEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'all' | 'buying' | 'selling'>('all')
@@ -60,7 +53,6 @@ export default function TransactionsPage() {
   useEffect(() => {
     authClient.getSession().then((res) => {
       if (res?.data?.user) {
-        setSession(res.data)
         loadTransactions()
       } else {
         router.push('/sign-in')
@@ -308,10 +300,10 @@ export default function TransactionsPage() {
               Rate your experience for the purchase of &quot;{selectedTx.listing?.title}&quot;.
             </p>
             <form onSubmit={handleReviewSubmit} className="mt-5 space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+              <div role="group" aria-labelledby="star-rating-label">
+                <p id="star-rating-label" className="block text-xs font-bold uppercase tracking-wider text-foreground">
                   Star Rating (1 - 5)
-                </label>
+                </p>
                 <div className="mt-2 flex gap-2">
                   {[1, 2, 3, 4, 5].map((s) => (
                     <button
@@ -330,10 +322,11 @@ export default function TransactionsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                <label htmlFor="review-body-input" className="block text-xs font-bold uppercase tracking-wider text-foreground">
                   Your Review Feedback
                 </label>
                 <textarea
+                  id="review-body-input"
                   required
                   rows={3}
                   value={reviewBody}

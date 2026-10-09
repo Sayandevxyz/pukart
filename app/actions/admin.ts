@@ -1,6 +1,6 @@
 'use server'
 
-import { and, desc, eq, ilike, or, sql } from 'drizzle-orm'
+import { desc, eq, ilike, or, sql } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { auth, isValidPondiUniEmail, isUserAdmin } from '@/lib/auth'
@@ -11,7 +11,6 @@ import {
   reports,
   transactions,
   user as userTable,
-  reviews,
 } from '@/lib/db/schema'
 
 async function requireAdmin() {

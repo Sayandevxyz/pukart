@@ -3,14 +3,13 @@
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { ShieldCheck, AlertCircle, Sparkles, GraduationCap, X, ArrowRight } from 'lucide-react'
+import { ShieldCheck, AlertCircle } from 'lucide-react'
 
 function AuthFormContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -41,7 +40,7 @@ function AuthFormContent() {
         }
         return
       }
-    } catch (err) {
+    } catch {
       setLoading(false)
       setError('Could not complete Google sign-in. Please try again.')
     }
@@ -134,7 +133,7 @@ function AuthFormContent() {
   )
 }
 
-export function AuthForm({ mode }: { mode?: 'sign-in' | 'sign-up' }) {
+export function AuthForm({ mode: _mode }: { mode?: 'sign-in' | 'sign-up' } = {}) {
   return (
     <Suspense fallback={<div className="flex min-h-svh items-center justify-center">Loading authentication...</div>}>
       <AuthFormContent />

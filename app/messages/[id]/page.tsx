@@ -7,15 +7,12 @@ import Image from 'next/image'
 import { Navbar } from '@/components/navbar'
 import {
   Send,
-  Upload,
   ArrowLeft,
   ShieldCheck,
   Tag,
   ExternalLink,
   Ban,
   CheckCheck,
-  Clock,
-  Sparkles,
 } from 'lucide-react'
 import {
   getConversationById,
@@ -147,7 +144,7 @@ export default function ConversationChatPage() {
     )
   }
 
-  const { conversation, listing, otherUser, messages } = data
+  const { listing, otherUser, messages } = data
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">

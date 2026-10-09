@@ -10,12 +10,6 @@ import {
   Plus,
   Edit,
   Trash2,
-  Eye,
-  CheckCircle2,
-  Clock,
-  Archive,
-  RefreshCw,
-  MapPin,
   ExternalLink,
 } from 'lucide-react'
 import { getMyListings, setListingStatus, deleteListing } from '@/app/actions/listings'
@@ -27,7 +21,6 @@ type ListingItemStatus = 'active' | 'reserved' | 'sold' | 'rented' | 'archived'
 
 export default function MyListingsPage() {
   const router = useRouter()
-  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
   const [listings, setListings] = useState<MyListingItem[]>([])
   const [activeTab, setActiveTab] = useState<MyListingTab>('all')
   const [loading, setLoading] = useState(true)
@@ -53,7 +46,6 @@ export default function MyListingsPage() {
   useEffect(() => {
     authClient.getSession().then((res) => {
       if (res?.data?.user) {
-        setSession(res.data)
         loadListings('all')
       } else {
         router.push('/sign-in')

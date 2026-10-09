@@ -7,13 +7,11 @@ import { Navbar } from '@/components/navbar'
 import {
   Upload,
   X,
-  Sparkles,
   ArrowLeft,
   Trash2,
   Phone,
 } from 'lucide-react'
 import { getListingById, updateListing, deleteListing } from '@/app/actions/listings'
-import { generateProductDescription } from '@/lib/ai'
 import { authClient } from '@/lib/auth-client'
 import { getFormOptionsForCategory } from '@/lib/constants/categories'
 
@@ -22,7 +20,7 @@ export default function EditListingPage() {
   const router = useRouter()
   const listingId = Number(params?.id)
 
-  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
+  const [_session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
@@ -263,8 +261,9 @@ export default function EditListingPage() {
 
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-5">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-foreground">Title</label>
+              <label htmlFor="edit-title" className="block text-xs font-bold uppercase tracking-wider text-foreground">Title</label>
               <input
+                id="edit-title"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -275,8 +274,9 @@ export default function EditListingPage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">Category</label>
+                <label htmlFor="edit-category" className="block text-xs font-bold uppercase tracking-wider text-foreground">Category</label>
                 <select
+                  id="edit-category"
                   value={category}
                   onChange={(e) => handleCategoryChange(e.target.value)}
                   className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-3 text-sm font-semibold outline-none focus:border-accent"
@@ -295,10 +295,11 @@ export default function EditListingPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                <label htmlFor="edit-condition" className="block text-xs font-bold uppercase tracking-wider text-foreground">
                   {formOptions.conditionLabel}
                 </label>
                 <select
+                  id="edit-condition"
                   value={condition}
                   onChange={(e) => setCondition(e.target.value)}
                   className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-3 text-sm font-semibold outline-none focus:border-accent"
@@ -312,10 +313,11 @@ export default function EditListingPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                <label htmlFor="edit-type" className="block text-xs font-bold uppercase tracking-wider text-foreground">
                   {formOptions.typeLabel}
                 </label>
                 <select
+                  id="edit-type"
                   value={type}
                   onChange={(e) => setType(e.target.value)}
                   className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-3 text-sm font-semibold outline-none focus:border-accent"
@@ -330,8 +332,9 @@ export default function EditListingPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-foreground">Description</label>
+              <label htmlFor="edit-description" className="block text-xs font-bold uppercase tracking-wider text-foreground">Description</label>
               <textarea
+                id="edit-description"
                 required
                 rows={5}
                 value={description}
@@ -343,8 +346,9 @@ export default function EditListingPage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">Price (₹ INR)</label>
+                <label htmlFor="edit-price" className="block text-xs font-bold uppercase tracking-wider text-foreground">Price (₹ INR)</label>
                 <input
+                  id="edit-price"
                   required
                   type="number"
                   min="1"
@@ -355,8 +359,9 @@ export default function EditListingPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">Original Retail Price (₹)</label>
+                <label htmlFor="edit-original-price" className="block text-xs font-bold uppercase tracking-wider text-foreground">Original Retail Price (₹)</label>
                 <input
+                  id="edit-original-price"
                   type="number"
                   min="1"
                   value={originalPrice}
@@ -370,7 +375,7 @@ export default function EditListingPage() {
               <div className="rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400">
+                    <label htmlFor="edit-daily-rent" className="block text-xs font-bold uppercase tracking-wider text-emerald-400">
                       Daily Rental Rate (₹/day)
                     </label>
                     <p className="text-[11px] text-muted-foreground">
@@ -399,6 +404,7 @@ export default function EditListingPage() {
                 </div>
 
                 <input
+                  id="edit-daily-rent"
                   type="number"
                   min="50"
                   max="5000"
@@ -411,8 +417,9 @@ export default function EditListingPage() {
             )}
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-foreground">Location</label>
+              <label htmlFor="edit-location" className="block text-xs font-bold uppercase tracking-wider text-foreground">Location</label>
               <input
+                id="edit-location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 className="mt-1.5 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm font-medium outline-none focus:border-accent"
@@ -420,7 +427,7 @@ export default function EditListingPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+              <label htmlFor="edit-phone" className="block text-xs font-bold uppercase tracking-wider text-foreground">
                 Phone / WhatsApp Number <span className="text-xs font-normal text-muted-foreground">(Shown to buyers for direct call / WhatsApp)</span>
               </label>
               <div className="relative mt-1.5">
@@ -428,6 +435,7 @@ export default function EditListingPage() {
                   <Phone size={16} className="text-accent" />
                 </div>
                 <input
+                  id="edit-phone"
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}

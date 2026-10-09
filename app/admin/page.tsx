@@ -3,31 +3,20 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Navbar } from '@/components/navbar'
 import {
-  Lock,
   Users,
   Package,
   Layers,
   AlertTriangle,
-  ShieldCheck,
   Search,
-  CheckCircle,
-  XCircle,
-  Eye,
   Trash2,
-  Sparkles,
-  Plus,
   Tag,
-  Ban,
-  RotateCcw,
 } from 'lucide-react'
 import {
   getAdminDashboardStats,
   getAdminUsers,
   setUserSuspension,
-  setUserRole,
   getAdminListings,
   adminModerateListing,
   getAdminReports,
@@ -46,7 +35,7 @@ type AdminCategoryList = Awaited<ReturnType<typeof getAdminCategories>>
 
 export default function AdminDashboardPage() {
   const router = useRouter()
-  const [session, setSession] = useState<{ user?: { id: string; email?: string; role?: string } } | null>(null)
+  const [_session, setSession] = useState<{ user?: { id: string; email?: string; role?: string } } | null>(null)
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'listings' | 'reports' | 'categories'>('dashboard')
   const [loading, setLoading] = useState(true)
   const [toastMessage, setToastMessage] = useState('')
@@ -57,12 +46,12 @@ export default function AdminDashboardPage() {
   const [listings, setListings] = useState<AdminListingList>([])
   const [listingFilter, setListingFilter] = useState('all')
   const [reports, setReports] = useState<AdminReportList>([])
-  const [reportFilter, setReportFilter] = useState('all')
+  const [reportFilter, _setReportFilter] = useState('all')
   const [categories, setCategories] = useState<AdminCategoryList>([])
 
   const [newCatName, setNewCatName] = useState('')
   const [newCatSlug, setNewCatSlug] = useState('')
-  const [newCatIcon, setNewCatIcon] = useState('ShoppingBag')
+  const [newCatIcon, _setNewCatIcon] = useState('ShoppingBag')
 
   function showToast(msg: string) {
     setToastMessage(msg)
