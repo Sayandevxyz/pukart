@@ -33,6 +33,27 @@ vi.mock('node:fs/promises', () => ({
   },
 }))
 
+function createMockSession(userId: string, email: string) {
+  return {
+    user: {
+      id: userId,
+      email,
+      name: 'Pondicherry University Student',
+      emailVerified: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    session: {
+      id: `session-${userId}`,
+      userId,
+      token: `token-${userId}`,
+      expiresAt: new Date(Date.now() + 86400000),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  }
+}
+
 describe('Upload API Route & Validation Suite (/api/upload)', () => {
   const originalEnv = { ...process.env }
 
@@ -40,7 +61,7 @@ describe('Upload API Route & Validation Suite (/api/upload)', () => {
     vi.clearAllMocks()
     process.env = { ...originalEnv }
     delete process.env.BLOB_READ_WRITE_TOKEN
-    process.env.NODE_ENV = 'test'
+    Reflect.set(process.env, 'NODE_ENV', 'test')
   })
 
   afterEach(() => {
@@ -131,12 +152,12 @@ describe('Upload API Route & Validation Suite (/api/upload)', () => {
     })
 
     it('should return 503 when BLOB_READ_WRITE_TOKEN is unset in production', async () => {
-      process.env.NODE_ENV = 'production'
+      Reflect.set(process.env, 'NODE_ENV', 'production')
       delete process.env.BLOB_READ_WRITE_TOKEN
 
-      vi.mocked(auth.api.getSession).mockResolvedValueOnce({
-        user: { id: 'usr-prod-test', email: 'test@pondiuni.ac.in' },
-      } as never)
+      vi.mocked(auth.api.getSession).mockResolvedValueOnce(
+        createMockSession('usr-prod-test', 'test@pondiuni.ac.in')
+      )
 
       const form = new FormData()
       form.append('file', createValidImageFile('valid.jpg', 'image/jpeg'))
@@ -148,9 +169,9 @@ describe('Upload API Route & Validation Suite (/api/upload)', () => {
     })
 
     it('should reject request with 400 when no files are provided', async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValueOnce({
-        user: { id: 'usr-123', email: 'student@pondiuni.ac.in' },
-      } as never)
+      vi.mocked(auth.api.getSession).mockResolvedValueOnce(
+        createMockSession('usr-123', 'student@pondiuni.ac.in')
+      )
 
       const form = new FormData()
       const res = await POST(createMockRequest(form))
@@ -160,9 +181,9 @@ describe('Upload API Route & Validation Suite (/api/upload)', () => {
     })
 
     it('should reject request with 400 when batch exceeds 8 images', async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValueOnce({
-        user: { id: 'usr-123', email: 'student@pondiuni.ac.in' },
-      } as never)
+      vi.mocked(auth.api.getSession).mockResolvedValueOnce(
+        createMockSession('usr-123', 'student@pondiuni.ac.in')
+      )
 
       const form = new FormData()
       for (let i = 0; i < 9; i++) {
@@ -176,9 +197,9 @@ describe('Upload API Route & Validation Suite (/api/upload)', () => {
     })
 
     it('should reject unsupported MIME type with 415', async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValueOnce({
-        user: { id: 'usr-123', email: 'student@pondiuni.ac.in' },
-      } as never)
+      vi.mocked(auth.api.getSession).mockResolvedValueOnce(
+        createMockSession('usr-123', 'student@pondiuni.ac.in')
+      )
 
       const form = new FormData()
       const badFile = new File([new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])], 'bad.gif', {
@@ -193,9 +214,9 @@ describe('Upload API Route & Validation Suite (/api/upload)', () => {
     })
 
     it('should reject file exceeding 5MB with 413', async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValueOnce({
-        user: { id: 'usr-123', email: 'student@pondiuni.ac.in' },
-      } as never)
+      vi.mocked(auth.api.getSession).mockResolvedValueOnce(
+        createMockSession('usr-123', 'student@pondiuni.ac.in')
+      )
 
       const form = new FormData()
       const largeBytes = new Uint8Array(5 * 1024 * 1024 + 64)
@@ -210,9 +231,9 @@ describe('Upload API Route & Validation Suite (/api/upload)', () => {
     })
 
     it('should reject fake image with mismatched magic bytes with 400', async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValueOnce({
-        user: { id: 'usr-123', email: 'student@pondiuni.ac.in' },
-      } as never)
+      vi.mocked(auth.api.getSession).mockResolvedValueOnce(
+        createMockSession('usr-123', 'student@pondiuni.ac.in')
+      )
 
       const form = new FormData()
       const fakeBytes = new TextEncoder().encode('fake image content payload')
@@ -227,11 +248,11 @@ describe('Upload API Route & Validation Suite (/api/upload)', () => {
 
     it('should save to local disk fallback in development/test and return local URL (no data-URI)', async () => {
       delete process.env.BLOB_READ_WRITE_TOKEN
-      process.env.NODE_ENV = 'test'
+      Reflect.set(process.env, 'NODE_ENV', 'test')
 
-      vi.mocked(auth.api.getSession).mockResolvedValueOnce({
-        user: { id: 'student-dev-1', email: 'dev@pondiuni.ac.in' },
-      } as never)
+      vi.mocked(auth.api.getSession).mockResolvedValueOnce(
+        createMockSession('student-dev-1', 'dev@pondiuni.ac.in')
+      )
 
       const form = new FormData()
       form.append('file', createValidImageFile('item.jpg', 'image/jpeg'))
@@ -248,13 +269,18 @@ describe('Upload API Route & Validation Suite (/api/upload)', () => {
     it('should upload to Vercel Blob when BLOB_READ_WRITE_TOKEN is configured', async () => {
       process.env.BLOB_READ_WRITE_TOKEN = 'test_blob_token_value'
 
-      vi.mocked(auth.api.getSession).mockResolvedValueOnce({
-        user: { id: 'student-blob-1', email: 'blob@pondiuni.ac.in' },
-      } as never)
+      vi.mocked(auth.api.getSession).mockResolvedValueOnce(
+        createMockSession('student-blob-1', 'blob@pondiuni.ac.in')
+      )
 
       vi.mocked(blobModule.put).mockResolvedValueOnce({
         url: 'https://blob.vercel-storage.com/listings/student-blob-1/photo.jpg',
-      } as never)
+        downloadUrl: 'https://blob.vercel-storage.com/listings/student-blob-1/photo.jpg',
+        pathname: 'listings/student-blob-1/photo.jpg',
+        contentType: 'image/jpeg',
+        contentDisposition: 'inline',
+        etag: '"mock-etag"',
+      })
 
       const form = new FormData()
       form.append('file', createValidImageFile('item.jpg', 'image/jpeg'))

@@ -593,18 +593,18 @@ function MarketplaceHome() {
         </div>
       </section>
 
-      <section className="border-t border-border bg-primary py-10 text-primary-foreground">
+      <section className="border-t border-border bg-card py-10 text-card-foreground">
         <div className="mx-auto flex max-w-[1440px] flex-col gap-6 px-4 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[.16em] text-accent">Ready to pass it on?</p>
-            <h2 className="mt-2 font-serif text-3xl sm:text-4xl">Your next buyer is on campus.</h2>
-            <p className="mt-2 text-xs sm:text-sm text-primary-foreground/75">
+            <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Ready to pass it on?</p>
+            <h2 className="mt-2 font-serif text-3xl sm:text-4xl text-foreground">Your next buyer is on campus.</h2>
+            <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
               List your unused textbooks, electronics, and hostel essentials in minutes.
             </p>
           </div>
           <Link
             href={session?.user ? "/listing/new" : `/sign-in?redirect=${encodeURIComponent('/listing/new')}`}
-            className="w-fit rounded-xl bg-accent px-6 py-3.5 text-sm font-bold text-accent-foreground shadow-lg hover:opacity-95"
+            className="w-fit rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-primary-foreground shadow-lg hover:opacity-95"
           >
             Sell on PUKart <Plus className="ml-1 inline" size={16} />
           </Link>

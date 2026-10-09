@@ -365,7 +365,7 @@ function analyzeSkinToneRatio(buffer: Uint8Array): {
     }
   }
 
-  const skinRatio = totalSamples > 0 ? skinPixels / totalSamples : 0
+  const skinRatio = skinPixels / totalSamples
   
   const colorVariance = colorBuckets.size / 512
 

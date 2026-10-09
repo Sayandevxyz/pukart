@@ -58,6 +58,11 @@ describe('AI Features & Natural Language Processing (Priority 14)', () => {
       expect(parseNaturalLanguageSearch('calculator used good condition').condition).toBe('good')
       expect(parseNaturalLanguageSearch('calculator fair condition scratched').condition).toBe('fair')
     })
+
+    it('should retain raw query when cleaned keywords string is empty', () => {
+      const res = parseNaturalLanguageSearch('find cheap buy rent')
+      expect(res.query).toBe('find cheap buy rent')
+    })
   })
 
   describe('Price Recommendation Algorithm', () => {
@@ -76,6 +81,21 @@ describe('AI Features & Natural Language Processing (Priority 14)', () => {
         originalPrice: 10000,
       })
       expect(usedElectronics.suggestedPrice).toBe(5500)
+    })
+
+    it('should derive original price from currentPrice or default fallback when missing', () => {
+      const fromCurrent = calculatePriceRecommendation({
+        category: 'Cycles',
+        condition: 'fair',
+        currentPrice: 3000,
+      })
+      expect(fromCurrent.suggestedPrice).toBeGreaterThan(0)
+
+      const fallbackDefaults = calculatePriceRecommendation({
+        category: 'UnknownCategory',
+        condition: 'unknown_condition',
+      })
+      expect(fallbackDefaults.suggestedPrice).toBe(1000)
     })
   })
 
@@ -106,6 +126,16 @@ describe('AI Features & Natural Language Processing (Priority 14)', () => {
       )
       expect(check.flagged).toBe(false)
       expect(check.riskLevel).toBe('low')
+    })
+
+    it('should assign high risk level and 0.95 confidence when multiple scam indicators match', () => {
+      const check = checkListingForScam(
+        'iPhone 15 free lottery winner',
+        'Send OTP code and pay advance via gift card. Check http://bit.ly/claim'
+      )
+      expect(check.flagged).toBe(true)
+      expect(check.riskLevel).toBe('high')
+      expect(check.confidence).toBe(0.95)
     })
 
     it('should flag prohibited campus contraband and non-standard payment schemes', () => {
@@ -147,12 +177,9 @@ describe('AI Features & Natural Language Processing (Priority 14)', () => {
 
     it('should generate description using remote AI Gateway / LLM when API key is configured', async () => {
       const origKey = process.env.GEMINI_API_KEY
-      const origFetch = global.fetch
-      try {
-        process.env.GEMINI_API_KEY = 'test-gemini-key'
-        global.fetch = vi.fn().mockResolvedValue({
-          ok: true,
-          json: async () => ({
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(
+          JSON.stringify({
             choices: [
               {
                 message: {
@@ -161,7 +188,11 @@ describe('AI Features & Natural Language Processing (Priority 14)', () => {
               },
             ],
           }),
-        }) as unknown as typeof fetch
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        )
+      )
+      try {
+        process.env.GEMINI_API_KEY = 'test-gemini-key'
 
         const desc = await generateProductDescription({
           title: 'Dell Inspiron 15',
@@ -174,16 +205,15 @@ describe('AI Features & Natural Language Processing (Priority 14)', () => {
         expect(desc).toBe('AI generated premium campus listing description from LLM endpoint.')
       } finally {
         process.env.GEMINI_API_KEY = origKey
-        global.fetch = origFetch
+        fetchSpy.mockRestore()
       }
     })
 
     it('should fallback to rule-based template if remote AI API call fails or returns non-200', async () => {
       const origKey = process.env.GEMINI_API_KEY
-      const origFetch = global.fetch
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Network error'))
       try {
         process.env.GEMINI_API_KEY = 'test-gemini-key'
-        global.fetch = vi.fn().mockRejectedValue(new Error('Network error')) as unknown as typeof fetch
 
         const desc = await generateProductDescription({
           title: 'Dell Inspiron 15',
@@ -195,7 +225,58 @@ describe('AI Features & Natural Language Processing (Priority 14)', () => {
         expect(desc).toContain('like new')
       } finally {
         process.env.GEMINI_API_KEY = origKey
-        global.fetch = origFetch
+        fetchSpy.mockRestore()
+      }
+    })
+
+    it('should cover all condition note variations and highlights branches', async () => {
+      const brandNew = await generateProductDescription({
+        title: 'Notebook',
+        category: 'Books',
+        condition: 'brand_new',
+      })
+      expect(brandNew).toContain('completely brand new')
+
+      const fair = await generateProductDescription({
+        title: 'Study Table',
+        category: 'Hostel',
+        condition: 'fair',
+        highlights: 'Sturdy wood',
+      })
+      expect(fair).toContain('Well-utilized')
+      expect(fair).toContain('Sturdy wood')
+
+      const poor = await generateProductDescription({
+        title: 'Cycle for spares',
+        category: 'Cycles',
+        condition: 'poor',
+      })
+      expect(poor).toContain('Usable condition')
+
+      const unknown = await generateProductDescription({
+        title: 'Custom gadget',
+        category: 'Electronics',
+        condition: 'vintage',
+      })
+      expect(unknown).toContain('Maintained well in hostel rooms')
+    })
+
+    it('should fallback when remote response returns empty choices', async () => {
+      const origKey = process.env.GEMINI_API_KEY
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify({ choices: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      )
+      try {
+        process.env.GEMINI_API_KEY = 'test-gemini-key'
+        const desc = await generateProductDescription({
+          title: 'Chemistry Book',
+          category: 'Books',
+          condition: 'good',
+        })
+        expect(desc).toContain('Chemistry Book')
+      } finally {
+        process.env.GEMINI_API_KEY = origKey
+        fetchSpy.mockRestore()
       }
     })
   })
@@ -206,6 +287,23 @@ describe('AI Features & Natural Language Processing (Priority 14)', () => {
       const res = moderateImageContent('sample-nude-photo.jpg', fakeBuffer)
       expect(res.rejected).toBe(true)
       expect(res.reason).toContain('prohibited content keywords')
+    })
+
+    it('should assign rejected warning level when multiple issues are flagged', () => {
+      const encoder = new TextEncoder()
+      const text = '<x:xmpmeta><dc:subject>adult</dc:subject></x:xmpmeta>'
+      const fakeBuffer = encoder.encode(text)
+      const res = moderateImageContent('sample-nude.jpg', fakeBuffer)
+      expect(res.rejected).toBe(true)
+      expect(res.warningLevel).toBe('rejected')
+      expect(res.details.length).toBeGreaterThanOrEqual(2)
+    })
+
+    it('should safely handle small buffers under 300 bytes', () => {
+      const smallBuffer = new Uint8Array(100)
+      const res = moderateImageContent('valid_thumb.jpg', smallBuffer)
+      expect(res.rejected).toBe(false)
+      expect(res.warningLevel).toBe('safe')
     })
 
     it('should reject images containing explicit XMP metadata tags', () => {

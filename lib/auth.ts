@@ -25,35 +25,33 @@ export function isUserAdmin(email?: string | null, role?: string | null): boolea
   return adminEmails.includes(normalized)
 }
 
-const rawBaseUrl =
-  process.env.BETTER_AUTH_URL ||
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_APP_URL ||
-        (process.env.NODE_ENV === 'production'
-          ? 'https://terminus-ruddy.vercel.app'
-          : 'http://localhost:3000'))
+export function getBaseUrl(env: Record<string, string | undefined> = process.env): string {
+  if (env.BETTER_AUTH_URL) return env.BETTER_AUTH_URL
+  if (env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
+  if (env.VERCEL_URL) return `https://${env.VERCEL_URL}`
+  if (env.NEXT_PUBLIC_APP_URL) return env.NEXT_PUBLIC_APP_URL
+  if (env.NODE_ENV === 'production') return 'https://terminus-ruddy.vercel.app'
+  return 'http://localhost:3000'
+}
 
-export function resolveAuthSecret(): string {
-  if (process.env.BETTER_AUTH_SECRET) {
-    return process.env.BETTER_AUTH_SECRET
+export function resolveAuthSecret(env: Record<string, string | undefined> = process.env): string {
+  if (env.BETTER_AUTH_SECRET) {
+    return env.BETTER_AUTH_SECRET
   }
 
-  if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
+  if (env.NODE_ENV === 'test' || env.VITEST) {
     return 'test_only_better_auth_secret_for_vitest_runner'
   }
 
   if (
-    process.env.NEXT_PHASE === 'phase-production-build' ||
-    process.env.npm_lifecycle_event === 'build' ||
-    process.env.__NEXT_BUILD === '1'
+    env.NEXT_PHASE === 'phase-production-build' ||
+    env.npm_lifecycle_event === 'build' ||
+    env.__NEXT_BUILD === '1'
   ) {
     return 'build_time_static_analysis_secret_placeholder'
   }
 
-  if (process.env.NODE_ENV === 'production') {
+  if (env.NODE_ENV === 'production') {
     throw new Error(
       'Missing required environment variable: BETTER_AUTH_SECRET. Generate a strong secret via `openssl rand -base64 32`.'
     )
@@ -62,13 +60,57 @@ export function resolveAuthSecret(): string {
   return 'dev_insecure_secret_pukart_local_only'
 }
 
-const authSecret = resolveAuthSecret()
+export function getTrustedOrigins(env: Record<string, string | undefined> = process.env): string[] {
+  return [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'https://pukart.shop',
+    'https://www.pukart.shop',
+    'https://terminus-ruddy.vercel.app',
+    ...(env.BETTER_AUTH_URL ? [env.BETTER_AUTH_URL] : []),
+    ...(env.NEXT_PUBLIC_APP_URL ? [env.NEXT_PUBLIC_APP_URL] : []),
+    ...(env.VERCEL_URL ? [`https://${env.VERCEL_URL}`] : []),
+    ...(env.VERCEL_PROJECT_PRODUCTION_URL ? [`https://${env.VERCEL_PROJECT_PRODUCTION_URL}`] : []),
+    ...(env.V0_RUNTIME_URL ? [env.V0_RUNTIME_URL] : []),
+    ...(env.V0_DEV_APP_URL ? [env.V0_DEV_APP_URL] : []),
+    ...(env.V0_BUILD_URL ? [env.V0_BUILD_URL] : []),
+    ...(env.V0_SANDBOX_URL ? [env.V0_SANDBOX_URL] : []),
+  ]
+}
 
+export function validateAndPrepareUser(user: { email?: string; role?: string; [key: string]: unknown }) {
+  const email = user.email?.trim().toLowerCase()
+  if (!email || !isValidEmail(email)) {
+    throw new Error('Please provide a valid email address.')
+  }
+  const role = isUserAdmin(email, user.role) ? 'admin' : 'user'
+  return {
+    data: {
+      ...user,
+      email,
+      role,
+    },
+  }
+}
+
+export function mapGoogleProfileToUser(profile: { email?: string; name?: string; picture?: string }) {
+  const email = profile.email?.trim().toLowerCase()
+  if (!email || !isValidEmail(email)) {
+    throw new Error('Please sign in with a valid email address.')
+  }
+  return {
+    email,
+    name: profile.name || 'Campus User',
+    image: profile.picture || undefined,
+  }
+}
 
 export const auth = betterAuth({
   database: pool,
-  secret: authSecret,
-  baseURL: rawBaseUrl,
+  secret: resolveAuthSecret(),
+  baseURL: getBaseUrl(),
   user: {
     additionalFields: {
       department: { type: 'string', required: false },
@@ -82,24 +124,10 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        before: async (user) => {
-          const email = user.email?.trim().toLowerCase()
-          if (!email || !isValidEmail(email)) {
-            throw new Error('Please provide a valid email address.')
-          }
-          const role = isUserAdmin(email, (user as { role?: string }).role) ? 'admin' : 'user'
-          return {
-            data: {
-              ...user,
-              email,
-              role,
-            },
-          }
-        },
+        before: async (user) => validateAndPrepareUser(user),
       },
     },
   },
-  
   emailAndPassword: {
     enabled: false,
   },
@@ -109,39 +137,13 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
       prompt: 'select_account',
       accessType: 'offline',
-      mapProfileToUser: async (profile) => {
-        const email = profile.email?.trim().toLowerCase()
-        if (!email || !isValidEmail(email)) {
-          throw new Error('Please sign in with a valid email address.')
-        }
-        return {
-          email,
-          name: profile.name || 'Campus User',
-          image: profile.picture || undefined,
-        }
-      },
+      mapProfileToUser: async (profile) => mapGoogleProfileToUser(profile),
     },
   },
-  trustedOrigins: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:3001',
-    'https://pukart.shop',
-    'https://www.pukart.shop',
-    'https://terminus-ruddy.vercel.app',
-    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
-    ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL] : []),
-    ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
-    ...(process.env.VERCEL_PROJECT_PRODUCTION_URL ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`] : []),
-    ...(process.env.V0_RUNTIME_URL ? [process.env.V0_RUNTIME_URL] : []),
-    ...(process.env.V0_DEV_APP_URL ? [process.env.V0_DEV_APP_URL] : []),
-    ...(process.env.V0_BUILD_URL ? [process.env.V0_BUILD_URL] : []),
-    ...(process.env.V0_SANDBOX_URL ? [process.env.V0_SANDBOX_URL] : []),
-  ],
+  trustedOrigins: getTrustedOrigins(),
   session: {
-    expiresIn: 60 * 60 * 24 * 7, 
-    updateAge: 60 * 60 * 24, 
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
   },
   ...(process.env.NODE_ENV === 'development'
     ? {

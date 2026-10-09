@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { isUserAdmin } from '../lib/auth'
 import { checkProfileCompletion } from '../lib/constants/campus'
 import { sanitizeText } from '../lib/utils'
@@ -272,11 +272,11 @@ describe('Security & Authorization Boundary Tests', () => {
       const origEnv = { ...process.env }
       try {
         // In test, defaults to MemoryRateLimiterStore
-        process.env.NODE_ENV = 'test'
+        Reflect.set(process.env, 'NODE_ENV', 'test')
         expect(getActiveStore()).toBeInstanceOf(MemoryRateLimiterStore)
 
         // In production with Upstash credentials
-        process.env.NODE_ENV = 'production'
+        Reflect.set(process.env, 'NODE_ENV', 'production')
         process.env.UPSTASH_REDIS_REST_URL = 'https://example.upstash.io'
         process.env.UPSTASH_REDIS_REST_TOKEN = 'secret'
         expect(getActiveStore()).toBeInstanceOf(UpstashRateLimiterStore)

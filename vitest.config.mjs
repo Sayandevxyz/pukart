@@ -5,6 +5,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    include: ['tests/**/*.{test,spec}.ts'],
+    exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
     env: {
       GOOGLE_CLIENT_ID: 'mock-google-client-id-test.apps.googleusercontent.com',
       GOOGLE_CLIENT_SECRET: 'mock-google-client-secret-test',
@@ -17,6 +19,12 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       include: ['lib/constants/**', 'lib/ai.ts', 'lib/auth.ts', 'lib/utils.ts'],
       exclude: ['**/*.d.ts', 'node_modules/**'],
+      thresholds: {
+        lines: 95,
+        branches: 95,
+        functions: 95,
+        statements: 95,
+      },
     },
   },
   resolve: {

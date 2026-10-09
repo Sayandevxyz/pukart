@@ -9,6 +9,7 @@ import {
   getTypesForCategory,
   getConditionsForCategory,
   getFormOptionsForCategory,
+  CATEGORY_CONFIGS,
   type FilterOption,
 } from '../lib/constants/categories'
 import { cn } from '../lib/utils'
@@ -531,6 +532,29 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
       const unknownOpts = getFormOptionsForCategory('NonExistent')
       expect(unknownOpts.defaultType).toBe('sell')
       expect(unknownOpts.defaultCondition).toBe('brand_new')
+
+      // Test category with explicit defaultType and defaultCondition
+      const foodOpts = getFormOptionsForCategory('Food')
+      expect(foodOpts.defaultType).toBe('tiffin')
+      expect(foodOpts.defaultCondition).toBe('fresh_today')
+
+      // Test fallback branch when types or conditions array is empty
+      CATEGORY_CONFIGS['__TestEmpty__'] = {
+        name: '__TestEmpty__',
+        label: 'Test Empty',
+        typeLabel: 'Type',
+        conditionLabel: 'Condition',
+        titlePlaceholder: 'Title',
+        types: [],
+        conditions: [],
+      }
+      try {
+        const emptyOpts = getFormOptionsForCategory('__TestEmpty__')
+        expect(emptyOpts.defaultType).toBe('sell')
+        expect(emptyOpts.defaultCondition).toBe('good')
+      } finally {
+        delete CATEGORY_CONFIGS['__TestEmpty__']
+      }
     })
   })
 })
