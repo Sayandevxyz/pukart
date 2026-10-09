@@ -24,16 +24,18 @@ import {
 } from '@/app/actions/marketplace'
 import { authClient } from '@/lib/auth-client'
 
+type TransactionEntry = Awaited<ReturnType<typeof getMyTransactions>>[number]
+
 export default function TransactionsPage() {
   const router = useRouter()
-  const [session, setSession] = useState<any>(null)
-  const [transactions, setTransactions] = useState<any[]>([])
+  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
+  const [transactions, setTransactions] = useState<TransactionEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'all' | 'buying' | 'selling'>('all')
   const [toastMessage, setToastMessage] = useState('')
 
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
-  const [selectedTx, setSelectedTx] = useState<any>(null)
+  const [selectedTx, setSelectedTx] = useState<TransactionEntry | null>(null)
   const [rating, setRating] = useState(5)
   const [reviewBody, setReviewBody] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
@@ -48,9 +50,8 @@ export default function TransactionsPage() {
     try {
       const data = await getMyTransactions()
       setTransactions(data)
-    } catch (err: any) {
-      console.error(err)
-      showToast(err.message || 'Failed to load transactions')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to load transactions')
     } finally {
       setLoading(false)
     }
@@ -72,8 +73,8 @@ export default function TransactionsPage() {
       await updateTransactionStatus(txId, status)
       showToast(`Transaction updated to ${status.toUpperCase()}`)
       loadTransactions()
-    } catch (err: any) {
-      showToast(err.message || 'Failed to update transaction status')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to update transaction status')
     }
   }
 
@@ -82,7 +83,6 @@ export default function TransactionsPage() {
     if (!selectedTx) return
     setSubmittingReview(true)
     try {
-      const recipientId = selectedTx.isBuyer ? selectedTx.sellerId : selectedTx.buyerId
       await leaveReview({
         transactionId: selectedTx.id,
         rating,
@@ -91,8 +91,8 @@ export default function TransactionsPage() {
       setReviewModalOpen(false)
       showToast('Thank you! Your campus review has been published.')
       loadTransactions()
-    } catch (err: any) {
-      showToast(err.message || 'Failed to submit review')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to submit review')
     } finally {
       setSubmittingReview(false)
     }
@@ -128,14 +128,14 @@ export default function TransactionsPage() {
         </div>
 
         <div className="mt-6 flex gap-2 border-b border-border pb-3 text-sm font-semibold">
-          {[
-            { id: 'all', label: `All Deals (${transactions.length})` },
-            { id: 'buying', label: `Buying (${transactions.filter((t) => t.isBuyer).length})` },
-            { id: 'selling', label: `Selling (${transactions.filter((t) => !t.isBuyer).length})` },
-          ].map((tab) => (
+          {([
+            { id: 'all' as const, label: `All Deals (${transactions.length})` },
+            { id: 'buying' as const, label: `Buying (${transactions.filter((t) => t.isBuyer).length})` },
+            { id: 'selling' as const, label: `Selling (${transactions.filter((t) => !t.isBuyer).length})` },
+          ]).map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id)}
               className={`rounded-xl px-4 py-2 transition ${
                 activeTab === tab.id
                   ? 'bg-primary text-primary-foreground font-bold shadow-sm'

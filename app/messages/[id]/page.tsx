@@ -24,14 +24,15 @@ import {
   makeOffer,
 } from '@/app/actions/marketplace'
 import { authClient } from '@/lib/auth-client'
+import type { ChatMessageItem } from '@/lib/types'
 
 export default function ConversationChatPage() {
   const params = useParams()
   const router = useRouter()
   const conversationId = Number(params?.id)
 
-  const [session, setSession] = useState<any>(null)
-  const [data, setData] = useState<any>(null)
+  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
+  const [data, setData] = useState<Awaited<ReturnType<typeof getConversationById>>>(null)
   const [loading, setLoading] = useState(true)
   const [inputText, setInputText] = useState('')
   const [sending, setSending] = useState(false)
@@ -51,9 +52,9 @@ export default function ConversationChatPage() {
     try {
       const res = await getConversationById(conversationId)
       setData(res)
-    } catch (err: any) {
+    } catch (err) {
       console.error(err)
-      showToast(err.message || 'Failed to load conversation')
+      showToast((err instanceof Error ? err.message : String(err)) || 'Failed to load conversation')
     } finally {
       setLoading(false)
     }
@@ -88,8 +89,8 @@ export default function ConversationChatPage() {
     try {
       await sendMessage(conversationId, textToSend)
       await loadConversation()
-    } catch (err: any) {
-      showToast(err.message || 'Failed to send message')
+    } catch (err) {
+      showToast((err instanceof Error ? err.message : String(err)) || 'Failed to send message')
       setInputText(textToSend)
     } finally {
       setSending(false)
@@ -99,15 +100,15 @@ export default function ConversationChatPage() {
   async function handleMakeOffer(e: React.FormEvent) {
     e.preventDefault()
     const val = Number(offerAmount)
-    if (!val || val <= 0) return
+    if (!val || val <= 0 || !data?.listing?.id) return
     try {
       await makeOffer(data.listing.id, val, `Offer made via chat: ₹${val}`)
       await sendMessage(conversationId, `💬 Proposed an offer of ₹${val.toLocaleString('en-IN')}. Check transactions tab to respond.`)
       setOfferModalOpen(false)
       showToast(`Offer of ₹${val} submitted!`)
       loadConversation()
-    } catch (err: any) {
-      showToast(err.message || 'Failed to submit offer')
+    } catch (err) {
+      showToast((err instanceof Error ? err.message : String(err)) || 'Failed to submit offer')
     }
   }
 
@@ -118,8 +119,8 @@ export default function ConversationChatPage() {
       await blockUser(data.otherUser.id)
       showToast('User blocked')
       router.push('/messages')
-    } catch (err: any) {
-      showToast(err.message || 'Failed to block user')
+    } catch (err) {
+      showToast((err instanceof Error ? err.message : String(err)) || 'Failed to block user')
     }
   }
 
@@ -161,7 +162,7 @@ export default function ConversationChatPage() {
         </div>
       )}
 
-      <main className="mx-auto flex flex-1 w-full max-w-4xl flex-col px-4 py-4 sm:px-6">
+      <main id="main-content" className="mx-auto flex flex-1 w-full max-w-4xl flex-col px-4 py-4 sm:px-6">
         
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
@@ -232,7 +233,7 @@ export default function ConversationChatPage() {
               Send your first message to discuss price, item condition, or campus meetup location.
             </div>
           ) : (
-            messages.map((msg: any) => {
+            messages.map((msg: ChatMessageItem) => {
               const isMine = msg.senderId === session?.user?.id
               return (
                 <div

@@ -56,7 +56,7 @@ export default function EditListingPage() {
 
   useEffect(() => {
     authClient.getSession().then((res) => {
-      if (res?.data?.user) setSession(res.data as any)
+      if (res?.data?.user) setSession(res.data)
       else router.push('/sign-in')
     }).catch(() => router.push('/sign-in'))
 
@@ -119,8 +119,8 @@ export default function EditListingPage() {
         setImages((prev) => [...prev, data.url])
       }
       showToast('Images added successfully!')
-    } catch (err: any) {
-      showToast(err.message || 'Image upload failed')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Image upload failed')
     } finally {
       setUploading(false)
     }
@@ -161,8 +161,8 @@ export default function EditListingPage() {
       })
       showToast('Listing updated successfully!')
       router.push(`/listing/${listingId}`)
-    } catch (err: any) {
-      showToast(err.message || 'Failed to update listing')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to update listing')
       setSaving(false)
     }
   }
@@ -174,8 +174,8 @@ export default function EditListingPage() {
       await deleteListing(listingId)
       showToast('Listing deleted')
       router.push('/my-listings')
-    } catch (err: any) {
-      showToast(err.message || 'Failed to delete listing')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to delete listing')
       setSaving(false)
     }
   }

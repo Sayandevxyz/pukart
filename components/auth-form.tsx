@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
@@ -40,21 +41,24 @@ function AuthFormContent() {
         }
         return
       }
-    } catch (err: any) {
+    } catch (err) {
       setLoading(false)
       setError('Could not complete Google sign-in. Please try again.')
     }
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-background px-4 py-8 relative">
+    <main id="main-content" className="flex min-h-svh items-center justify-center bg-background px-4 py-8 relative">
 
       <Card className="w-full max-w-md overflow-hidden border-border/80 bg-card p-8 shadow-2xl shadow-primary/5 sm:p-10">
         <div className="flex flex-col items-center text-center">
           <div className="mb-6 flex items-center gap-3">
-            <img
+            <Image
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-EScoY3Dr9cDuwfPiUrfIsTl2QOCJT5.png"
               alt="PUKart logo"
+              width={64}
+              height={64}
+              priority
               className="h-16 w-16 rounded-2xl object-cover shadow-lg shadow-primary/20"
             />
             <div className="text-left">

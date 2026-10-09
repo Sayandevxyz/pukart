@@ -99,7 +99,7 @@ function MarketplaceHome() {
   const [banner, setBanner] = useState(0)
   const [notice, setNotice] = useState('')
 
-  const [session, setSession] = useState<any>(null)
+  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
   const [saved, setSaved] = useState<number[]>([])
 
   const availableTypes = useMemo(() => getTypesForCategory(activeCategory), [activeCategory])
@@ -154,9 +154,9 @@ function MarketplaceHome() {
     try {
       const result = await toggleFavorite(id)
       toast(result.saved ? 'Saved to favorites' : 'Removed from favorites')
-    } catch (err: any) {
+    } catch (err) {
       setSaved((current) => (wasSaved ? [...current, id] : current.filter((item) => item !== id)))
-      toast(err.message || 'Failed to save')
+      toast(err instanceof Error ? err.message : 'Failed to save')
     }
   }
 

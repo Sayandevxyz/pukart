@@ -60,16 +60,24 @@ export interface ListingItem {
   seller?: ListingSeller | null
 }
 
+export interface ReviewItem {
+  id: number
+  transactionId?: number
+  listingId?: number | null
+  authorId?: string
+  recipientId?: string
+  rating: number
+  body?: string
+  comment?: string | null
+  createdAt: string | Date
+  reviewerName?: string
+  buyerName?: string
+}
+
 export interface UserRatingStats {
   averageRating: number | null
   reviewCount: number
-  reviews?: Array<{
-    id: number
-    rating: number
-    comment?: string | null
-    createdAt: string | Date
-    buyerName?: string
-  }>
+  reviews?: ReviewItem[]
 }
 
 export interface TransactionItem {
@@ -88,3 +96,41 @@ export interface TransactionItem {
   buyer?: UserProfile
   seller?: UserProfile
 }
+
+export interface ChatMessageItem {
+  id: number
+  conversationId?: number
+  senderId: string
+  content: string
+  readAt?: string | Date | null
+  createdAt: string | Date
+}
+
+export interface ReportItem {
+  id: number
+  reason: string
+  details?: string | null
+  listingId?: number | null
+  reportedUserId?: string | null
+  reporterId?: string
+  createdAt: string | Date
+}
+
+export interface ConversationItem {
+  id: number
+  listingId: number
+  buyerId: string
+  sellerId: string
+  lastMessageAt?: string | Date | null
+  createdAt: string | Date
+  listing?: ListingItem
+  otherUser?: UserProfile
+}
+
+export interface SellerProfileData {
+  user: UserProfile & { createdAt?: string | Date | null; role?: string }
+  listings: ListingItem[]
+  ratingStats: UserRatingStats
+  isPrivate?: boolean
+}
+

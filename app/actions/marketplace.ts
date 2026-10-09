@@ -85,9 +85,9 @@ export async function toggleFavorite(listingId: number) {
     revalidatePath('/favorites')
     revalidatePath('/')
     return { success: true, saved: true }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[toggleFavorite error]', err)
-    return { success: false, error: err.message || 'Failed to update favorite' }
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to update favorite' }
   }
 }
 
@@ -200,9 +200,9 @@ export async function startConversation(listingId: number, initialMessage?: stri
 
     revalidatePath('/messages')
     return { success: true, id: conversation.id, conversation }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[startConversation error]', err)
-    return { success: false, error: err.message || 'Unable to open conversation' }
+    return { success: false, error: err instanceof Error ? err.message : 'Unable to open conversation' }
   }
 }
 
@@ -352,9 +352,9 @@ export async function sendMessage(conversationId: number, content: string, image
     revalidatePath('/messages')
     revalidatePath('/notifications')
     return { success: true, message }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[sendMessage error]', err)
-    return { success: false, error: err.message || 'Failed to send message' }
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to send message' }
   }
 }
 
@@ -370,9 +370,9 @@ export async function blockUser(targetUserId: string) {
       .onConflictDoNothing()
 
     return { success: true, blocked: true }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[blockUser error]', err)
-    return { success: false, error: err.message || 'Failed to block user' }
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to block user' }
   }
 }
 
@@ -416,9 +416,9 @@ export async function makeOffer(listingId: number, amount: number, message?: str
     revalidatePath('/transactions')
     revalidatePath('/notifications')
     return { success: true, offer }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[makeOffer error]', err)
-    return { success: false, error: err.message || 'Failed to submit offer' }
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to submit offer' }
   }
 }
 
@@ -532,9 +532,9 @@ export async function respondToOffer(offerId: number, action: 'accept' | 'reject
     }
 
     return { success: false, error: 'Invalid action' }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[respondToOffer error]', err)
-    return { success: false, error: err.message || 'Failed to update offer' }
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to update offer' }
   }
 }
 
@@ -581,9 +581,9 @@ export async function requestTransaction(listingId: number, paymentMethod = 'mee
     revalidatePath('/transactions')
     revalidatePath('/notifications')
     return { success: true, transaction }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[requestTransaction error]', err)
-    return { success: false, error: err.message || 'Failed to submit buy request' }
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to submit buy request' }
   }
 }
 
@@ -688,9 +688,9 @@ export async function updateTransactionStatus(
 
     revalidatePath('/transactions')
     return { success: true, transaction: updated }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[updateTransactionStatus error]', err)
-    return { success: false, error: err.message || 'Failed to update transaction status' }
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to update transaction status' }
   }
 }
 
@@ -757,9 +757,9 @@ export async function leaveReview(input: {
     revalidatePath(`/seller/${recipientId}`)
     revalidatePath('/transactions')
     return { success: true, review }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[leaveReview error]', err)
-    return { success: false, error: err.message || 'Failed to submit review' }
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to submit review' }
   }
 }
 
@@ -859,9 +859,9 @@ export async function reportListing(listingId: number, reason: string, details?:
       .returning()
 
     return { success: true, reported: true, reportId: report.id }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[reportListing error]', err)
-    return { success: false, error: err.message || 'Failed to submit report' }
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to submit report' }
   }
 }
 
@@ -886,9 +886,9 @@ export async function reportUser(reportedUserId: string, reason: string, details
       .returning()
 
     return { success: true, reported: true, reportId: report.id }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[reportUser error]', err)
-    return { success: false, error: err.message || 'Failed to submit report' }
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to submit report' }
   }
 }
 
@@ -947,9 +947,9 @@ export async function saveProfile(input: {
     revalidatePath('/profile')
     revalidatePath('/listing/new')
     return { success: true, profile: values }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[saveProfile error]', err)
-    return { success: false, error: err.message || 'Failed to save profile' }
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to save profile' }
   }
 }
 

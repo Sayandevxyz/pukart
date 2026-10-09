@@ -9,6 +9,7 @@ import {
   getTypesForCategory,
   getConditionsForCategory,
   getFormOptionsForCategory,
+  type FilterOption,
 } from '../lib/constants/categories'
 
 describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)', () => {
@@ -126,8 +127,8 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
     it('should provide food-tailored options for Food category', () => {
       const foodTypes = getTypesForCategory('Food')
       const foodConditions = getConditionsForCategory('Food')
-      const foodLabels = foodTypes.map((t: any) => t.label).join(' ')
-      const foodCondLabels = foodConditions.map((c: any) => c.label).join(' ')
+      const foodLabels = foodTypes.map((t: FilterOption) => t.label).join(' ')
+      const foodCondLabels = foodConditions.map((c: FilterOption) => c.label).join(' ')
 
       expect(foodLabels).toContain('Daily Meal / Home Tiffin')
       expect(foodLabels).toContain('Hostel Mess Coupon / Share')
@@ -138,8 +139,8 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
     it('should provide service-tailored options for Services category', () => {
       const serviceTypes = getTypesForCategory('Services')
       const serviceConditions = getConditionsForCategory('Services')
-      const serviceLabels = serviceTypes.map((t: any) => t.label).join(' ')
-      const serviceCondLabels = serviceConditions.map((c: any) => c.label).join(' ')
+      const serviceLabels = serviceTypes.map((t: FilterOption) => t.label).join(' ')
+      const serviceCondLabels = serviceConditions.map((c: FilterOption) => c.label).join(' ')
 
       expect(serviceLabels).toContain('Tutoring / Exam Prep / Assignment Help')
       expect(serviceLabels).toContain('Printing / Xerox / Thesis Binding')

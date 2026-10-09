@@ -35,7 +35,7 @@ export default function HelpPage() {
       <div>
         <Navbar />
 
-        <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 space-y-8">
+        <main id="main-content" className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 space-y-8">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-accent">Pondicherry University</span>
             <h1 className="mt-1 font-serif text-3xl font-bold text-primary sm:text-4xl">Help & Campus FAQ</h1>

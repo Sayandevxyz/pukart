@@ -24,7 +24,7 @@ function AuthErrorContent() {
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-background px-4 py-8">
+    <main id="main-content" className="flex min-h-svh items-center justify-center bg-background px-4 py-8">
       <Card className="w-full max-w-md overflow-hidden border-border/80 bg-card p-8 shadow-2xl shadow-primary/5 sm:p-10 text-center">
         <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 mb-6">
           <GraduationCap className="size-8" />

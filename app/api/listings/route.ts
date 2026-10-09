@@ -130,8 +130,8 @@ export async function GET(request: NextRequest) {
       count: rows.length,
       hasMore: rows.length === limit,
     })
-  } catch (error: any) {
-    console.error('[API Listings Error]', error?.message || error)
+  } catch (error) {
+    console.error('[API Listings Error]', error instanceof Error ? error.message : error)
     return NextResponse.json({
       listings: [],
       page: 1,

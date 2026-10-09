@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import {
@@ -99,9 +100,12 @@ export function Navbar({
       <div className="mx-auto flex max-w-[1440px] items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8">
         
         <Link href="/" className="flex shrink-0 items-center gap-2.5 group" aria-label="PUKart Home">
-          <img
+          <Image
             src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-EScoY3Dr9cDuwfPiUrfIsTl2QOCJT5.png"
             alt="PUKart logo"
+            width={40}
+            height={40}
+            priority
             className="h-10 w-10 rounded-xl object-cover shadow-sm transition group-hover:scale-105"
           />
           <div className="flex flex-col">
@@ -131,7 +135,7 @@ export function Navbar({
               type="button"
               onClick={() => setSearchQuery('')}
               className="absolute right-3 rounded-md p-1 text-muted-foreground hover:bg-muted"
-              aria-label="Clear"
+              aria-label="Clear search input"
             >
               <X size={15} />
             </button>

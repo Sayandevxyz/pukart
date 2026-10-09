@@ -25,9 +25,20 @@ import { getFormOptionsForCategory } from '@/lib/constants/categories'
 import { AlertTriangle, UserRound, Phone } from 'lucide-react'
 import Link from 'next/link'
 
+type AuthUserData = {
+  id: string
+  name?: string
+  email?: string
+  phone?: string | null
+  department?: string | null
+  course?: string | null
+  year?: string | number | null
+  hostel?: string | null
+}
+
 export default function NewListingPage() {
   const router = useRouter()
-  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
+  const [session, setSession] = useState<{ user?: AuthUserData } | null>(null)
   const [authChecking, setAuthChecking] = useState(true)
   const [loading, setLoading] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
@@ -78,15 +89,16 @@ export default function NewListingPage() {
 
         const authRes = await authClient.getSession()
         if (authRes?.data?.user) {
-          setSession(authRes.data as any)
-          const u = authRes.data.user as any
+          setSession(authRes.data as { user?: AuthUserData })
+          const u = authRes.data.user as AuthUserData
           if (u.phone) {
             setPhone(u.phone)
           }
+          const parsedYear = typeof u.year === 'number' ? u.year : (u.year ? parseInt(String(u.year), 10) : null)
           const result = checkProfileCompletion({
             department: u.department,
             course: u.course,
-            year: u.year,
+            year: Number.isNaN(parsedYear) ? null : parsedYear,
             hostel: u.hostel,
           })
           if (!result.isComplete) {
@@ -101,7 +113,7 @@ export default function NewListingPage() {
       } catch {
         const authRes = await authClient.getSession()
         if (authRes?.data?.user) {
-          setSession(authRes.data as any)
+          setSession(authRes.data as { user?: AuthUserData })
           setAuthChecking(false)
         } else {
           router.replace('/sign-in?redirect=' + encodeURIComponent('/listing/new'))
@@ -157,8 +169,8 @@ export default function NewListingPage() {
         setImages((prev) => [...prev, data.url])
       }
       showToast('Images uploaded successfully!')
-    } catch (err: any) {
-      showToast(err.message || 'Image upload failed')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Image upload failed')
     } finally {
       setUploading(false)
     }
@@ -183,8 +195,8 @@ export default function NewListingPage() {
       })
       setDescription(desc)
       showToast('AI Description generated!')
-    } catch (err: any) {
-      showToast(err.message || 'AI generation unavailable')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'AI generation unavailable')
     } finally {
       setAiLoading(false)
     }
@@ -234,8 +246,8 @@ export default function NewListingPage() {
       })
       showToast('Listing published successfully!')
       router.push(`/listing/${listing.id}`)
-    } catch (err: any) {
-      showToast(err.message || 'Failed to publish listing')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to publish listing')
       setLoading(false)
     }
   }

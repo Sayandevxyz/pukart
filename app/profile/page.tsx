@@ -175,7 +175,7 @@ function ProfilePageInner() {
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect')
 
-  const [session, setSession] = useState<any>(null)
+  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
   const [department, setDepartment] = useState('')
   const [course, setCourse] = useState('')
   const [year, setYear] = useState('1')
@@ -269,8 +269,8 @@ function ProfilePageInner() {
           router.push(redirectTo)
         }, 1000)
       }
-    } catch (err: any) {
-      showToast(err.message || 'Failed to update profile')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to update profile')
     } finally {
       setSaving(false)
     }

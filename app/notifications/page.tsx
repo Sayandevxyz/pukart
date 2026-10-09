@@ -23,10 +23,12 @@ import {
 } from '@/app/actions/marketplace'
 import { authClient } from '@/lib/auth-client'
 
+type NotificationItem = Awaited<ReturnType<typeof getNotifications>>[number]
+
 export default function NotificationsPage() {
   const router = useRouter()
-  const [session, setSession] = useState<any>(null)
-  const [notifications, setNotifications] = useState<any[]>([])
+  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(true)
   const [toastMessage, setToastMessage] = useState('')
 
@@ -44,8 +46,7 @@ export default function NotificationsPage() {
       } else {
         setNotifications([])
       }
-    } catch (err: any) {
-      console.error('[loadNotifications error]', err)
+    } catch {
       setNotifications([])
     } finally {
       setLoading(false)
@@ -114,7 +115,7 @@ export default function NotificationsPage() {
         </div>
       )}
 
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <main id="main-content" className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-serif text-3xl font-bold text-primary">Notifications</h1>

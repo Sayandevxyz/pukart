@@ -73,6 +73,8 @@ function extractDailyRentPrice(item: Partial<ListingItem> | null | undefined): n
   return 350
 }
 
+type RentalDuration = '1_day' | '3_days' | '1_week' | '1_month'
+
 export default function ListingDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -95,7 +97,7 @@ export default function ListingDetailPage() {
   const [reportReason, setReportReason] = useState('Suspicious pricing or advance payment requested')
   const [actionLoading, setActionLoading] = useState(false)
 
-  const [rentalDuration, setRentalDuration] = useState<'1_day' | '3_days' | '1_week' | '1_month'>('1_day')
+  const [rentalDuration, setRentalDuration] = useState<RentalDuration>('1_day')
   const [customDailyPrice, setCustomDailyPrice] = useState<string>('')
   const [savingCustomPrice, setSavingCustomPrice] = useState(false)
   const [isRentalPurchase, setIsRentalPurchase] = useState(false)
@@ -107,7 +109,7 @@ export default function ListingDetailPage() {
 
   useEffect(() => {
     authClient.getSession().then((res) => {
-      if (res?.data) setSession(res.data as any)
+      if (res?.data?.user) setSession(res.data)
     }).catch(() => { })
 
     if (!listingId || isNaN(listingId)) return
@@ -153,9 +155,9 @@ export default function ListingDetailPage() {
     try {
       const res = await toggleFavorite(listingId)
       showToast(res.saved ? 'Saved to your favorites' : 'Removed from favorites')
-    } catch (err: any) {
+    } catch (err) {
       setIsSaved(!nextState)
-      showToast(err.message || 'Failed to update favorite')
+      showToast(err instanceof Error ? err.message : 'Failed to update favorite')
     }
   }
 
@@ -184,9 +186,9 @@ export default function ListingDetailPage() {
         setActionLoading(false)
         showToast('Unable to open conversation')
       }
-    } catch (err: any) {
+    } catch (err) {
       setActionLoading(false)
-      showToast(err.message || 'Unable to open conversation')
+      showToast(err instanceof Error ? err.message : 'Unable to open conversation')
     }
   }
 
@@ -246,8 +248,8 @@ export default function ListingDetailPage() {
         showToast(`Offer of ₹${val.toLocaleString('en-IN')} submitted successfully!`)
         router.push('/transactions')
       }
-    } catch (err: any) {
-      showToast(err.message || 'Failed to submit offer')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to submit offer')
     } finally {
       setActionLoading(false)
     }
@@ -269,8 +271,8 @@ export default function ListingDetailPage() {
         showToast('Purchase request sent! Check your transactions page.')
         router.push('/transactions')
       }
-    } catch (err: any) {
-      showToast(err.message || 'Failed to send buy request')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to send buy request')
     } finally {
       setActionLoading(false)
     }
@@ -287,8 +289,8 @@ export default function ListingDetailPage() {
       await reportListing(listingId, reportReason)
       setReportModalOpen(false)
       showToast('Listing reported. Our campus moderation team will review it.')
-    } catch (err: any) {
-      showToast(err.message || 'Report failed')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Report failed')
     } finally {
       setActionLoading(false)
     }
@@ -356,7 +358,7 @@ export default function ListingDetailPage() {
 
   const baseDailyRentalPrice = extractDailyRentPrice(listing)
 
-  const rentalOptions: Record<string, { label: string; multiplier: number; days: number }> = {
+  const rentalOptions: Record<RentalDuration, { label: string; multiplier: number; days: number }> = {
     '1_day': { label: 'Daily (1 Day)', multiplier: 1, days: 1 },
     '3_days': { label: 'Weekend Pass (3 Days)', multiplier: 2.4, days: 3 },
     '1_week': { label: 'Weekly Transit (7 Days)', multiplier: 4.8, days: 7 },
@@ -540,7 +542,7 @@ export default function ListingDetailPage() {
                       <Bike size={16} />
                     </span>
                     <div>
-                      <h3 className="text-sm font-bold text-primary">Campus Transit & Mobility Rental</h3>
+                      <h2 className="text-sm font-bold text-primary">Campus Transit & Mobility Rental</h2>
                       <p className="text-[11px] text-muted-foreground">800-acre PU Campus Walk-Saver</p>
                     </div>
                   </div>
@@ -573,8 +575,8 @@ export default function ListingDetailPage() {
                               setListing({ ...listing, priceUnit: `daily_${preset}` })
                               setCustomDailyPrice(String(preset))
                               showToast(`Daily rental price updated to ₹${preset}/day!`)
-                            } catch (err: any) {
-                              showToast(err.message || 'Failed to update rental price')
+                            } catch (err) {
+                              showToast(err instanceof Error ? err.message : 'Failed to update rental price')
                             } finally {
                               setSavingCustomPrice(false)
                             }
@@ -618,8 +620,8 @@ export default function ListingDetailPage() {
                             await setListingDailyRentPrice(listing.id, val)
                             setListing({ ...listing, priceUnit: `daily_${val}` })
                             showToast(`Daily rental price set to ₹${val}/day!`)
-                          } catch (err: any) {
-                            showToast(err.message || 'Failed to update')
+                          } catch (err) {
+                            showToast(err instanceof Error ? err.message : 'Failed to update')
                           } finally {
                             setSavingCustomPrice(false)
                           }
@@ -638,11 +640,11 @@ export default function ListingDetailPage() {
                     <span>Select Rental Duration:</span>
                   </label>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {Object.entries(rentalOptions).map(([key, config]) => (
+                    {(Object.entries(rentalOptions) as Array<[keyof typeof rentalOptions, (typeof rentalOptions)[keyof typeof rentalOptions]]>).map(([key, config]) => (
                       <button
                         key={key}
                         type="button"
-                        onClick={() => setRentalDuration(key as any)}
+                        onClick={() => setRentalDuration(key)}
                         className={`rounded-xl p-2.5 text-center text-xs font-bold transition border ${
                           rentalDuration === key
                             ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-500/30'

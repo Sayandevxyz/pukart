@@ -17,8 +17,8 @@ import { authClient } from '@/lib/auth-client'
 
 export default function MessagesInboxPage() {
   const router = useRouter()
-  const [session, setSession] = useState<any>(null)
-  const [conversations, setConversations] = useState<any[]>([])
+  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
+  const [conversations, setConversations] = useState<Awaited<ReturnType<typeof getMyConversations>>>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function MessagesInboxPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <main id="main-content" className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="font-serif text-3xl font-bold text-primary">Marketplace Messages</h1>

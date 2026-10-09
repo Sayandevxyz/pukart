@@ -21,11 +21,15 @@ import {
 import { getMyListings, setListingStatus, deleteListing } from '@/app/actions/listings'
 import { authClient } from '@/lib/auth-client'
 
+type MyListingItem = Awaited<ReturnType<typeof getMyListings>>[number]
+type MyListingTab = 'all' | 'active' | 'reserved' | 'sold' | 'rented' | 'archived'
+type ListingItemStatus = 'active' | 'reserved' | 'sold' | 'rented' | 'archived'
+
 export default function MyListingsPage() {
   const router = useRouter()
-  const [session, setSession] = useState<any>(null)
-  const [listings, setListings] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'reserved' | 'sold' | 'rented' | 'archived'>('all')
+  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
+  const [listings, setListings] = useState<MyListingItem[]>([])
+  const [activeTab, setActiveTab] = useState<MyListingTab>('all')
   const [loading, setLoading] = useState(true)
   const [toastMessage, setToastMessage] = useState('')
 
@@ -34,14 +38,13 @@ export default function MyListingsPage() {
     window.setTimeout(() => setToastMessage(''), 3000)
   }
 
-  async function loadListings(tab = activeTab) {
+  async function loadListings(tab: MyListingTab = activeTab) {
     setLoading(true)
     try {
       const data = await getMyListings(tab)
       setListings(data)
-    } catch (err: any) {
-      console.error(err)
-      showToast(err.message || 'Failed to load your listings')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to load your listings')
     } finally {
       setLoading(false)
     }
@@ -58,13 +61,13 @@ export default function MyListingsPage() {
     }).catch(() => router.push('/sign-in'))
   }, [router])
 
-  async function handleStatusChange(id: number, newStatus: 'active' | 'reserved' | 'sold' | 'rented' | 'archived') {
+  async function handleStatusChange(id: number, newStatus: ListingItemStatus) {
     try {
       await setListingStatus(id, newStatus)
       showToast(`Listing status updated to ${newStatus.toUpperCase()}`)
       loadListings(activeTab)
-    } catch (err: any) {
-      showToast(err.message || 'Failed to update status')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to update status')
     }
   }
 
@@ -74,8 +77,8 @@ export default function MyListingsPage() {
       await deleteListing(id)
       showToast('Listing deleted successfully')
       loadListings(activeTab)
-    } catch (err: any) {
-      showToast(err.message || 'Failed to delete listing')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to delete listing')
     }
   }
 
@@ -107,19 +110,19 @@ export default function MyListingsPage() {
         </div>
 
         <div className="mt-6 flex gap-2 overflow-x-auto border-b border-border pb-3 text-xs sm:text-sm font-semibold">
-          {[
-            { id: 'all', label: 'All Items' },
-            { id: 'active', label: 'Active / Available' },
-            { id: 'reserved', label: 'Reserved' },
-            { id: 'sold', label: 'Sold' },
-            { id: 'rented', label: 'Rented' },
-            { id: 'archived', label: 'Archived' },
-          ].map((tab) => (
+          {([
+            { id: 'all' as const, label: 'All Items' },
+            { id: 'active' as const, label: 'Active / Available' },
+            { id: 'reserved' as const, label: 'Reserved' },
+            { id: 'sold' as const, label: 'Sold' },
+            { id: 'rented' as const, label: 'Rented' },
+            { id: 'archived' as const, label: 'Archived' },
+          ]).map((tab) => (
             <button
               key={tab.id}
               onClick={() => {
-                setActiveTab(tab.id as any)
-                loadListings(tab.id as any)
+                setActiveTab(tab.id)
+                loadListings(tab.id)
               }}
               className={`rounded-xl px-4 py-2 whitespace-nowrap transition ${
                 activeTab === tab.id
@@ -197,7 +200,7 @@ export default function MyListingsPage() {
                 <div className="flex flex-wrap items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
                   <select
                     value={item.status}
-                    onChange={(e) => handleStatusChange(item.id, e.target.value as any)}
+                    onChange={(e) => handleStatusChange(item.id, e.target.value as ListingItemStatus)}
                     className="h-10 rounded-xl border border-border bg-background px-3 text-xs font-semibold outline-none focus:border-accent"
                   >
                     <option value="active">Active</option>

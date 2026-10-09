@@ -22,9 +22,9 @@ import {
   Zap,
   Award,
 } from 'lucide-react'
-import { getSellerProfile } from '@/app/actions/marketplace'
-import { startConversation, toggleFavorite } from '@/app/actions/marketplace'
+import { getSellerProfile, startConversation, toggleFavorite } from '@/app/actions/marketplace'
 import { authClient } from '@/lib/auth-client'
+import type { ListingItem, ListingSeller, UserRatingStats, ReviewItem, SellerProfileData } from '@/lib/types'
 
 export default function SellerProfilePage() {
   const params = useParams()
@@ -32,7 +32,7 @@ export default function SellerProfilePage() {
   const sellerId = String(params?.id)
 
   const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
-  const [profileData, setProfileData] = useState<any>(null)
+  const [profileData, setProfileData] = useState<SellerProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [favorites, setFavorites] = useState<number[]>([])
   const [toastMessage, setToastMessage] = useState('')
@@ -43,7 +43,8 @@ export default function SellerProfilePage() {
     window.setTimeout(() => setToastMessage(''), 3000)
   }
 
-  function handleCopyPhone(phoneStr: string) {
+  function handleCopyPhone(phoneStr?: string | null) {
+    if (!phoneStr) return
     navigator.clipboard.writeText(phoneStr)
     setCopiedPhone(true)
     showToast('Phone number copied to clipboard!')
@@ -52,13 +53,13 @@ export default function SellerProfilePage() {
 
   useEffect(() => {
     authClient.getSession().then((res) => {
-      if (res?.data?.user) setSession(res.data as any)
+      if (res?.data?.user) setSession(res.data)
     }).catch(() => { })
 
     if (!sellerId) return
 
     getSellerProfile(sellerId).then((data) => {
-      setProfileData(data)
+      setProfileData(data as unknown as SellerProfileData)
       setLoading(false)
     }).catch((err) => {
       console.error(err)
@@ -83,9 +84,9 @@ export default function SellerProfilePage() {
     try {
       const res = await toggleFavorite(listingId)
       showToast(res.saved ? 'Saved to favorites' : 'Removed from favorites')
-    } catch (err: any) {
+    } catch (err) {
       setFavorites((prev) => (wasSaved ? [...prev, listingId] : prev.filter((id) => id !== listingId)))
-      showToast(err.message || 'Failed to update favorite')
+      showToast(err instanceof Error ? err.message : 'Failed to update favorite')
     }
   }
 
@@ -158,7 +159,7 @@ export default function SellerProfilePage() {
         </div>
       )}
 
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <main id="main-content" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         
         <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
@@ -278,7 +279,7 @@ export default function SellerProfilePage() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {listings.map((item: any) => (
+              {listings.map((item: ListingItem) => (
                 <article
                   key={item.id}
                   className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-md"
@@ -333,7 +334,7 @@ export default function SellerProfilePage() {
           <h2 className="text-xl font-bold text-primary">Student Reviews ({ratingStats?.reviews?.length || 0})</h2>
           {ratingStats?.reviews && ratingStats.reviews.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
-              {ratingStats.reviews.map((rev: any) => (
+              {ratingStats.reviews.map((rev: ReviewItem) => (
                 <div key={rev.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
@@ -349,7 +350,7 @@ export default function SellerProfilePage() {
                       {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('en-IN') : 'Recent'}
                     </span>
                   </div>
-                  <p className="text-xs leading-relaxed text-foreground">{rev.body}</p>
+                  <p className="text-xs leading-relaxed text-foreground">{rev.body || rev.comment}</p>
                 </div>
               ))}
             </div>

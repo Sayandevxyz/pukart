@@ -9,6 +9,7 @@
     "test": "vitest run",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
+    "precommit": "npm run typecheck && npm test",
     "db:migrate": "tsx lib/db/migrate.ts"
   },
   "dependencies": {

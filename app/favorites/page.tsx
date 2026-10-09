@@ -15,10 +15,12 @@ import {
 import { getMyFavorites, toggleFavorite } from '@/app/actions/marketplace'
 import { authClient } from '@/lib/auth-client'
 
+type FavoriteItem = Awaited<ReturnType<typeof getMyFavorites>>[number]
+
 export default function FavoritesPage() {
   const router = useRouter()
-  const [session, setSession] = useState<any>(null)
-  const [favorites, setFavorites] = useState<any[]>([])
+  const [session, setSession] = useState<{ user?: { id: string } } | null>(null)
+  const [favorites, setFavorites] = useState<FavoriteItem[]>([])
   const [loading, setLoading] = useState(true)
   const [toastMessage, setToastMessage] = useState('')
 
@@ -32,9 +34,8 @@ export default function FavoritesPage() {
     try {
       const items = await getMyFavorites()
       setFavorites(items)
-    } catch (err: any) {
-      console.error(err)
-      showToast(err.message || 'Failed to load favorites')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to load favorites')
     } finally {
       setLoading(false)
     }
@@ -56,8 +57,8 @@ export default function FavoritesPage() {
     try {
       await toggleFavorite(id)
       showToast('Removed from favorites')
-    } catch (err: any) {
-      showToast(err.message || 'Failed to remove')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to remove')
       loadFavorites()
     }
   }

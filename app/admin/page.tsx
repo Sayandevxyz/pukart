@@ -38,21 +38,27 @@ import {
 } from '@/app/actions/admin'
 import { authClient } from '@/lib/auth-client'
 
+type AdminStats = Awaited<ReturnType<typeof getAdminDashboardStats>>
+type AdminUserList = Awaited<ReturnType<typeof getAdminUsers>>
+type AdminListingList = Awaited<ReturnType<typeof getAdminListings>>
+type AdminReportList = Awaited<ReturnType<typeof getAdminReports>>
+type AdminCategoryList = Awaited<ReturnType<typeof getAdminCategories>>
+
 export default function AdminDashboardPage() {
   const router = useRouter()
-  const [session, setSession] = useState<any>(null)
+  const [session, setSession] = useState<{ user?: { id: string; email?: string; role?: string } } | null>(null)
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'listings' | 'reports' | 'categories'>('dashboard')
   const [loading, setLoading] = useState(true)
   const [toastMessage, setToastMessage] = useState('')
 
-  const [stats, setStats] = useState<any>(null)
-  const [users, setUsers] = useState<any[]>([])
+  const [stats, setStats] = useState<AdminStats | null>(null)
+  const [users, setUsers] = useState<AdminUserList>([])
   const [userQuery, setUserQuery] = useState('')
-  const [listings, setListings] = useState<any[]>([])
+  const [listings, setListings] = useState<AdminListingList>([])
   const [listingFilter, setListingFilter] = useState('all')
-  const [reports, setReports] = useState<any[]>([])
+  const [reports, setReports] = useState<AdminReportList>([])
   const [reportFilter, setReportFilter] = useState('all')
-  const [categories, setCategories] = useState<any[]>([])
+  const [categories, setCategories] = useState<AdminCategoryList>([])
 
   const [newCatName, setNewCatName] = useState('')
   const [newCatSlug, setNewCatSlug] = useState('')
@@ -78,9 +84,9 @@ export default function AdminDashboardPage() {
       setListings(l)
       setReports(r)
       setCategories(c)
-    } catch (err: any) {
+    } catch (err) {
       console.error(err)
-      showToast(err.message || 'Unauthorized or failed to load admin data')
+      showToast(err instanceof Error ? err.message : 'Unauthorized or failed to load admin data')
       router.push('/')
     } finally {
       setLoading(false)
@@ -104,8 +110,8 @@ export default function AdminDashboardPage() {
       showToast(`User ${!currentSuspended ? 'suspended' : 'restored'}`)
       const u = await getAdminUsers(userQuery)
       setUsers(u)
-    } catch (err: any) {
-      showToast(err.message || 'Action failed')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Action failed')
     }
   }
 
@@ -115,8 +121,8 @@ export default function AdminDashboardPage() {
       showToast(`Listing updated: ${action}`)
       const l = await getAdminListings(listingFilter)
       setListings(l)
-    } catch (err: any) {
-      showToast(err.message || 'Action failed')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Action failed')
     }
   }
 
@@ -126,8 +132,8 @@ export default function AdminDashboardPage() {
       showToast(`Report marked as ${status}`)
       const r = await getAdminReports(reportFilter)
       setReports(r)
-    } catch (err: any) {
-      showToast(err.message || 'Action failed')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Action failed')
     }
   }
 
@@ -145,8 +151,8 @@ export default function AdminDashboardPage() {
       showToast('Category created!')
       const c = await getAdminCategories()
       setCategories(c)
-    } catch (err: any) {
-      showToast(err.message || 'Failed to create category')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to create category')
     }
   }
 
@@ -157,8 +163,8 @@ export default function AdminDashboardPage() {
       showToast('Category deleted')
       const c = await getAdminCategories()
       setCategories(c)
-    } catch (err: any) {
-      showToast(err.message || 'Failed to delete category')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to delete category')
     }
   }
 
@@ -175,7 +181,7 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main id="main-content" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -189,18 +195,18 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="mt-6 flex gap-2 overflow-x-auto border-b border-border pb-3 text-xs sm:text-sm font-semibold">
-          {[
+          {([
             { id: 'dashboard', label: 'Overview Metrics', icon: Layers },
             { id: 'users', label: `Users (${stats?.usersCount || 0})`, icon: Users },
             { id: 'listings', label: `Listings (${stats?.totalListingsCount || 0})`, icon: Package },
             { id: 'reports', label: `Reports (${stats?.openReportsCount || 0} Open)`, icon: AlertTriangle },
             { id: 'categories', label: `Categories (${categories.length})`, icon: Tag },
-          ].map((tab) => {
+          ] as const).map((tab) => {
             const Icon = tab.icon
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 rounded-xl px-4 py-2.5 whitespace-nowrap transition ${
                   activeTab === tab.id
                     ? 'bg-primary text-primary-foreground font-bold shadow-sm'
@@ -252,7 +258,7 @@ export default function AdminDashboardPage() {
                   <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
                     <h3 className="font-bold text-base text-primary">Recent Transactions</h3>
                     <div className="divide-y divide-border text-xs">
-                      {stats.recentTransactions?.map((tx: any) => (
+                      {stats?.recentTransactions?.map((tx) => (
                         <div key={tx.id} className="py-2.5 flex items-center justify-between">
                           <div>
                             <span className="font-semibold text-foreground">Item #{tx.listingId}</span>
@@ -269,7 +275,7 @@ export default function AdminDashboardPage() {
                   <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
                     <h3 className="font-bold text-base text-primary">Recent Campus Reports</h3>
                     <div className="divide-y divide-border text-xs">
-                      {stats.recentReports?.map((rep: any) => (
+                      {stats?.recentReports?.map((rep) => (
                         <div key={rep.id} className="py-2.5 flex items-center justify-between">
                           <div>
                             <span className="font-bold text-destructive">{rep.reason}</span>
