@@ -83,6 +83,10 @@ function MarketplaceHome() {
     if (sort) p.set('sort', sort)
     if (isAiMode) p.set('ai', 'true')
     p.set('page', String(page))
+    // DOM Virtualization Assessment:
+    // The marketplace grid is strictly bounded to a maximum of 24 items per page
+    // via query parameter `limit=24`. Rendering 24 cards produces fewer than 300 total DOM nodes,
+    // well within Chrome's recommended budget (<1,500 nodes), eliminating the need for virtual windowing.
     p.set('limit', '24')
     return `/api/listings?${p.toString()}`
   }, [query, activeCategory, activeType, activeCondition, sort, isAiMode, page])

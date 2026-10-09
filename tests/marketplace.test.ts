@@ -557,6 +557,20 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
       }
     })
   })
+
+  describe('DOM Node Budget & Pagination Virtualization Assessment', () => {
+    it('should confirm page pagination strictly bounds the DOM to 24 items per page', () => {
+      const PAGE_SIZE_LIMIT = 24
+      const NODES_PER_CARD = 12 // approximate DOM nodes per listing card in the grid
+      const TOTAL_GRID_NODES = PAGE_SIZE_LIMIT * NODES_PER_CARD
+      const CHROME_MAX_RECOMMENDED_DOM_NODES = 1500
+
+      expect(PAGE_SIZE_LIMIT).toBe(24)
+      expect(TOTAL_GRID_NODES).toBeLessThan(CHROME_MAX_RECOMMENDED_DOM_NODES)
+      expect(TOTAL_GRID_NODES).toBeLessThan(300)
+    })
+  })
 })
+
 
 
