@@ -172,6 +172,123 @@ describe('Security & Authorization Boundary Tests', () => {
       const blocked = checkRateLimit(testKey, 5, 60000)
       expect(blocked.success).toBe(false)
       expect(blocked.remaining).toBe(0)
+      expect(blocked.retryAfter).toBeGreaterThan(0)
+    })
+
+    it('should track exact boundary conditions (quota decrement and retryAfter)', () => {
+      const testKey = 'test-ip-rate-boundary'
+      resetRateLimit(testKey)
+
+      const first = checkRateLimit(testKey, 3, 60000)
+      expect(first.success).toBe(true)
+      expect(first.remaining).toBe(2)
+      expect(first.retryAfter).toBe(0)
+
+      const second = checkRateLimit(testKey, 3, 60000)
+      expect(second.success).toBe(true)
+      expect(second.remaining).toBe(1)
+
+      const third = checkRateLimit(testKey, 3, 60000)
+      expect(third.success).toBe(true)
+      expect(third.remaining).toBe(0)
+
+      const fourth = checkRateLimit(testKey, 3, 60000)
+      expect(fourth.success).toBe(false)
+      expect(fourth.remaining).toBe(0)
+      expect(fourth.retryAfter).toBeGreaterThanOrEqual(1)
+      expect(fourth.retryAfter).toBeLessThanOrEqual(60)
+    })
+
+    it('should reset limit after window expiry', async () => {
+      const testKey = 'test-ip-rate-expiry'
+      resetRateLimit(testKey)
+
+      // 100ms window
+      const res1 = checkRateLimit(testKey, 1, 100)
+      expect(res1.success).toBe(true)
+
+      const resBlocked = checkRateLimit(testKey, 1, 100)
+      expect(resBlocked.success).toBe(false)
+
+      // Wait for window to expire
+      await new Promise((r) => setTimeout(r, 120))
+
+      const resAfterExpiry = checkRateLimit(testKey, 1, 100)
+      expect(resAfterExpiry.success).toBe(true)
+      expect(resAfterExpiry.remaining).toBe(0)
+    })
+
+    it('should allow immediate manual reset of identifier', () => {
+      const testKey = 'test-ip-manual-reset'
+      resetRateLimit(testKey)
+
+      checkRateLimit(testKey, 1, 60000)
+      expect(checkRateLimit(testKey, 1, 60000).success).toBe(false)
+
+      resetRateLimit(testKey)
+      expect(checkRateLimit(testKey, 1, 60000).success).toBe(true)
+    })
+
+    it('should support UpstashRateLimiterStore with REST API and fallback', async () => {
+      const { UpstashRateLimiterStore } = await import('../lib/rate-limit')
+
+      // Without credentials, falls back gracefully to in-memory
+      const emptyStore = new UpstashRateLimiterStore('', '')
+      const resFallback = await emptyStore.check('upstash-fallback-key', 2, 60000)
+      expect(resFallback.success).toBe(true)
+
+      // Mock Upstash REST responses
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [{ result: 1 }, { result: 50000 }],
+      })
+      const originalFetch = globalThis.fetch
+      globalThis.fetch = mockFetch
+
+      try {
+        const upstashStore = new UpstashRateLimiterStore('https://mock.upstash.io', 'token_123')
+        const upstashRes = await upstashStore.check('upstash-key-1', 5, 60000)
+        expect(upstashRes.success).toBe(true)
+        expect(upstashRes.remaining).toBe(4)
+
+        // Blocked test
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: async () => [{ result: 10 }, { result: 45000 }],
+        })
+        const blockedRes = await upstashStore.check('upstash-key-1', 5, 60000)
+        expect(blockedRes.success).toBe(false)
+        expect(blockedRes.remaining).toBe(0)
+        expect(blockedRes.retryAfter).toBe(45)
+      } finally {
+        globalThis.fetch = originalFetch
+      }
+    })
+
+    it('should correctly select stores in getActiveStore', async () => {
+      const { getActiveStore, UpstashRateLimiterStore, DatabaseRateLimiterStore, MemoryRateLimiterStore } =
+        await import('../lib/rate-limit')
+
+      const origEnv = { ...process.env }
+      try {
+        // In test, defaults to MemoryRateLimiterStore
+        process.env.NODE_ENV = 'test'
+        expect(getActiveStore()).toBeInstanceOf(MemoryRateLimiterStore)
+
+        // In production with Upstash credentials
+        process.env.NODE_ENV = 'production'
+        process.env.UPSTASH_REDIS_REST_URL = 'https://example.upstash.io'
+        process.env.UPSTASH_REDIS_REST_TOKEN = 'secret'
+        expect(getActiveStore()).toBeInstanceOf(UpstashRateLimiterStore)
+
+        // In production without Upstash but with DATABASE_URL
+        delete process.env.UPSTASH_REDIS_REST_URL
+        delete process.env.UPSTASH_REDIS_REST_TOKEN
+        process.env.DATABASE_URL = 'postgres://localhost/test'
+        expect(getActiveStore()).toBeInstanceOf(DatabaseRateLimiterStore)
+      } finally {
+        process.env = origEnv
+      }
     })
   })
 })

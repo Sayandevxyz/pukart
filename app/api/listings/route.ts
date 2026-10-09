@@ -8,11 +8,11 @@ import { checkRateLimit } from '@/lib/rate-limit'
 export async function GET(request: NextRequest) {
   try {
     const clientIp = request.headers.get('x-forwarded-for') || 'anonymous'
-    const rateLimit = checkRateLimit(`listings:${clientIp}`, 120, 60000)
+    const rateLimit = await checkRateLimit(`listings:${clientIp}`, 120, 60000)
     if (!rateLimit.success) {
       return NextResponse.json(
         { error: 'Too many search requests. Please slow down.' },
-        { status: 429, headers: { 'Retry-After': '60' } }
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter || 60) } }
       )
     }
 
