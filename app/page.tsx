@@ -372,53 +372,68 @@ function MarketplaceHome() {
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={activeType}
-                onChange={(e) => {
-                  setActiveType(e.target.value)
-                  setPage(1)
-                }}
-                aria-label="Filter listing type"
-                className="h-10 rounded-xl border border-border bg-background px-3 text-xs font-semibold outline-none shadow-sm"
-              >
-                {availableTypes.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <label htmlFor="filter-type" className="text-xs font-medium text-muted-foreground">
+                  Type:
+                </label>
+                <select
+                  id="filter-type"
+                  value={activeType}
+                  onChange={(e) => {
+                    setActiveType(e.target.value)
+                    setPage(1)
+                  }}
+                  className="h-10 rounded-xl border border-border bg-background px-3 text-xs font-semibold outline-none shadow-sm"
+                >
+                  {availableTypes.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-              <select
-                value={activeCondition}
-                onChange={(e) => {
-                  setActiveCondition(e.target.value)
-                  setPage(1)
-                }}
-                aria-label="Filter condition"
-                className="h-10 rounded-xl border border-border bg-background px-3 text-xs font-semibold outline-none shadow-sm"
-              >
-                {availableConditions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-1.5">
+                <label htmlFor="filter-condition" className="text-xs font-medium text-muted-foreground">
+                  Condition:
+                </label>
+                <select
+                  id="filter-condition"
+                  value={activeCondition}
+                  onChange={(e) => {
+                    setActiveCondition(e.target.value)
+                    setPage(1)
+                  }}
+                  className="h-10 rounded-xl border border-border bg-background px-3 text-xs font-semibold outline-none shadow-sm"
+                >
+                  {availableConditions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-              <select
-                value={sort}
-                onChange={(e) => {
-                  setSort(e.target.value)
-                  setPage(1)
-                }}
-                aria-label="Sort listings"
-                className="h-10 rounded-xl border border-border bg-background px-3 text-xs font-semibold outline-none shadow-sm"
-              >
-                <option value="newest">Newest First</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
-                <option value="popular">Most Viewed</option>
-              </select>
+              <div className="flex items-center gap-1.5">
+                <label htmlFor="filter-sort" className="text-xs font-medium text-muted-foreground">
+                  Sort:
+                </label>
+                <select
+                  id="filter-sort"
+                  value={sort}
+                  onChange={(e) => {
+                    setSort(e.target.value)
+                    setPage(1)
+                  }}
+                  className="h-10 rounded-xl border border-border bg-background px-3 text-xs font-semibold outline-none shadow-sm"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="price_asc">Price: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
+                  <option value="popular">Most Viewed</option>
+                </select>
+              </div>
             </div>
           </div>
 

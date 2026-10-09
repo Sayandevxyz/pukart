@@ -172,9 +172,11 @@ npm install
 ```
 
 ### Environment Configuration
-Copy `.env.example` to `.env.local` and configure your credentials:
+Copy `.env.example` to `.env.local` and configure your credentials. Note that `BETTER_AUTH_SECRET` is strictly mandatory in production (generate via `openssl rand -base64 32`):
 ```bash
 cp .env.example .env.local
+# Generate production secret:
+openssl rand -base64 32
 ```
 
 ### Run Type Checking & Linting

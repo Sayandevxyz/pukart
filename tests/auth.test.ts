@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { auth, isValidPondiUniEmail, isUserAdmin } from '../lib/auth'
+import { auth, isValidPondiUniEmail, isUserAdmin, resolveAuthSecret } from '../lib/auth'
 import {
   checkProfileCompletion,
   ALL_HOSTELS,
@@ -156,4 +156,37 @@ describe('Campus Constants & PU Landmark Integrity', () => {
       }
     })
   })
+
+  describe('Production Auth Secret Resolution & Verification', () => {
+    const originalEnv = { ...process.env }
+
+    it('should return BETTER_AUTH_SECRET when defined', () => {
+      process.env.BETTER_AUTH_SECRET = 'custom_secret_1234567890_test_value'
+      expect(resolveAuthSecret()).toBe('custom_secret_1234567890_test_value')
+      process.env = { ...originalEnv }
+    })
+
+    it('should throw an error in production if secret is missing and not in build phase', () => {
+      delete process.env.BETTER_AUTH_SECRET
+      delete process.env.NEXT_PHASE
+      delete process.env.npm_lifecycle_event
+      delete process.env.__NEXT_BUILD
+      delete process.env.VITEST
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', configurable: true, writable: true })
+
+      expect(() => resolveAuthSecret()).toThrow(/Missing required environment variable: BETTER_AUTH_SECRET/)
+      process.env = { ...originalEnv }
+    })
+
+    it('should provide safe build placeholder during static production build phase', () => {
+      delete process.env.BETTER_AUTH_SECRET
+      delete process.env.VITEST
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', configurable: true, writable: true })
+      process.env.NEXT_PHASE = 'phase-production-build'
+
+      expect(resolveAuthSecret()).toBe('build_time_static_analysis_secret_placeholder')
+      process.env = { ...originalEnv }
+    })
+  })
 })
+

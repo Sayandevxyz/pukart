@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
 
 describe('Accessibility & Inclusive Design Standards (WCAG 2.1 AA Compliance)', () => {
   describe('Color Contrast Relative Luminance (WCAG SC 1.4.3)', () => {
@@ -314,6 +316,15 @@ describe('Accessibility & Inclusive Design Standards (WCAG 2.1 AA Compliance)', 
       }
       expect(motionSafeVariants.reduced.transition.duration).toBe(0)
     })
+
+    it('should assert mobile pinch-to-zoom is not disabled in viewport (WCAG 1.4.4 Resize text)', () => {
+      const layoutSrc = fs.readFileSync(path.resolve(__dirname, '../app/layout.tsx'), 'utf-8')
+      expect(layoutSrc).not.toContain('userScalable: false')
+      expect(layoutSrc).not.toContain('maximumScale: 1')
+      expect(layoutSrc).not.toMatch(/user-scalable\s*=\s*no/i)
+      expect(layoutSrc).not.toMatch(/maximum-scale\s*=\s*1/i)
+    })
   })
 })
+
 
