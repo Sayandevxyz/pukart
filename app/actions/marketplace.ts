@@ -20,6 +20,7 @@ import {
   blockedUsers,
 } from '@/lib/db/schema'
 import { checkProfileCompletion } from '@/lib/constants/campus'
+import type { SellerProfileData, ListingItem } from '@/lib/types'
 
 async function currentUser() {
   try {
@@ -985,7 +986,7 @@ export async function getCurrentUserProfile() {
   }
 }
 
-export async function getSellerProfile(userId: string) {
+export async function getSellerProfile(userId: string): Promise<SellerProfileData | null> {
   try {
     if (!userId) return null
     const currentUserSession = await currentUser()

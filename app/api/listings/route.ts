@@ -1,4 +1,4 @@
-import { and, desc, asc, eq, gte, ilike, lte, or, sql } from 'drizzle-orm'
+import { and, desc, asc, eq, gte, ilike, lte, or, sql, type SQL } from 'drizzle-orm'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { listings, user as userTable } from '@/lib/db/schema'
@@ -33,10 +33,9 @@ export async function GET(request: NextRequest) {
       if (parsed.minPrice && minPrice === 0) minPrice = parsed.minPrice
     }
 
-    const conditions = [eq(listings.status, status)]
+    const conditions: SQL<unknown>[] = [eq(listings.status, status)]
 
     if (rawQuery) {
-      
       const words = rawQuery
         .split(/\s+/)
         .map((w) => w.trim())
@@ -44,25 +43,26 @@ export async function GET(request: NextRequest) {
 
       if (words.length > 0) {
         for (const word of words) {
-          conditions.push(
-            or(
-              ilike(listings.title, `%${word}%`),
-              ilike(listings.description, `%${word}%`),
-              ilike(listings.location, `%${word}%`),
-              ilike(listings.sellerName, `%${word}%`)
-            ) as never
+          const searchClause = or(
+            ilike(listings.title, `%${word}%`),
+            ilike(listings.description, `%${word}%`),
+            ilike(listings.location, `%${word}%`),
+            ilike(listings.sellerName, `%${word}%`)
           )
+          if (searchClause) {
+            conditions.push(searchClause)
+          }
         }
       } else {
-        
-        conditions.push(
-          or(
-            ilike(listings.title, `%${rawQuery}%`),
-            ilike(listings.description, `%${rawQuery}%`),
-            ilike(listings.location, `%${rawQuery}%`),
-            ilike(listings.sellerName, `%${rawQuery}%`)
-          ) as never
+        const searchClause = or(
+          ilike(listings.title, `%${rawQuery}%`),
+          ilike(listings.description, `%${rawQuery}%`),
+          ilike(listings.location, `%${rawQuery}%`),
+          ilike(listings.sellerName, `%${rawQuery}%`)
         )
+        if (searchClause) {
+          conditions.push(searchClause)
+        }
       }
     }
 

@@ -21,6 +21,10 @@ import {
 } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 
+interface NavbarSession {
+  user?: { id: string; name?: string; email?: string; role?: string; image?: string }
+}
+
 export function Navbar({
   initialQuery = '',
   onSearch,
@@ -41,13 +45,33 @@ export function Navbar({
     authClient
       .getSession()
       .then((res) => {
-        if (res?.data) {
-          const userSession = res.data as unknown as {
-            user?: { id: string; name?: string; email?: string; role?: string; image?: string }
+        if (
+          res?.data &&
+          typeof res.data === 'object' &&
+          'user' in res.data &&
+          res.data.user &&
+          typeof res.data.user === 'object'
+        ) {
+          const rawUser = res.data.user as {
+            id?: unknown
+            name?: unknown
+            email?: unknown
+            role?: unknown
+            image?: unknown
           }
-          setSession(userSession)
+          if (typeof rawUser.id === 'string') {
+            const userSession: NavbarSession = {
+              user: {
+                id: rawUser.id,
+                name: typeof rawUser.name === 'string' ? rawUser.name : undefined,
+                email: typeof rawUser.email === 'string' ? rawUser.email : undefined,
+                role: typeof rawUser.role === 'string' ? rawUser.role : undefined,
+                image: typeof rawUser.image === 'string' ? rawUser.image : undefined,
+              },
+            }
+            setSession(userSession)
 
-          if (userSession?.user) {
+            if (userSession.user) {
             function loadCounts() {
               if (typeof document !== 'undefined' && document.hidden) return
 
@@ -70,7 +94,8 @@ export function Navbar({
             interval = setInterval(loadCounts, 30000)
           }
         }
-      })
+      }
+    })
       .catch(() => {})
 
     return () => {

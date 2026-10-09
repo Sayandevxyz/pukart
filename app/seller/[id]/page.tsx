@@ -59,7 +59,7 @@ export default function SellerProfilePage() {
     if (!sellerId) return
 
     getSellerProfile(sellerId).then((data) => {
-      setProfileData(data as unknown as SellerProfileData)
+      setProfileData(data)
       setLoading(false)
     }).catch((err) => {
       console.error(err)

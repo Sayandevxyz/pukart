@@ -10,7 +10,7 @@ export type ListingCondition = 'new' | 'like_new' | 'good' | 'fair'
 export interface UserProfile {
   id: string
   name: string
-  email: string
+  email?: string | null
   image?: string | null
   department?: string | null
   course?: string | null
@@ -19,6 +19,7 @@ export interface UserProfile {
   hostel?: string | null
   phone?: string | null
   role?: 'user' | 'admin' | string
+  isPrivate?: boolean
 }
 
 export interface ListingSeller {
