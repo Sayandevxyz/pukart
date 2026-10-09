@@ -178,6 +178,7 @@ export function parseNaturalLanguageSearch(rawQuery: string): AISearchResult {
   if (/\b(?:brand new|sealed|unopened)\b/i.test(lower)) condition = 'brand_new'
   else if (/\b(?:like new|mint)\b/i.test(lower)) condition = 'like_new'
   else if (/\b(?:good condition|used)\b/i.test(lower)) condition = 'good'
+  else if (/\b(?:fair condition|fair|scratched|heavily used)\b/i.test(lower)) condition = 'fair'
 
   const cleanKeywords = query
     .replace(/(?:under|below|less than|above|greater than|<|>|min|max|between|and|to)\s*(?:₹|rs\.?|inr)?\s*[0-9]+(?:,[0-9]+)*/gi, '')

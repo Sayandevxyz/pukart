@@ -13,5 +13,6 @@ public/uploads/*
 
 node_modules
 .next/
+coverage/
 *.tsbuildinfo
 .DS_Store

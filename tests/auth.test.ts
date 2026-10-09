@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isValidPondiUniEmail, isUserAdmin } from '../lib/auth'
+import { auth, isValidPondiUniEmail, isUserAdmin } from '../lib/auth'
 import {
   checkProfileCompletion,
   ALL_HOSTELS,
@@ -124,5 +124,35 @@ describe('Campus Constants & PU Landmark Integrity', () => {
     expect(schoolNames).toContain('School of Management')
     expect(schoolNames).toContain('Ramanujan School of Mathematical Sciences')
     expect(schoolNames).toContain('School of Life Sciences')
+  })
+
+  describe('Better Auth Lifecycle Hooks & OAuth Profile Normalization', () => {
+    it('should assign student role in user create hook and reject invalid emails', async () => {
+      const userHook = auth.options.databaseHooks?.user?.create?.before
+      if (userHook) {
+        const studentRes = await userHook({ email: 'scholar@pondiuni.ac.in', name: 'Scholar' } as Parameters<typeof userHook>[0])
+        expect(studentRes.data.role).toBe('user')
+        expect(studentRes.data.email).toBe('scholar@pondiuni.ac.in')
+
+        const adminRes = await userHook({ email: 'admin@pondiuni.ac.in', name: 'Admin User' } as Parameters<typeof userHook>[0])
+        expect(adminRes.data.role).toBe('admin')
+
+        await expect(
+          userHook({ email: 'invalid-email' } as Parameters<typeof userHook>[0])
+        ).rejects.toThrow('Please provide a valid email address.')
+      }
+    })
+
+    it('should map Google OAuth profile correctly and reject invalid email payloads', async () => {
+      const mapProfile = auth.options.socialProviders?.google?.mapProfileToUser
+      if (mapProfile) {
+        const valid = await mapProfile({ email: 'alice@pondiuni.ac.in', name: 'Alice', picture: 'https://example.com/pic.jpg' })
+        expect(valid.email).toBe('alice@pondiuni.ac.in')
+        expect(valid.name).toBe('Alice')
+        expect(valid.image).toBe('https://example.com/pic.jpg')
+
+        await expect(mapProfile({ email: 'invalid' })).rejects.toThrow('Please sign in with a valid email address.')
+      }
+    })
   })
 })

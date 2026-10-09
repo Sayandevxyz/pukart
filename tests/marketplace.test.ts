@@ -11,6 +11,7 @@ import {
   getFormOptionsForCategory,
   type FilterOption,
 } from '../lib/constants/categories'
+import { cn } from '../lib/utils'
 
 describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)', () => {
   describe('Listing Constraints & Validation', () => {
@@ -484,6 +485,52 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
       expect(thirtyDaysCost).toBe(4900)
       expect(deposit).toBe(525)
       expect(deposit).toBeLessThanOrEqual(1000) // Much safer than ₹18,500!
+    })
+  })
+
+  describe('UI Utility & Class Merging (lib/utils)', () => {
+    it('should cleanly merge class names and resolve Tailwind conflicts', () => {
+      const merged = cn('bg-red-500 text-white', 'p-4', false && 'hidden', undefined, 'bg-blue-500')
+      expect(merged).toContain('bg-blue-500')
+      expect(merged).not.toContain('bg-red-500')
+      expect(merged).toContain('p-4')
+      expect(merged).toContain('text-white')
+    })
+  })
+
+  describe('Category Taxonomy Configuration & Form Options', () => {
+    it('should return default types and conditions when category is All or null', () => {
+      const defaultTypes = getTypesForCategory('All')
+      expect(defaultTypes.length).toBeGreaterThan(0)
+      expect(getTypesForCategory(null)).toEqual(defaultTypes)
+
+      const defaultConditions = getConditionsForCategory('All')
+      expect(defaultConditions.length).toBeGreaterThan(0)
+      expect(getConditionsForCategory(undefined)).toEqual(defaultConditions)
+    })
+
+    it('should return specific types and conditions for custom categories', () => {
+      const bookTypes = getTypesForCategory('Books')
+      expect(bookTypes.some((t) => t.value === 'sell')).toBe(true)
+
+      const scootyConditions = getConditionsForCategory('Scooty')
+      expect(scootyConditions.some((c) => c.value === 'good')).toBe(true)
+    })
+
+    it('should build proper form options without "All" filter value', () => {
+      const formOpts = getFormOptionsForCategory('Electronics')
+      expect(formOpts.types.some((t) => t.value === 'All')).toBe(false)
+      expect(formOpts.conditions.some((c) => c.value === 'All')).toBe(false)
+      expect(formOpts.typeLabel).toBeDefined()
+      expect(formOpts.titlePlaceholder).toBeDefined()
+
+      const nullOpts = getFormOptionsForCategory(null)
+      expect(nullOpts.defaultType).toBe('sell')
+      expect(nullOpts.defaultCondition).toBe('brand_new')
+
+      const unknownOpts = getFormOptionsForCategory('NonExistent')
+      expect(unknownOpts.defaultType).toBe('sell')
+      expect(unknownOpts.defaultCondition).toBe('brand_new')
     })
   })
 })
