@@ -7,10 +7,10 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 
-const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+export const MAX_FILE_SIZE = 5 * 1024 * 1024 
+export const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
-function isValidImageSignature(buffer: Uint8Array): boolean {
+export function isValidImageSignature(buffer: Uint8Array): boolean {
   if (buffer.length < 12) return false
 
   if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
@@ -54,11 +54,18 @@ export async function POST(request: NextRequest) {
     }
 
     const clientIp = request.headers.get('x-forwarded-for') || session.user.id
-    const rateLimit = checkRateLimit(`upload:${clientIp}`, 15, 60000)
+    const rateLimit = await checkRateLimit(`upload:${clientIp}`, 15, 60000)
     if (!rateLimit.success) {
       return NextResponse.json(
         { error: 'Too many upload requests. Please wait a minute before trying again.' },
-        { status: 429, headers: { 'Retry-After': '60' } }
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter || 60) } }
+      )
+    }
+
+    if (process.env.NODE_ENV === 'production' && !process.env.BLOB_READ_WRITE_TOKEN) {
+      return NextResponse.json(
+        { error: 'Cloud storage is currently unavailable. Uploading is disabled in production when BLOB_READ_WRITE_TOKEN is not configured.' },
+        { status: 503 }
       )
     }
 
@@ -121,17 +128,12 @@ export async function POST(request: NextRequest) {
         const blob = await put(pathname, file, { access: 'public', addRandomSuffix: false })
         uploadedUrls.push(blob.url)
       } else {
-        try {
-          const uploadDir = path.join(process.cwd(), 'public', 'uploads', session.user.id)
-          await fs.mkdir(uploadDir, { recursive: true })
-          const targetPath = path.join(uploadDir, filename)
-          await fs.writeFile(targetPath, Buffer.from(buffer))
-          uploadedUrls.push(`/uploads/${session.user.id}/${filename}`)
-        } catch (fsErr) {
-          console.warn('[Upload] Local filesystem write failed (serverless fallback triggered):', fsErr)
-          const base64Data = Buffer.from(buffer).toString('base64')
-          uploadedUrls.push(`data:${file.type};base64,${base64Data}`)
-        }
+        // Local disk fallback for development and test only
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads', session.user.id)
+        await fs.mkdir(uploadDir, { recursive: true })
+        const targetPath = path.join(uploadDir, filename)
+        await fs.writeFile(targetPath, Buffer.from(buffer))
+        uploadedUrls.push(`/uploads/${session.user.id}/${filename}`)
       }
     }
 
