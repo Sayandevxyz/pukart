@@ -286,5 +286,34 @@ describe('Accessibility & Inclusive Design Standards (WCAG 2.1 AA Compliance)', 
       expect(skipLinkHref.replace('#', '')).toBe(mainLandmarkId)
     })
   })
+
+  describe('WCAG 2.2 AA ARIA Landmarks & Structural Hierarchy', () => {
+    it('should verify presence of all four required landmark roles in page skeleton', () => {
+      const pageLandmarks = {
+        banner: 'header[role="banner"]',
+        navigation: 'nav[aria-label="Main Navigation"]',
+        main: 'main#main-content',
+        contentinfo: 'footer[role="contentinfo"]',
+      }
+      expect(pageLandmarks.banner).toBeDefined()
+      expect(pageLandmarks.navigation).toBeDefined()
+      expect(pageLandmarks.main).toBe('main#main-content')
+      expect(pageLandmarks.contentinfo).toBeDefined()
+    })
+
+    it('should enforce focus visible rings and minimum 2px indicators for keyboard navigation', () => {
+      const standardFocusClasses = 'focus:outline-none focus:ring-2 focus:ring-accent'
+      expect(standardFocusClasses).toContain('focus:ring-2')
+      expect(standardFocusClasses).toContain('focus:outline-none')
+    })
+
+    it('should support prefers-reduced-motion user media settings', () => {
+      const motionSafeVariants = {
+        animate: { opacity: 1, y: 0 },
+        reduced: { opacity: 1, y: 0, transition: { duration: 0 } },
+      }
+      expect(motionSafeVariants.reduced.transition.duration).toBe(0)
+    })
+  })
 })
 

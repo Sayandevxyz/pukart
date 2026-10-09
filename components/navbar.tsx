@@ -96,7 +96,7 @@ export function Navbar({
   const isAdmin = session?.user?.role === 'admin' || session?.user?.email === 'admin@pondiuni.ac.in'
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/80 bg-background/95 backdrop-blur-xl transition">
+    <header role="banner" className="sticky top-0 z-50 border-b border-border/80 bg-background/95 backdrop-blur-xl transition">
       <div className="mx-auto flex max-w-[1440px] items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8">
         
         <Link href="/" className="flex shrink-0 items-center gap-2.5 group" aria-label="PUKart Home">
@@ -142,7 +142,7 @@ export function Navbar({
           )}
         </form>
 
-        <div className="ml-auto hidden items-center gap-1.5 lg:flex">
+        <nav aria-label="Main Navigation" className="ml-auto hidden items-center gap-1.5 lg:flex">
           {session?.user ? (
             <>
               {isAdmin && (
@@ -233,12 +233,13 @@ export function Navbar({
               </Link>
             </>
           )}
-        </div>
+        </nav>
 
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="ml-auto rounded-xl p-2 text-foreground lg:hidden hover:bg-muted"
-          aria-label="Toggle menu"
+          aria-label="Toggle navigation menu"
+          aria-expanded={mobileMenuOpen}
         >
           {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -267,7 +268,7 @@ export function Navbar({
       </div>
 
       {mobileMenuOpen && (
-        <div className="border-t border-border bg-card px-5 py-6 lg:hidden space-y-4 animate-in slide-in-from-top duration-200">
+        <nav aria-label="Mobile Navigation" className="border-t border-border bg-card px-5 py-6 lg:hidden space-y-4 animate-in slide-in-from-top duration-200">
           {session?.user ? (
             <div className="space-y-3">
               <div className="flex items-center gap-3 rounded-xl bg-muted p-3">
@@ -370,7 +371,7 @@ export function Navbar({
               </div>
             </div>
           )}
-        </div>
+        </nav>
       )}
     </header>
   )

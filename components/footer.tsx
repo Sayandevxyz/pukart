@@ -23,7 +23,7 @@ export function InstagramIcon({ size = 16, className = '' }: { size?: number; cl
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-card/50 backdrop-blur-xs">
+    <footer role="contentinfo" aria-label="Campus Marketplace Footer" className="border-t border-border bg-card/50 backdrop-blur-xs">
       <div className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           
