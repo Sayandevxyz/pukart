@@ -146,12 +146,13 @@ describe('Campus Constants & PU Landmark Integrity', () => {
     it('should map Google OAuth profile correctly and reject invalid email payloads', async () => {
       const mapProfile = auth.options.socialProviders?.google?.mapProfileToUser
       if (mapProfile) {
-        const valid = await mapProfile({ email: 'alice@pondiuni.ac.in', name: 'Alice', picture: 'https://example.com/pic.jpg' })
+        type GoogleProfileType = Parameters<typeof mapProfile>[0]
+        const valid = await mapProfile({ email: 'alice@pondiuni.ac.in', name: 'Alice', picture: 'https://example.com/pic.jpg' } as GoogleProfileType)
         expect(valid.email).toBe('alice@pondiuni.ac.in')
         expect(valid.name).toBe('Alice')
         expect(valid.image).toBe('https://example.com/pic.jpg')
 
-        await expect(mapProfile({ email: 'invalid' })).rejects.toThrow('Please sign in with a valid email address.')
+        await expect(mapProfile({ email: 'invalid' } as GoogleProfileType)).rejects.toThrow('Please sign in with a valid email address.')
       }
     })
   })
