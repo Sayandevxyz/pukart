@@ -3,7 +3,7 @@
 import { and, desc, eq, inArray, or, sql } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { auth, isValidPondiUniEmail, isUserAdmin } from '@/lib/auth'
+import { auth, isValidPondiUniEmail } from '@/lib/auth'
 import { db } from '@/lib/db'
 import {
   conversations,
@@ -20,7 +20,8 @@ import {
   blockedUsers,
 } from '@/lib/db/schema'
 import { checkProfileCompletion } from '@/lib/constants/campus'
-import type { SellerProfileData, ListingItem } from '@/lib/types'
+import { sanitizeText } from '@/lib/utils'
+import type { SellerProfileData } from '@/lib/types'
 
 async function currentUser() {
   try {
@@ -33,15 +34,6 @@ async function currentUser() {
   } catch {
     return null
   }
-}
-
-function sanitizeText(value: unknown, min: number, max: number): string {
-  if (typeof value !== 'string') throw new Error('Invalid text format')
-  const clean = value.trim()
-  if (clean.length < min || clean.length > max) {
-    throw new Error(`Text must be between ${min} and ${max} characters`)
-  }
-  return clean
 }
 
 export async function toggleFavorite(listingId: number) {

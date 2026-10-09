@@ -1,17 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { isValidEmail, isUserAdmin } from '../lib/auth'
+import { isUserAdmin } from '../lib/auth'
 import { checkProfileCompletion } from '../lib/constants/campus'
+import { sanitizeText } from '../lib/utils'
+import { checkRateLimit, resetRateLimit } from '../lib/rate-limit'
 
 describe('Security & Authorization Boundary Tests', () => {
   describe('Input Sanitization & Length Boundaries', () => {
-    function sanitizeText(value: unknown, min: number, max: number): string {
-      if (typeof value !== 'string') throw new Error('Invalid text format')
-      const clean = value.trim()
-      if (clean.length < min || clean.length > max) {
-        throw new Error(`Text must be between ${min} and ${max} characters`)
-      }
-      return clean
-    }
 
     it('should prevent empty or whitespace-only inputs', () => {
       expect(() => sanitizeText('   ', 1, 100)).toThrow()
@@ -32,6 +26,11 @@ describe('Security & Authorization Boundary Tests', () => {
 
     it('should properly clean safe valid text with trimming', () => {
       expect(sanitizeText('  Calculus Textbook 9th Edition  ', 3, 100)).toBe('Calculus Textbook 9th Edition')
+    })
+
+    it('should strip dangerous HTML tags and scripts to prevent stored XSS attacks', () => {
+      expect(sanitizeText('<script>alert("xss")</script>Calculus Book', 3, 100)).toBe('Calculus Book')
+      expect(sanitizeText('<b>Bold</b> <img src=x onerror=alert(1)> description', 3, 100)).toBe('Bold  description')
     })
   })
 
@@ -159,6 +158,20 @@ describe('Security & Authorization Boundary Tests', () => {
       expect(check.isComplete).toBe(false)
       expect(check.missingFields).toContain('Department / School')
       expect(check.missingFields).toContain('Campus Hostel')
+    })
+  })
+
+  describe('Rate Limiting Defenses', () => {
+    it('should allow requests within threshold and block burst requests exceeding limit', () => {
+      const testKey = 'test-ip-rate-limit-1'
+      resetRateLimit(testKey)
+      for (let i = 0; i < 5; i++) {
+        const res = checkRateLimit(testKey, 5, 60000)
+        expect(res.success).toBe(true)
+      }
+      const blocked = checkRateLimit(testKey, 5, 60000)
+      expect(blocked.success).toBe(false)
+      expect(blocked.remaining).toBe(0)
     })
   })
 })

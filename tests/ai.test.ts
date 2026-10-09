@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import {
   parseNaturalLanguageSearch,
   calculatePriceRecommendation,
@@ -143,6 +143,60 @@ describe('AI Features & Natural Language Processing (Priority 14)', () => {
       expect(desc).toContain('Microeconomics Principles 8th Edition')
       expect(desc).toContain('good')
       expect(desc).toContain('Pondicherry University')
+    })
+
+    it('should generate description using remote AI Gateway / LLM when API key is configured', async () => {
+      const origKey = process.env.GEMINI_API_KEY
+      const origFetch = global.fetch
+      try {
+        process.env.GEMINI_API_KEY = 'test-gemini-key'
+        global.fetch = vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({
+            choices: [
+              {
+                message: {
+                  content: 'AI generated premium campus listing description from LLM endpoint.',
+                },
+              },
+            ],
+          }),
+        }) as unknown as typeof fetch
+
+        const desc = await generateProductDescription({
+          title: 'Dell Inspiron 15',
+          category: 'Electronics',
+          condition: 'like_new',
+          originalPrice: 45000,
+          highlights: '16GB RAM, SSD upgraded',
+        })
+
+        expect(desc).toBe('AI generated premium campus listing description from LLM endpoint.')
+      } finally {
+        process.env.GEMINI_API_KEY = origKey
+        global.fetch = origFetch
+      }
+    })
+
+    it('should fallback to rule-based template if remote AI API call fails or returns non-200', async () => {
+      const origKey = process.env.GEMINI_API_KEY
+      const origFetch = global.fetch
+      try {
+        process.env.GEMINI_API_KEY = 'test-gemini-key'
+        global.fetch = vi.fn().mockRejectedValue(new Error('Network error')) as unknown as typeof fetch
+
+        const desc = await generateProductDescription({
+          title: 'Dell Inspiron 15',
+          category: 'Electronics',
+          condition: 'like_new',
+        })
+
+        expect(desc).toContain('Dell Inspiron 15')
+        expect(desc).toContain('like new')
+      } finally {
+        process.env.GEMINI_API_KEY = origKey
+        global.fetch = origFetch
+      }
     })
   })
 

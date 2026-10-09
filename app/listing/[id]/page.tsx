@@ -3,8 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import useSWR from 'swr'
+import { useEffect, useState, useMemo } from 'react'
 import { Navbar } from '@/components/navbar'
 import type { ListingItem, UserRatingStats } from '@/lib/types'
 import {
@@ -74,6 +73,13 @@ function extractDailyRentPrice(item: Partial<ListingItem> | null | undefined): n
 }
 
 type RentalDuration = '1_day' | '3_days' | '1_week' | '1_month'
+
+const RENTAL_OPTIONS: Record<RentalDuration, { label: string; multiplier: number; days: number }> = {
+  '1_day': { label: 'Daily (1 Day)', multiplier: 1, days: 1 },
+  '3_days': { label: 'Weekend Pass (3 Days)', multiplier: 2.4, days: 3 },
+  '1_week': { label: 'Weekly Transit (7 Days)', multiplier: 4.8, days: 7 },
+  '1_month': { label: 'Semester Month (30 Days)', multiplier: 14, days: 30 },
+}
 
 export default function ListingDetailPage() {
   const params = useParams()
@@ -356,16 +362,14 @@ export default function ListingDetailPage() {
     ['Cycles', 'Scooty', 'Bikes'].includes(listing.category)
   )
 
-  const baseDailyRentalPrice = extractDailyRentPrice(listing)
+  const baseDailyRentalPrice = useMemo(() => extractDailyRentPrice(listing), [
+    listing?.priceUnit,
+    listing?.category,
+    listing?.type,
+    listing?.price,
+  ])
 
-  const rentalOptions: Record<RentalDuration, { label: string; multiplier: number; days: number }> = {
-    '1_day': { label: 'Daily (1 Day)', multiplier: 1, days: 1 },
-    '3_days': { label: 'Weekend Pass (3 Days)', multiplier: 2.4, days: 3 },
-    '1_week': { label: 'Weekly Transit (7 Days)', multiplier: 4.8, days: 7 },
-    '1_month': { label: 'Semester Month (30 Days)', multiplier: 14, days: 30 },
-  }
-
-  const selectedRentalConfig = rentalOptions[rentalDuration] || rentalOptions['1_day']
+  const selectedRentalConfig = RENTAL_OPTIONS[rentalDuration] || RENTAL_OPTIONS['1_day']
   const calculatedRentalAmount = Math.max(20, Math.round(baseDailyRentalPrice * selectedRentalConfig.multiplier))
   const calculatedDepositAmount = Math.max(200, Math.min(1000, Math.round(baseDailyRentalPrice * 1.5)))
 
@@ -640,7 +644,7 @@ export default function ListingDetailPage() {
                     <span>Select Rental Duration:</span>
                   </label>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {(Object.entries(rentalOptions) as Array<[keyof typeof rentalOptions, (typeof rentalOptions)[keyof typeof rentalOptions]]>).map(([key, config]) => (
+                    {(Object.entries(RENTAL_OPTIONS) as [RentalDuration, (typeof RENTAL_OPTIONS)[RentalDuration]][]).map(([key, config]) => (
                       <button
                         key={key}
                         type="button"

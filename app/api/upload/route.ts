@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { moderateImageContent } from '@/lib/ai'
+import { checkRateLimit } from '@/lib/rate-limit'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
@@ -50,6 +51,15 @@ export async function POST(request: NextRequest) {
     const session = await auth.api.getSession({ headers: await headers() })
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized. Please sign in to upload.' }, { status: 401 })
+    }
+
+    const clientIp = request.headers.get('x-forwarded-for') || session.user.id
+    const rateLimit = checkRateLimit(`upload:${clientIp}`, 15, 60000)
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many upload requests. Please wait a minute before trying again.' },
+        { status: 429, headers: { 'Retry-After': '60' } }
+      )
     }
 
     const formData = await request.formData()
@@ -111,12 +121,17 @@ export async function POST(request: NextRequest) {
         const blob = await put(pathname, file, { access: 'public', addRandomSuffix: false })
         uploadedUrls.push(blob.url)
       } else {
-        
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads', session.user.id)
-        await fs.mkdir(uploadDir, { recursive: true })
-        const targetPath = path.join(uploadDir, filename)
-        await fs.writeFile(targetPath, Buffer.from(buffer))
-        uploadedUrls.push(`/uploads/${session.user.id}/${filename}`)
+        try {
+          const uploadDir = path.join(process.cwd(), 'public', 'uploads', session.user.id)
+          await fs.mkdir(uploadDir, { recursive: true })
+          const targetPath = path.join(uploadDir, filename)
+          await fs.writeFile(targetPath, Buffer.from(buffer))
+          uploadedUrls.push(`/uploads/${session.user.id}/${filename}`)
+        } catch (fsErr) {
+          console.warn('[Upload] Local filesystem write failed (serverless fallback triggered):', fsErr)
+          const base64Data = Buffer.from(buffer).toString('base64')
+          uploadedUrls.push(`data:${file.type};base64,${base64Data}`)
+        }
       }
     }
 

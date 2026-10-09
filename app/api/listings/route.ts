@@ -1,11 +1,21 @@
-import { and, desc, asc, eq, gte, ilike, lte, or, sql, type SQL } from 'drizzle-orm'
+import { and, desc, asc, eq, gte, ilike, lte, or, type SQL } from 'drizzle-orm'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { listings, user as userTable } from '@/lib/db/schema'
+import { listings } from '@/lib/db/schema'
 import { parseNaturalLanguageSearch } from '@/lib/ai'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function GET(request: NextRequest) {
   try {
+    const clientIp = request.headers.get('x-forwarded-for') || 'anonymous'
+    const rateLimit = checkRateLimit(`listings:${clientIp}`, 120, 60000)
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many search requests. Please slow down.' },
+        { status: 429, headers: { 'Retry-After': '60' } }
+      )
+    }
+
     const params = request.nextUrl.searchParams
     let rawQuery = params.get('q')?.trim().slice(0, 150) || ''
     const categoryParam = params.get('category')?.trim().slice(0, 80)
