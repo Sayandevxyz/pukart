@@ -36,14 +36,11 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
     type TxStatus = 'inquiry' | 'requested' | 'negotiating' | 'accepted' | 'completed' | 'rejected' | 'cancelled' | 'disputed'
 
     function canTransition(current: TxStatus, target: TxStatus, isSeller: boolean): boolean {
-      if (target === 'accepted') {
+      if (target === 'accepted' || target === 'rejected') {
         return isSeller && ['inquiry', 'requested', 'negotiating'].includes(current)
       }
       if (target === 'completed') {
         return current === 'accepted'
-      }
-      if (target === 'rejected') {
-        return isSeller && ['inquiry', 'requested', 'negotiating'].includes(current)
       }
       if (target === 'cancelled') {
         return ['inquiry', 'requested', 'negotiating', 'accepted'].includes(current)
@@ -126,11 +123,11 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
   })
 
   describe('Category-Tailored Types & Conditions Filter Rules', () => {
+    const joinLabels = (opts: FilterOption[]) => opts.map((o) => o.label).join(' ')
+
     it('should provide food-tailored options for Food category', () => {
-      const foodTypes = getTypesForCategory('Food')
-      const foodConditions = getConditionsForCategory('Food')
-      const foodLabels = foodTypes.map((t: FilterOption) => t.label).join(' ')
-      const foodCondLabels = foodConditions.map((c: FilterOption) => c.label).join(' ')
+      const foodLabels = joinLabels(getTypesForCategory('Food'))
+      const foodCondLabels = joinLabels(getConditionsForCategory('Food'))
 
       expect(foodLabels).toContain('Daily Meal / Home Tiffin')
       expect(foodLabels).toContain('Hostel Mess Coupon / Share')
@@ -139,10 +136,8 @@ describe('Marketplace Business Logic & Authorization (Priorities 3, 8, 10, 16)',
     })
 
     it('should provide service-tailored options for Services category', () => {
-      const serviceTypes = getTypesForCategory('Services')
-      const serviceConditions = getConditionsForCategory('Services')
-      const serviceLabels = serviceTypes.map((t: FilterOption) => t.label).join(' ')
-      const serviceCondLabels = serviceConditions.map((c: FilterOption) => c.label).join(' ')
+      const serviceLabels = joinLabels(getTypesForCategory('Services'))
+      const serviceCondLabels = joinLabels(getConditionsForCategory('Services'))
 
       expect(serviceLabels).toContain('Tutoring / Exam Prep / Assignment Help')
       expect(serviceLabels).toContain('Printing / Xerox / Thesis Binding')

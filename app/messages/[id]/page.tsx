@@ -20,29 +20,27 @@ import {
   blockUser,
   makeOffer,
 } from '@/app/actions/marketplace'
-import { authClient } from '@/lib/auth-client'
+import { useToast } from '@/lib/hooks/useToast'
+import { useRequireAuth, type UserSessionData } from '@/lib/hooks/useRequireAuth'
+import { ToastBanner } from '@/components/ui/ToastBanner'
+import { ModalDialog, ModalActionButtons } from '@/components/ui/modal-dialog'
 import type { ChatMessageItem } from '@/lib/types'
 
 export default function ConversationChatPage() {
-  const params = useParams()
   const router = useRouter()
+  const params = useParams()
   const conversationId = Number(params?.id)
 
-  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
+  const [session, setSession] = useState<UserSessionData | null>(null)
   const [data, setData] = useState<Awaited<ReturnType<typeof getConversationById>>>(null)
   const [loading, setLoading] = useState(true)
   const [inputText, setInputText] = useState('')
   const [sending, setSending] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
+  const { toastMessage, showToast } = useToast()
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const [offerModalOpen, setOfferModalOpen] = useState(false)
   const [offerAmount, setOfferAmount] = useState('')
-
-  function showToast(msg: string) {
-    setToastMessage(msg)
-    window.setTimeout(() => setToastMessage(''), 3000)
-  }
 
   async function loadConversation() {
     if (!conversationId || isNaN(conversationId)) return
@@ -57,19 +55,15 @@ export default function ConversationChatPage() {
     }
   }
 
-  useEffect(() => {
-    authClient.getSession().then((res) => {
-      if (res?.data?.user) {
-        setSession(res.data)
-        loadConversation()
-      } else {
-        router.push('/sign-in')
-      }
-    }).catch(() => router.push('/sign-in'))
+  useRequireAuth((sess) => {
+    setSession(sess)
+    loadConversation()
+  })
 
+  useEffect(() => {
     const interval = setInterval(loadConversation, 4000)
     return () => clearInterval(interval)
-  }, [conversationId, router])
+  }, [conversationId])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -150,14 +144,7 @@ export default function ConversationChatPage() {
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <Navbar />
 
-      {toastMessage && (
-        <div
-          role="status"
-          className="fixed bottom-6 left-1/2 z-[80] -translate-x-1/2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-2xl"
-        >
-          {toastMessage}
-        </div>
-      )}
+      <ToastBanner message={toastMessage} />
 
       <main id="main-content" className="mx-auto flex flex-1 w-full max-w-4xl flex-col px-4 py-4 sm:px-6">
         
@@ -274,42 +261,29 @@ export default function ConversationChatPage() {
         </form>
       </main>
 
-      {offerModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-bold text-primary">Make an In-Chat Offer</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Listed at ₹{listing.price.toLocaleString('en-IN')}. Submit a student counter-offer.
-            </p>
-            <form onSubmit={handleMakeOffer} className="mt-4 space-y-4">
-              <input
-                type="number"
-                min="1"
-                required
-                value={offerAmount}
-                onChange={(e) => setOfferAmount(e.target.value)}
-                placeholder="Enter amount ₹"
-                className="h-12 w-full rounded-xl border border-border bg-background px-4 text-base font-bold outline-none focus:border-accent"
-              />
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setOfferModalOpen(false)}
-                  className="flex-1 rounded-xl border border-border py-2.5 text-xs font-semibold hover:bg-muted"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 rounded-xl bg-accent py-2.5 text-xs font-bold text-accent-foreground"
-                >
-                  Submit Offer
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ModalDialog
+        isOpen={offerModalOpen}
+        onClose={() => setOfferModalOpen(false)}
+        title="Make an In-Chat Offer"
+        description={`Listed at ₹${listing.price.toLocaleString('en-IN')}. Submit a student counter-offer.`}
+      >
+        <form onSubmit={handleMakeOffer} className="mt-4 space-y-4">
+          <input
+            type="number"
+            min="1"
+            required
+            value={offerAmount}
+            onChange={(e) => setOfferAmount(e.target.value)}
+            placeholder="Enter amount ₹"
+            className="h-12 w-full rounded-xl border border-border bg-background px-4 text-base font-bold outline-none focus:border-accent"
+          />
+          <ModalActionButtons
+            onCancel={() => setOfferModalOpen(false)}
+            cancelText="Cancel"
+            submitText="Submit Offer"
+          />
+        </form>
+      </ModalDialog>
     </div>
   )
 }

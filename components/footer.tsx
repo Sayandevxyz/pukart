@@ -86,27 +86,39 @@ export function Footer() {
               Have questions, feedback, or need help with a listing? Reach out to the student support team:
             </p>
             <div className="space-y-2.5 pt-1">
-              <a
-                href="mailto:contactpukart@gmail.com"
-                className="group flex items-center gap-2.5 rounded-xl border border-border bg-background/80 px-3.5 py-2.5 text-xs font-semibold text-foreground shadow-xs transition hover:border-accent hover:text-accent"
-              >
-                <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent group-hover:bg-accent group-hover:text-accent-foreground transition">
-                  <Mail size={14} />
-                </div>
-                <span className="truncate">contactpukart@gmail.com</span>
-              </a>
-
-              <a
-                href="https://www.instagram.com/pu_kart?igsi=aDdsODBoeTVsMzNn"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-center gap-2.5 rounded-xl border border-border bg-background/80 px-3.5 py-2.5 text-xs font-semibold text-foreground shadow-xs transition hover:border-pink-500 hover:text-pink-500"
-              >
-                <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-pink-500/10 text-pink-500 group-hover:bg-pink-500 group-hover:text-white transition">
-                  <InstagramIcon size={14} />
-                </div>
-                <span className="truncate">@pu_kart on Instagram</span>
-              </a>
+              {[
+                {
+                  href: 'mailto:contactpukart@gmail.com',
+                  label: 'contactpukart@gmail.com',
+                  icon: Mail,
+                  colors: 'bg-accent/10 text-accent group-hover:bg-accent group-hover:text-accent-foreground',
+                  border: 'hover:border-accent hover:text-accent',
+                  external: false,
+                },
+                {
+                  href: 'https://www.instagram.com/pu_kart?igsi=aDdsODBoeTVsMzNn',
+                  label: '@pu_kart on Instagram',
+                  icon: InstagramIcon,
+                  colors: 'bg-pink-500/10 text-pink-500 group-hover:bg-pink-500 group-hover:text-white',
+                  border: 'hover:border-pink-500 hover:text-pink-500',
+                  external: true,
+                },
+              ].map((c) => {
+                const Icon = c.icon
+                return (
+                  <a
+                    key={c.label}
+                    href={c.href}
+                    {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    className={`group flex items-center gap-2.5 rounded-xl border border-border bg-background/80 px-3.5 py-2.5 text-xs font-semibold text-foreground shadow-xs transition ${c.border}`}
+                  >
+                    <div className={`flex size-7 shrink-0 items-center justify-center rounded-lg transition ${c.colors}`}>
+                      <Icon size={14} />
+                    </div>
+                    <span className="truncate">{c.label}</span>
+                  </a>
+                )
+              })}
             </div>
           </div>
         </div>

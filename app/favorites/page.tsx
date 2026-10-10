@@ -1,54 +1,37 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Navbar } from '@/components/navbar'
 import {
   Heart,
   MapPin,
   ExternalLink,
 } from 'lucide-react'
 import { getMyFavorites, toggleFavorite } from '@/app/actions/marketplace'
-import { authClient } from '@/lib/auth-client'
+
+import { useToast } from '@/lib/hooks/useToast'
+import { useRequireAuth } from '@/lib/hooks/useRequireAuth'
+import { PageShell } from '@/components/ui/PageShell'
 
 type FavoriteItem = Awaited<ReturnType<typeof getMyFavorites>>[number]
 
 export default function FavoritesPage() {
-  const router = useRouter()
-  const [_session, setSession] = useState<{ user?: { id: string } } | null>(null)
   const [favorites, setFavorites] = useState<FavoriteItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [toastMessage, setToastMessage] = useState('')
+  const { toastMessage, showToast } = useToast()
 
-  function showToast(msg: string) {
-    setToastMessage(msg)
-    window.setTimeout(() => setToastMessage(''), 3000)
-  }
+  const { loading } = useRequireAuth(() => {
+    loadFavorites()
+  })
 
   async function loadFavorites() {
-    setLoading(true)
     try {
       const items = await getMyFavorites()
       setFavorites(items)
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to load favorites')
-    } finally {
-      setLoading(false)
     }
   }
-
-  useEffect(() => {
-    authClient.getSession().then((res) => {
-      if (res?.data?.user) {
-        setSession(res.data)
-        loadFavorites()
-      } else {
-        router.push('/sign-in')
-      }
-    }).catch(() => router.push('/sign-in'))
-  }, [router])
 
   async function handleRemove(id: number) {
     setFavorites((prev) => prev.filter((item) => item.id !== id))
@@ -62,19 +45,7 @@ export default function FavoritesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
-
-      {toastMessage && (
-        <div
-          role="status"
-          className="fixed bottom-6 left-1/2 z-[80] -translate-x-1/2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-2xl"
-        >
-          {toastMessage}
-        </div>
-      )}
-
-      <main id="main-content" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <PageShell toastMessage={toastMessage}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-serif text-3xl font-bold text-primary">Saved Favorites</h1>
@@ -148,7 +119,6 @@ export default function FavoritesPage() {
             ))}
           </div>
         )}
-      </main>
-    </div>
+    </PageShell>
   )
 }

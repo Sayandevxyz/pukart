@@ -1,6 +1,6 @@
 'use server'
 
-import { and, desc, eq, inArray, or, sql } from 'drizzle-orm'
+import { and, desc, eq, or, sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import {
@@ -8,21 +8,32 @@ import {
   conversations,
   listings,
   messages,
-  notifications,
   user as userTable,
 } from '@/lib/db/schema'
+import { userSummaryFields } from '@/lib/db/schema-helpers'
 import { sanitizeText } from '@/lib/utils'
-import { currentUser } from './validation'
+import { currentUser, createSafeNotification, fetchUsersMap, formatSafeListingTitle, getValidListingOrThrow } from './validation'
+
+async function findAuthorizedConversation(conversationId: number, userId: string) {
+  const [conv] = await db
+    .select()
+    .from(conversations)
+    .where(
+      and(
+        eq(conversations.id, conversationId),
+        or(eq(conversations.buyerId, userId), eq(conversations.sellerId, userId))
+      )
+    )
+    .limit(1)
+  return conv
+}
 
 export async function startConversation(listingId: number, initialMessage?: string) {
   try {
     const user = await currentUser()
     if (!user) return { success: false, error: 'Please sign in to start a conversation' }
-    if (!Number.isInteger(listingId) || listingId < 1)
-      return { success: false, error: 'Invalid listing ID' }
 
-    const [listing] = await db.select().from(listings).where(eq(listings.id, listingId)).limit(1)
-    if (!listing) return { success: false, error: 'Listing not found' }
+    const listing = await getValidListingOrThrow(listingId)
     if (listing.userId === user.id) return { success: false, error: 'You are the seller of this listing' }
 
     const blocked = await db.select().from(blockedUsers).where(
@@ -62,19 +73,14 @@ export async function startConversation(listingId: number, initialMessage?: stri
         .set({ lastMessage: cleanContent, lastMessageAt: new Date() })
         .where(eq(conversations.id, conversation.id))
 
-      try {
-        const safeTitle = (listing.title || '').replace(/["""]/g, "'").slice(0, 100)
-        const safeBody = `${user.name || 'A student'} asked about ${safeTitle}`.slice(0, 200)
-        await db.insert(notifications).values({
-          userId: listing.userId,
-          kind: 'message',
-          title: 'New Campus Inquiry',
-          body: safeBody,
-          link: `/messages/${conversation.id}`,
-        })
-      } catch (notifErr) {
-        console.error('[startConversation] notification insert failed (non-fatal):', notifErr)
-      }
+      const safeTitle = await formatSafeListingTitle(listing.title)
+      await createSafeNotification({
+        userId: listing.userId,
+        kind: 'message',
+        title: 'New Campus Inquiry',
+        body: `${user.name || 'A student'} asked about ${safeTitle}`.slice(0, 200),
+        link: `/messages/${conversation.id}`,
+      })
     }
 
     revalidatePath('/messages')
@@ -97,12 +103,7 @@ export async function getMyConversations() {
       .select({
         conversation: conversations,
         listing: listings,
-        buyer: {
-          id: userTable.id,
-          name: userTable.name,
-          email: userTable.email,
-          image: userTable.image,
-        },
+        buyer: userSummaryFields,
       })
       .from(conversations)
       .innerJoin(listings, eq(conversations.listingId, listings.id))
@@ -110,11 +111,7 @@ export async function getMyConversations() {
       .where(or(eq(conversations.buyerId, user.id), eq(conversations.sellerId, user.id)))
       .orderBy(desc(conversations.lastMessageAt))
 
-    const sellerIds = [...new Set(rows.map((r) => r.conversation.sellerId))]
-    const sellers = sellerIds.length > 0
-      ? await db.select().from(userTable).where(inArray(userTable.id, sellerIds))
-      : []
-    const sellerMap = new Map(sellers.map((s) => [s.id, s]))
+    const sellerMap = await fetchUsersMap(rows.map((r) => r.conversation.sellerId))
 
     return rows.map((r) => {
       const isBuyer = r.conversation.buyerId === user.id
@@ -137,17 +134,7 @@ export async function getConversationById(conversationId: number) {
     const user = await currentUser()
     if (!user || !Number.isInteger(conversationId) || conversationId < 1) return null
 
-    const [conversation] = await db
-      .select()
-      .from(conversations)
-      .where(
-        and(
-          eq(conversations.id, conversationId),
-          or(eq(conversations.buyerId, user.id), eq(conversations.sellerId, user.id))
-        )
-      )
-      .limit(1)
-
+    const conversation = await findAuthorizedConversation(conversationId, user.id)
     if (!conversation) return null
 
     const [listing] = await db.select().from(listings).where(eq(listings.id, conversation.listingId)).limit(1)
@@ -192,17 +179,7 @@ export async function sendMessage(conversationId: number, content: string, image
     if (!Number.isInteger(conversationId) || conversationId < 1)
       return { success: false, error: 'Invalid conversation' }
 
-    const [conv] = await db
-      .select()
-      .from(conversations)
-      .where(
-        and(
-          eq(conversations.id, conversationId),
-          or(eq(conversations.buyerId, user.id), eq(conversations.sellerId, user.id))
-        )
-      )
-      .limit(1)
-
+    const conv = await findAuthorizedConversation(conversationId, user.id)
     if (!conv) return { success: false, error: 'Conversation not found or unauthorized' }
 
     const cleanContent = sanitizeText(content, 1, 3000)
@@ -224,17 +201,13 @@ export async function sendMessage(conversationId: number, content: string, image
 
     const recipientId = conv.buyerId === user.id ? conv.sellerId : conv.buyerId
 
-    try {
-      await db.insert(notifications).values({
-        userId: recipientId,
-        kind: 'message',
-        title: `Message from ${(user.name || 'PU Student').slice(0, 40)}`,
-        body: cleanContent.slice(0, 100),
-        link: `/messages/${conversationId}`,
-      })
-    } catch (notifErr) {
-      console.error('[sendMessage notification error]', notifErr)
-    }
+    await createSafeNotification({
+      userId: recipientId,
+      kind: 'message',
+      title: `Message from ${(user.name || 'PU Student').slice(0, 40)}`,
+      body: cleanContent.slice(0, 100),
+      link: `/messages/${conversationId}`,
+    })
 
     revalidatePath(`/messages/${conversationId}`)
     revalidatePath('/messages')

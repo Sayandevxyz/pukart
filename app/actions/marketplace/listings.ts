@@ -13,7 +13,7 @@ import {
 import { checkProfileCompletion } from '@/lib/constants/campus'
 import { sanitizeText } from '@/lib/utils'
 import type { SellerProfileData } from '@/lib/types'
-import { currentUser } from './validation'
+import { currentUser, createAnonymousSeller } from './validation'
 import { getUserRatingStats } from './reviews'
 
 export async function toggleFavorite(listingId: number) {
@@ -217,19 +217,7 @@ export async function getSellerProfile(userId: string): Promise<SellerProfileDat
 
     if (!currentUserSession) {
       return {
-        user: {
-          id: userRow.id,
-          name: 'Verified PU Student',
-          image: null,
-          email: null,
-          department: null,
-          course: null,
-          year: null,
-          bio: null,
-          phone: null,
-          hostel: null,
-          isPrivate: true,
-        },
+        user: createAnonymousSeller(userRow.id),
         listings: sellerListings,
         ratingStats,
         isPrivate: true,

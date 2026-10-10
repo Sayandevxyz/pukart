@@ -26,11 +26,30 @@ export const DEFAULT_TYPES: FilterOption[] = [
 ]
 
 export const DEFAULT_CONDITIONS: FilterOption[] = [
-  { value: 'All', label: 'All Conditions' },
-  { value: 'brand_new', label: 'Brand New' },
-  { value: 'like_new', label: 'Like New' },
-  { value: 'good', label: 'Good' },
+  { value: 'All', label: 'All Conditions' }, { value: 'brand_new', label: 'Brand New' },
+  { value: 'like_new', label: 'Like New' }, { value: 'good', label: 'Good' },
   { value: 'fair', label: 'Fair' },
+]
+
+const standardTypes = (rentLabel: string, freeLabel: string): FilterOption[] => [
+  { value: 'All', label: 'All Types' },
+  { value: 'sell', label: 'For Sale' },
+  { value: 'rent', label: rentLabel },
+  { value: 'free', label: freeLabel },
+]
+
+const motorizedTypes = (allLabel: string, sellLabel: string, rentLabel: string, leaseLabel: string): FilterOption[] => [
+  { value: 'All', label: allLabel },
+  { value: 'sell', label: sellLabel },
+  { value: 'rent', label: rentLabel },
+  { value: 'monthly_rent', label: leaseLabel },
+]
+
+const vehicleConditions = (excellentLabel: string, goodLabel: string, fairLabel: string): FilterOption[] => [
+  { value: 'All', label: 'All Conditions' },
+  { value: 'excellent', label: excellentLabel },
+  { value: 'good', label: goodLabel },
+  { value: 'fair', label: fairLabel },
 ]
 
 export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
@@ -110,12 +129,9 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       { value: 'free', label: 'Free Senior Giveaway' },
     ],
     conditions: [
-      { value: 'All', label: 'All Conditions' },
-      { value: 'brand_new', label: 'Brand New (Unmarked)' },
-      { value: 'like_new', label: 'Like New (Clean pages, no ink)' },
-      { value: 'good', label: 'Good (Minimal highlighting)' },
-      { value: 'fair', label: 'Fair (Highlighted / Soft wear)' },
-      { value: 'spiral_bound', label: 'Spiral Bound / Photocopy Set' },
+      { value: 'All', label: 'All Conditions' }, { value: 'brand_new', label: 'Brand New (Unmarked)' },
+      { value: 'like_new', label: 'Like New (Clean pages, no ink)' }, { value: 'good', label: 'Good (Minimal highlighting)' },
+      { value: 'fair', label: 'Fair (Highlighted / Soft wear)' }, { value: 'spiral_bound', label: 'Spiral Bound / Photocopy Set' },
     ],
   },
 
@@ -129,18 +145,13 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     defaultType: 'sell',
     defaultCondition: 'good',
     types: [
-      { value: 'All', label: 'All Deal Types' },
-      { value: 'sell', label: 'For Sale' },
-      { value: 'rent', label: 'Rental (Short term / Exam)' },
-      { value: 'exchange', label: 'Gadget Exchange' },
+      { value: 'All', label: 'All Deal Types' }, { value: 'sell', label: 'For Sale' },
+      { value: 'rent', label: 'Rental (Short term / Exam)' }, { value: 'exchange', label: 'Gadget Exchange' },
     ],
     conditions: [
-      { value: 'All', label: 'All Conditions' },
-      { value: 'brand_new', label: 'Brand New (Sealed in Box)' },
-      { value: 'like_new', label: 'Like New (Flawless, with Bill/Box)' },
-      { value: 'good', label: 'Good (Fully Working, Minor Scratches)' },
-      { value: 'fair', label: 'Fair (Signs of use, battery wear)' },
-      { value: 'for_parts', label: 'For Parts / Needs Repair' },
+      { value: 'All', label: 'All Conditions' }, { value: 'brand_new', label: 'Brand New (Sealed in Box)' },
+      { value: 'like_new', label: 'Like New (Flawless, with Bill/Box)' }, { value: 'good', label: 'Good (Fully Working, Minor Scratches)' },
+      { value: 'fair', label: 'Fair (Signs of use, battery wear)' }, { value: 'for_parts', label: 'For Parts / Needs Repair' },
     ],
   },
 
@@ -153,12 +164,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     descriptionPlaceholder: 'Detail bicycle brand, gear/brake condition, tire status, lock/bell/basket included, and hostel pickup.',
     defaultType: 'sell',
     defaultCondition: 'good',
-    types: [
-      { value: 'All', label: 'All Cycle Types' },
-      { value: 'sell', label: 'For Sale' },
-      { value: 'rent', label: 'Semester / Monthly Rental' },
-      { value: 'free', label: 'Free Pass-On' },
-    ],
+    types: standardTypes('Semester / Monthly Rental', 'Free Pass-On'),
     conditions: [
       { value: 'All', label: 'All Conditions' },
       { value: 'like_new', label: 'Like New (Ready to ride, new tires)' },
@@ -177,18 +183,12 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     descriptionPlaceholder: 'Detail registration year, kilometers run, RC transfer / NOC status, insurance validity, mileage, and test ride location.',
     defaultType: 'sell',
     defaultCondition: 'good',
-    types: [
-      { value: 'All', label: 'All Bike Types' },
-      { value: 'sell', label: 'For Sale (Full RC Transfer)' },
-      { value: 'rent', label: 'Daily / Weekend Rental' },
-      { value: 'monthly_rent', label: 'Monthly Lease' },
-    ],
-    conditions: [
-      { value: 'All', label: 'All Conditions' },
-      { value: 'excellent', label: 'Excellent (Serviced, Insurance Active)' },
-      { value: 'good', label: 'Good (Smooth Running, Clean)' },
-      { value: 'fair', label: 'Fair (Daily Campus Commute)' },
-    ],
+    types: motorizedTypes('All Bike Types', 'For Sale (Full RC Transfer)', 'Daily / Weekend Rental', 'Monthly Lease'),
+    conditions: vehicleConditions(
+      'Excellent (Serviced, Insurance Active)',
+      'Good (Smooth Running, Clean)',
+      'Fair (Daily Campus Commute)'
+    ),
   },
 
   Scooty: {
@@ -200,18 +200,12 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     descriptionPlaceholder: 'Detail model year, self-start/battery condition, tire health, mileage, RC/insurance status, and campus pickup location.',
     defaultType: 'sell',
     defaultCondition: 'good',
-    types: [
-      { value: 'All', label: 'All Scooty Types' },
-      { value: 'sell', label: 'For Sale' },
-      { value: 'rent', label: 'Weekend / Weekly Rental' },
-      { value: 'monthly_rent', label: 'Monthly Rental' },
-    ],
-    conditions: [
-      { value: 'All', label: 'All Conditions' },
-      { value: 'excellent', label: 'Excellent (Self-Start, Great Mileage)' },
-      { value: 'good', label: 'Good (Regularly Serviced)' },
-      { value: 'fair', label: 'Fair (Campus Runabout)' },
-    ],
+    types: motorizedTypes('All Scooty Types', 'For Sale', 'Weekend / Weekly Rental', 'Monthly Rental'),
+    conditions: vehicleConditions(
+      'Excellent (Self-Start, Great Mileage)',
+      'Good (Regularly Serviced)',
+      'Fair (Campus Runabout)'
+    ),
   },
 
   Hostel: {
@@ -223,12 +217,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     descriptionPlaceholder: 'Detail dimensions, power rating, cosmetic condition, working status, and which hostel room to collect from.',
     defaultType: 'sell',
     defaultCondition: 'good',
-    types: [
-      { value: 'All', label: 'All Types' },
-      { value: 'sell', label: 'For Sale' },
-      { value: 'rent', label: 'Semester Rental' },
-      { value: 'free', label: 'Senior Room Giveaway (Free)' },
-    ],
+    types: standardTypes('Semester Rental', 'Senior Room Giveaway (Free)'),
     conditions: [
       { value: 'All', label: 'All Conditions' },
       { value: 'like_new', label: 'Like New (Spotless & Sturdy)' },
@@ -246,12 +235,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     descriptionPlaceholder: 'Detail brand, size, fit, fabric material, how many times worn, and whether dry-cleaned or freshly washed.',
     defaultType: 'sell',
     defaultCondition: 'like_new',
-    types: [
-      { value: 'All', label: 'All Types' },
-      { value: 'sell', label: 'For Sale' },
-      { value: 'rent', label: 'Fest / Traditional / Suit Rental' },
-      { value: 'free', label: 'Free Clothing Donation' },
-    ],
+    types: standardTypes('Fest / Traditional / Suit Rental', 'Free Clothing Donation'),
     conditions: [
       { value: 'All', label: 'All Conditions' },
       { value: 'brand_new', label: 'Brand New (With Tags / Unworn)' },
@@ -270,12 +254,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     descriptionPlaceholder: 'Detail brand, grip/string condition, accessories included (cover, shuttlecocks, balls), and handover preference.',
     defaultType: 'sell',
     defaultCondition: 'good',
-    types: [
-      { value: 'All', label: 'All Types' },
-      { value: 'sell', label: 'For Sale' },
-      { value: 'rent', label: 'Match Day / Tournament Rent' },
-      { value: 'free', label: 'Free Community Share' },
-    ],
+    types: standardTypes('Match Day / Tournament Rent', 'Free Community Share'),
     conditions: [
       { value: 'All', label: 'All Conditions' },
       { value: 'brand_new', label: 'Brand New (In Packaging)' },
@@ -286,18 +265,21 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
   },
 }
 
+function getCategoryOptionList(
+  category: string | null | undefined,
+  field: 'types' | 'conditions',
+  fallback: FilterOption[]
+): FilterOption[] {
+  if (!category || category === 'All' || !CATEGORY_CONFIGS[category]) return fallback
+  return CATEGORY_CONFIGS[category][field]
+}
+
 export function getTypesForCategory(category?: string | null): FilterOption[] {
-  if (!category || category === 'All' || !CATEGORY_CONFIGS[category]) {
-    return DEFAULT_TYPES
-  }
-  return CATEGORY_CONFIGS[category].types
+  return getCategoryOptionList(category, 'types', DEFAULT_TYPES)
 }
 
 export function getConditionsForCategory(category?: string | null): FilterOption[] {
-  if (!category || category === 'All' || !CATEGORY_CONFIGS[category]) {
-    return DEFAULT_CONDITIONS
-  }
-  return CATEGORY_CONFIGS[category].conditions
+  return getCategoryOptionList(category, 'conditions', DEFAULT_CONDITIONS)
 }
 
 export function getFormOptionsForCategory(category?: string | null) {

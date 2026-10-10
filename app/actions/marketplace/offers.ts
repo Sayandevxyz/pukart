@@ -5,28 +5,21 @@ import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import {
   listings,
-  notifications,
   offers,
   transactions,
 } from '@/lib/db/schema'
 import { sanitizeText } from '@/lib/utils'
-import { currentUser } from './validation'
+import { currentUser, createSafeNotification, formatSafeListingTitle, getValidListingOrThrow } from './validation'
 
 export async function makeOffer(listingId: number, amount: number, message?: string) {
   try {
     const user = await currentUser()
     if (!user) return { success: false, error: 'Please sign in to make an offer' }
-    if (!Number.isInteger(listingId) || listingId < 1)
-      return { success: false, error: 'Invalid listing' }
     if (!Number.isInteger(amount) || amount <= 0 || amount > 10000000)
       return { success: false, error: 'Invalid offer amount in INR' }
 
-    const [listing] = await db
-      .select()
-      .from(listings)
-      .where(eq(listings.id, listingId))
-      .limit(1)
-    if (!listing || listing.status !== 'active')
+    const listing = await getValidListingOrThrow(listingId)
+    if (listing.status !== 'active')
       return { success: false, error: 'Listing is no longer active' }
     if (listing.userId === user.id)
       return { success: false, error: 'You are the seller of this listing' }
@@ -43,21 +36,14 @@ export async function makeOffer(listingId: number, amount: number, message?: str
       })
       .returning()
 
-    try {
-      const safeTitle = (listing.title || '').replace(/["""]/g, "'").slice(0, 100)
-      await db.insert(notifications).values({
-        userId: listing.userId,
-        kind: 'offer',
-        title: 'New Offer Received!',
-        body: `${user.name || 'A student'} offered ₹${amount.toLocaleString('en-IN')} for ${safeTitle}`.slice(
-          0,
-          200
-        ),
-        link: `/transactions`,
-      })
-    } catch (notifErr) {
-      console.error('[makeOffer] notification insert failed (non-fatal):', notifErr)
-    }
+    const safeTitle = await formatSafeListingTitle(listing.title)
+    await createSafeNotification({
+      userId: listing.userId,
+      kind: 'offer',
+      title: 'New Offer Received!',
+      body: `${user.name || 'A student'} offered ₹${amount.toLocaleString('en-IN')} for ${safeTitle}`.slice(0, 200),
+      link: '/transactions',
+    })
 
     revalidatePath('/transactions')
     revalidatePath('/notifications')
@@ -89,6 +75,8 @@ export async function respondToOffer(
       return { success: false, error: 'Forbidden: Unauthorized offer access' }
     }
 
+    const otherPartyId = offer.sellerId === user.id ? offer.buyerId : offer.sellerId
+
     if (action === 'accept') {
       if (offer.sellerId !== user.id && offer.status !== 'countered') {
         return { success: false, error: 'Only recipient can accept' }
@@ -114,18 +102,14 @@ export async function respondToOffer(
 
       await db.update(listings).set({ status: 'reserved' }).where(eq(listings.id, offer.listingId))
 
-      const targetUserId = offer.sellerId === user.id ? offer.buyerId : offer.sellerId
-      try {
-        await db.insert(notifications).values({
-          userId: targetUserId,
-          kind: 'offer_accepted',
-          title: 'Offer Accepted!',
-          body: `Your offer for ₹${(offer.counterAmount || offer.amount).toLocaleString('en-IN')} was accepted. Ready for campus meetup.`,
-          link: `/transactions`,
-        })
-      } catch (notifErr) {
-        console.error('[respondToOffer notification error]', notifErr)
-      }
+      const acceptedAmt = (offer.counterAmount || offer.amount).toLocaleString('en-IN')
+      await createSafeNotification({
+        userId: otherPartyId,
+        kind: 'offer_accepted',
+        title: 'Offer Accepted!',
+        body: `Your offer for ₹${acceptedAmt} was accepted. Ready for campus meetup.`,
+        link: '/transactions',
+      })
 
       revalidatePath('/transactions')
       return { success: true, offer: updatedOffer, transaction: tx }
@@ -138,18 +122,13 @@ export async function respondToOffer(
         .where(eq(offers.id, offerId))
         .returning()
 
-      const targetUserId = offer.sellerId === user.id ? offer.buyerId : offer.sellerId
-      try {
-        await db.insert(notifications).values({
-          userId: targetUserId,
-          kind: 'offer_rejected',
-          title: 'Offer Declined',
-          body: `Offer was declined. You can message the seller to negotiate.`,
-          link: `/transactions`,
-        })
-      } catch (notifErr) {
-        console.error('[respondToOffer notification error]', notifErr)
-      }
+      await createSafeNotification({
+        userId: otherPartyId,
+        kind: 'offer_rejected',
+        title: 'Offer Declined',
+        body: 'Offer was declined. You can message the seller to negotiate.',
+        link: '/transactions',
+      })
 
       revalidatePath('/transactions')
       return { success: true, offer: updatedOffer }
@@ -171,17 +150,13 @@ export async function respondToOffer(
         .where(eq(offers.id, offerId))
         .returning()
 
-      try {
-        await db.insert(notifications).values({
-          userId: offer.buyerId,
-          kind: 'offer',
-          title: 'Counter Offer Proposed',
-          body: `Seller countered with ₹${counterAmount.toLocaleString('en-IN')}`,
-          link: `/transactions`,
-        })
-      } catch (notifErr) {
-        console.error('[respondToOffer notification error]', notifErr)
-      }
+      await createSafeNotification({
+        userId: offer.buyerId,
+        kind: 'offer',
+        title: 'Counter Offer Proposed',
+        body: `Seller countered with ₹${counterAmount.toLocaleString('en-IN')}`,
+        link: '/transactions',
+      })
 
       revalidatePath('/transactions')
       return { success: true, offer: updatedOffer }

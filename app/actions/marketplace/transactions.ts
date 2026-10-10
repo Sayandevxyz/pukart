@@ -1,16 +1,22 @@
 'use server'
 
-import { and, desc, eq, inArray, or } from 'drizzle-orm'
+import { and, desc, eq, or } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import {
   listings,
-  notifications,
   transactions,
   user as userTable,
 } from '@/lib/db/schema'
+import { userSummaryFields } from '@/lib/db/schema-helpers'
 import { sanitizeText } from '@/lib/utils'
-import { currentUser } from './validation'
+import {
+  currentUser,
+  createSafeNotification,
+  fetchUsersMap,
+  getTxParticipantRole,
+  formatSafeListingTitle,
+} from './validation'
 
 export async function requestTransaction(
   listingId: number,
@@ -44,21 +50,17 @@ export async function requestTransaction(
       })
       .returning()
 
-    try {
-      const safeTitle = (listing.title || '').replace(/["""]/g, "'").slice(0, 100)
-      await db.insert(notifications).values({
-        userId: listing.userId,
-        kind: 'transaction',
-        title: 'Purchase Request Received',
-        body: `${user.name || 'A student'} requested to buy ${safeTitle} for ₹${listing.price.toLocaleString('en-IN')}`.slice(
-          0,
-          200
-        ),
-        link: `/transactions`,
-      })
-    } catch (notifErr) {
-      console.error('[requestTransaction] notification insert failed (non-fatal):', notifErr)
-    }
+    const safeTitle = await formatSafeListingTitle(listing.title)
+    await createSafeNotification({
+      userId: listing.userId,
+      kind: 'transaction',
+      title: 'Purchase Request Received',
+      body: `${user.name || 'A student'} requested to buy ${safeTitle} for ₹${listing.price.toLocaleString('en-IN')}`.slice(
+        0,
+        200
+      ),
+      link: '/transactions',
+    })
 
     revalidatePath('/transactions')
     revalidatePath('/notifications')
@@ -81,12 +83,7 @@ export async function getMyTransactions() {
       .select({
         transaction: transactions,
         listing: listings,
-        buyer: {
-          id: userTable.id,
-          name: userTable.name,
-          email: userTable.email,
-          image: userTable.image,
-        },
+        buyer: userSummaryFields,
       })
       .from(transactions)
       .innerJoin(listings, eq(transactions.listingId, listings.id))
@@ -94,12 +91,7 @@ export async function getMyTransactions() {
       .where(or(eq(transactions.buyerId, user.id), eq(transactions.sellerId, user.id)))
       .orderBy(desc(transactions.createdAt))
 
-    const sellerIds = [...new Set(rows.map((r) => r.transaction.sellerId))]
-    const sellers =
-      sellerIds.length > 0
-        ? await db.select().from(userTable).where(inArray(userTable.id, sellerIds))
-        : []
-    const sellerMap = new Map(sellers.map((s) => [s.id, s]))
+    const sellerMap = await fetchUsersMap(rows.map((r) => r.transaction.sellerId))
 
     return rows.map((r) => {
       const isBuyer = r.transaction.buyerId === user.id
@@ -135,11 +127,10 @@ export async function updateTransactionStatus(
     const [tx] = await db.select().from(transactions).where(eq(transactions.id, id)).limit(1)
     if (!tx) return { success: false, error: 'Transaction not found' }
 
-    const isBuyer = tx.buyerId === user.id
-    const isSeller = tx.sellerId === user.id
-
-    if (!isBuyer && !isSeller)
+    const { isBuyer, isSeller, isParticipant } = await getTxParticipantRole(tx, user.id)
+    if (!isParticipant) {
       return { success: false, error: 'Forbidden: Unauthorized transaction access' }
+    }
 
     if (newStatus === 'accepted') {
       if (!isSeller)
@@ -176,17 +167,13 @@ export async function updateTransactionStatus(
       .returning()
 
     const otherPartyId = isBuyer ? tx.sellerId : tx.buyerId
-    try {
-      await db.insert(notifications).values({
-        userId: otherPartyId,
-        kind: 'transaction',
-        title: `Transaction Update: ${newStatus.toUpperCase()}`,
-        body: `The transaction for item #${tx.listingId} status is now ${newStatus}.`,
-        link: `/transactions`,
-      })
-    } catch (notifErr) {
-      console.error('[updateTransactionStatus notification error]', notifErr)
-    }
+    await createSafeNotification({
+      userId: otherPartyId,
+      kind: 'transaction',
+      title: `Transaction Update: ${newStatus.toUpperCase()}`,
+      body: `The transaction for item #${tx.listingId} status is now ${newStatus}.`,
+      link: '/transactions',
+    })
 
     revalidatePath('/transactions')
     return { success: true, transaction: updated }

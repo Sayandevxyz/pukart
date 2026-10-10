@@ -7,10 +7,7 @@ export type ListingStatus = 'active' | 'reserved' | 'sold' | 'rented' | 'archive
 export type ListingType = 'sell' | 'rent' | 'buy'
 export type ListingCondition = 'new' | 'like_new' | 'good' | 'fair'
 
-export interface UserProfile {
-  id: string
-  name: string
-  email?: string | null
+export interface BasePersonDetails {
   image?: string | null
   department?: string | null
   course?: string | null
@@ -18,22 +15,20 @@ export interface UserProfile {
   bio?: string | null
   hostel?: string | null
   phone?: string | null
-  role?: 'user' | 'admin' | string
   isPrivate?: boolean
 }
 
-export interface ListingSeller {
+export interface UserProfile extends BasePersonDetails {
+  id: string
+  name: string
+  email?: string | null
+  role?: 'user' | 'admin' | string
+}
+
+export interface ListingSeller extends BasePersonDetails {
   id?: string
   name?: string | null
   email?: string | null
-  department?: string | null
-  course?: string | null
-  year?: number | null
-  bio?: string | null
-  image?: string | null
-  hostel?: string | null
-  phone?: string | null
-  isPrivate?: boolean
 }
 
 export interface ListingItem {

@@ -9,6 +9,22 @@ import { listings, listingImages, user as userTable } from '@/lib/db/schema'
 import { checkListingForScam } from '@/lib/ai'
 import { checkProfileCompletion } from '@/lib/constants/campus'
 
+export interface ListingInput {
+  title: string
+  description: string
+  price: number
+  originalPrice?: number
+  category: string
+  type?: string
+  condition?: string
+  imageUrl?: string
+  images?: string[]
+  location?: string
+  phone?: string
+  dailyRentPrice?: number
+  priceUnit?: string
+}
+
 export async function getAuthenticatedUser() {
   const session = await auth.api.getSession({ headers: await headers() })
   const email = session?.user?.email?.trim().toLowerCase()
@@ -18,17 +34,29 @@ export async function getAuthenticatedUser() {
   return session.user
 }
 
+async function requireListingOwnerOrAdmin(id: number, actionName: string) {
+  const user = await getAuthenticatedUser()
+  if (!Number.isInteger(id) || id < 1) throw new Error('Invalid listing ID')
+  const [existing] = await db.select().from(listings).where(eq(listings.id, id)).limit(1)
+  if (!existing) throw new Error('Listing not found')
+  const isAdmin = isUserAdmin(user.email, (user as { role?: string }).role)
+  if (existing.userId !== user.id && !isAdmin) {
+    throw new Error(`Forbidden: You can only ${actionName} for your own listings.`)
+  }
+  return { user, existing }
+}
+
+import { sanitizeListingPayload, persistListingImages } from './listings-helpers'
+import { createAnonymousSeller } from './marketplace/validation'
+
 export async function getListingById(id: number) {
   try {
     if (!Number.isInteger(id) || id < 1) return null
 
     let isAuthenticatedStudent = false
     try {
-      const session = await auth.api.getSession({ headers: await headers() })
-      const email = session?.user?.email?.trim().toLowerCase()
-      if (session?.user?.id && isValidPondiUniEmail(email)) {
-        isAuthenticatedStudent = true
-      }
+      const user = await getAuthenticatedUser()
+      if (user) isAuthenticatedStudent = true
     } catch {
       isAuthenticatedStudent = false
     }
@@ -67,18 +95,7 @@ export async function getListingById(id: number) {
     const sanitizedPhone = isAuthenticatedStudent ? (rawListing.phone || rawSeller?.phone || null) : null
     const sanitizedSeller = isAuthenticatedStudent
       ? rawSeller
-      : {
-          id: rawSeller?.id,
-          name: 'Verified PU Student',
-          image: null,
-          email: null,
-          department: null,
-          course: null,
-          year: null,
-          bio: null,
-          phone: null,
-          isPrivate: true,
-        }
+      : createAnonymousSeller(rawSeller?.id)
 
     return {
       ...rawListing,
@@ -101,21 +118,7 @@ export async function getActiveListings() {
     .orderBy(desc(listings.createdAt))
 }
 
-export async function createListing(input: {
-  title: string
-  description: string
-  price: number
-  originalPrice?: number
-  category: string
-  type?: string
-  condition?: string
-  imageUrl?: string
-  images?: string[]
-  location?: string
-  phone?: string
-  dailyRentPrice?: number
-  priceUnit?: string
-}) {
+export async function createListing(input: ListingInput) {
   const user = await getAuthenticatedUser()
 
   const [userProfile] = await db.select().from(userTable).where(eq(userTable.id, user.id)).limit(1)
@@ -131,27 +134,12 @@ export async function createListing(input: {
     }
   }
 
-  const title = input.title.trim()
-  const description = input.description.trim()
-  const category = input.category.trim()
-  const condition = (input.condition || 'good').toLowerCase().trim()
-  const type = (input.type || 'sell').toLowerCase().trim()
+  const { title, description, category, condition, type, allImages, primaryImage, resolvedPriceUnit } =
+    sanitizeListingPayload(input)
+
   const location = input.location?.trim() || 'Pondicherry University'
   const phone = input.phone?.trim().slice(0, 25) || userProfile?.phone || null
-
-  if (title.length < 3 || title.length > 120) throw new Error('Title must be between 3 and 120 characters')
-  if (description.length < 10 || description.length > 5000) throw new Error('Description must be between 10 and 5000 characters')
-  if (!Number.isInteger(input.price) || input.price <= 0 || input.price > 10000000) throw new Error('Price must be a positive integer in INR (max ₹10,000,000)')
-  if (!category) throw new Error('Category is required')
-
   const scamCheck = checkListingForScam(title, description)
-
-  const allImages = (input.images && input.images.length > 0 ? input.images : input.imageUrl ? [input.imageUrl] : []).filter(Boolean)
-  const primaryImage = allImages[0] || input.imageUrl || null
-
-  const resolvedPriceUnit = input.dailyRentPrice && input.dailyRentPrice > 0
-    ? `daily_${input.dailyRentPrice}`
-    : (input.priceUnit || 'item')
 
   if (input.phone?.trim() && !userProfile?.phone) {
     try {
@@ -183,69 +171,19 @@ export async function createListing(input: {
     })
     .returning()
 
-  if (allImages.length > 0) {
-    await db.insert(listingImages).values(
-      allImages.map((url, idx) => ({
-        listingId: listing.id,
-        url,
-        displayOrder: idx,
-        isPrimary: idx === 0,
-      }))
-    )
-  }
+  await persistListingImages(listing.id, allImages, false)
 
   revalidatePath('/')
   revalidatePath('/my-listings')
   return listing
 }
 
-export async function updateListing(
-  id: number,
-  input: {
-    title: string
-    description: string
-    price: number
-    originalPrice?: number
-    category: string
-    type?: string
-    condition?: string
-    imageUrl?: string
-    images?: string[]
-    location?: string
-    phone?: string
-    dailyRentPrice?: number
-    priceUnit?: string
-  }
-) {
-  const user = await getAuthenticatedUser()
-  if (!Number.isInteger(id) || id < 1) throw new Error('Invalid listing ID')
+export async function updateListing(id: number, input: ListingInput) {
+  const { existing } = await requireListingOwnerOrAdmin(id, 'edit')
+  const { title, description, category, condition, type, primaryImage, resolvedPriceUnit } =
+    sanitizeListingPayload(input, existing)
 
-  const [existing] = await db.select().from(listings).where(eq(listings.id, id)).limit(1)
-  if (!existing) throw new Error('Listing not found')
-
-  const isAdmin = isUserAdmin(user.email, (user as { role?: string }).role)
-  if (existing.userId !== user.id && !isAdmin) {
-    throw new Error('Forbidden: You can only edit your own listings.')
-  }
-
-  const title = input.title.trim()
-  const description = input.description.trim()
-  const category = input.category.trim()
-  const condition = (input.condition || existing.condition).toLowerCase().trim()
-  const type = (input.type || existing.type).toLowerCase().trim()
   const phone = input.phone !== undefined ? (input.phone?.trim().slice(0, 25) || null) : existing.phone
-
-  if (title.length < 3 || title.length > 120) throw new Error('Title must be between 3 and 120 characters')
-  if (description.length < 10 || description.length > 5000) throw new Error('Description must be between 10 and 5000 characters')
-  if (!Number.isInteger(input.price) || input.price <= 0 || input.price > 10000000) throw new Error('Invalid price')
-  if (!category) throw new Error('Category is required')
-
-  const allImages = (input.images && input.images.length > 0 ? input.images : input.imageUrl ? [input.imageUrl] : []).filter(Boolean)
-  const primaryImage = allImages[0] || input.imageUrl || existing.imageUrl
-
-  const resolvedPriceUnit = input.dailyRentPrice && input.dailyRentPrice > 0
-    ? `daily_${input.dailyRentPrice}`
-    : (input.priceUnit !== undefined ? input.priceUnit : existing.priceUnit)
 
   const [updated] = await db
     .update(listings)
@@ -266,17 +204,8 @@ export async function updateListing(
     .where(eq(listings.id, id))
     .returning()
 
-
   if (input.images && input.images.length > 0) {
-    await db.delete(listingImages).where(eq(listingImages.listingId, id))
-    await db.insert(listingImages).values(
-      input.images.map((url, idx) => ({
-        listingId: id,
-        url,
-        displayOrder: idx,
-        isPrimary: idx === 0,
-      }))
-    )
+    await persistListingImages(id, input.images, true)
   }
 
   revalidatePath('/')
@@ -286,18 +215,11 @@ export async function updateListing(
 }
 
 export async function setListingDailyRentPrice(listingId: number, dailyPrice: number) {
-  const user = await getAuthenticatedUser()
-  if (!Number.isInteger(listingId) || listingId < 1) throw new Error('Invalid listing ID')
   if (!Number.isInteger(dailyPrice) || dailyPrice < 20 || dailyPrice > 10000) {
     throw new Error('Daily rental price must be an integer between ₹20 and ₹10,000')
   }
 
-  const [existing] = await db.select().from(listings).where(eq(listings.id, listingId)).limit(1)
-  if (!existing) throw new Error('Listing not found')
-  const isAdmin = isUserAdmin(user.email, (user as { role?: string }).role)
-  if (existing.userId !== user.id && !isAdmin) {
-    throw new Error('Forbidden: You can only customize rental price for your own listings.')
-  }
+  await requireListingOwnerOrAdmin(listingId, 'customize rental price')
 
   const encodedUnit = `daily_${dailyPrice}`
   const [updated] = await db
@@ -315,16 +237,7 @@ export async function setListingDailyRentPrice(listingId: number, dailyPrice: nu
 }
 
 export async function setListingStatus(id: number, status: 'active' | 'reserved' | 'sold' | 'rented' | 'archived') {
-  const user = await getAuthenticatedUser()
-  if (!Number.isInteger(id) || id < 1) throw new Error('Invalid listing ID')
-
-  const [existing] = await db.select().from(listings).where(eq(listings.id, id)).limit(1)
-  if (!existing) throw new Error('Listing not found')
-
-  const isAdmin = isUserAdmin(user.email, (user as { role?: string }).role)
-  if (existing.userId !== user.id && !isAdmin) {
-    throw new Error('Forbidden: You can only change status for your own listings.')
-  }
+  await requireListingOwnerOrAdmin(id, 'change status')
 
   const [updated] = await db
     .update(listings)
@@ -343,16 +256,7 @@ export async function archiveListing(id: number) {
 }
 
 export async function deleteListing(id: number) {
-  const user = await getAuthenticatedUser()
-  if (!Number.isInteger(id) || id < 1) throw new Error('Invalid listing ID')
-
-  const [existing] = await db.select().from(listings).where(eq(listings.id, id)).limit(1)
-  if (!existing) throw new Error('Listing not found')
-
-  const isAdmin = isUserAdmin(user.email, (user as { role?: string }).role)
-  if (existing.userId !== user.id && !isAdmin) {
-    throw new Error('Forbidden: You can only delete your own listings.')
-  }
+  await requireListingOwnerOrAdmin(id, 'delete')
 
   await db.delete(listings).where(eq(listings.id, id))
 

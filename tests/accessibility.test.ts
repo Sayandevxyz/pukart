@@ -20,8 +20,9 @@ describe('Accessibility & Inclusive Design Standards (WCAG 2.1 AA Compliance)', 
       return (brightest + 0.05) / (darkest + 0.05)
     }
 
+    const darkBackground: [number, number, number] = [15, 23, 42]
+
     it('should meet minimum 4.5:1 contrast for normal body text on dark theme background', () => {
-      const darkBackground: [number, number, number] = [15, 23, 42]
       const highContrastText: [number, number, number] = [248, 250, 252]
       const ratio = getContrastRatio(darkBackground, highContrastText)
       expect(ratio).toBeGreaterThanOrEqual(4.5)
@@ -29,7 +30,6 @@ describe('Accessibility & Inclusive Design Standards (WCAG 2.1 AA Compliance)', 
     })
 
     it('should meet minimum 3.0:1 contrast for UI components and badges', () => {
-      const darkBackground: [number, number, number] = [15, 23, 42]
       const emeraldAccent: [number, number, number] = [52, 211, 153]
       const ratio = getContrastRatio(darkBackground, emeraldAccent)
       expect(ratio).toBeGreaterThanOrEqual(3.0)
@@ -171,20 +171,24 @@ describe('Accessibility & Inclusive Design Standards (WCAG 2.1 AA Compliance)', 
       return false
     }
 
+    function testEscapeHandling(isOpen: boolean) {
+      let closed = false
+      const handled = handleModalKeydown({ key: 'Escape', shiftKey: false }, isOpen, () => {
+        closed = true
+      })
+      return { handled, closed }
+    }
+
     it('should dismiss active modals upon pressing Escape key', () => {
-      let modalClosed = false
-      const closeFn = () => { modalClosed = true }
-      const handled = handleModalKeydown({ key: 'Escape', shiftKey: false }, true, closeFn)
+      const { handled, closed } = testEscapeHandling(true)
       expect(handled).toBe(true)
-      expect(modalClosed).toBe(true)
+      expect(closed).toBe(true)
     })
 
     it('should ignore Escape key events when modals are already closed', () => {
-      let modalClosed = false
-      const closeFn = () => { modalClosed = true }
-      const handled = handleModalKeydown({ key: 'Escape', shiftKey: false }, false, closeFn)
+      const { handled, closed } = testEscapeHandling(false)
       expect(handled).toBe(false)
-      expect(modalClosed).toBe(false)
+      expect(closed).toBe(false)
     })
   })
 

@@ -1,9 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import Link from 'next/link'
-import { Navbar } from '@/components/navbar'
 import {
   Bell,
   Check,
@@ -21,23 +19,22 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
 } from '@/app/actions/marketplace'
-import { authClient } from '@/lib/auth-client'
+
+import { useToast } from '@/lib/hooks/useToast'
+import { useRequireAuth } from '@/lib/hooks/useRequireAuth'
+import { PageShell } from '@/components/ui/PageShell'
 
 type NotificationItem = Awaited<ReturnType<typeof getNotifications>>[number]
 
 export default function NotificationsPage() {
-  const router = useRouter()
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [toastMessage, setToastMessage] = useState('')
+  const { toastMessage, showToast } = useToast()
 
-  function showToast(msg: string) {
-    setToastMessage(msg)
-    window.setTimeout(() => setToastMessage(''), 3000)
-  }
+  const { loading } = useRequireAuth(() => {
+    loadNotifications()
+  })
 
   async function loadNotifications() {
-    setLoading(true)
     try {
       const data = await getNotifications()
       if (Array.isArray(data)) {
@@ -47,20 +44,8 @@ export default function NotificationsPage() {
       }
     } catch {
       setNotifications([])
-    } finally {
-      setLoading(false)
     }
   }
-
-  useEffect(() => {
-    authClient.getSession().then((res) => {
-      if (res?.data?.user) {
-        loadNotifications()
-      } else {
-        router.push('/sign-in')
-      }
-    }).catch(() => router.push('/sign-in'))
-  }, [router])
 
   async function handleMarkRead(id: number) {
     await markNotificationRead(id)
@@ -101,19 +86,7 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter((n) => !n.readAt).length
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
-
-      {toastMessage && (
-        <div
-          role="status"
-          className="fixed bottom-6 left-1/2 z-[80] -translate-x-1/2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-2xl"
-        >
-          {toastMessage}
-        </div>
-      )}
-
-      <main id="main-content" className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <PageShell toastMessage={toastMessage} maxWidthClass="max-w-4xl">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-serif text-3xl font-bold text-primary">Notifications</h1>
@@ -202,7 +175,6 @@ export default function NotificationsPage() {
             })}
           </div>
         )}
-      </main>
-    </div>
+    </PageShell>
   )
 }

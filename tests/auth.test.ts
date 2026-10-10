@@ -175,13 +175,17 @@ describe('Campus Constants & PU Landmark Integrity', () => {
       process.env = { ...originalEnv }
     })
 
+    function setProductionEnv() {
+      delete process.env.VITEST
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', configurable: true, writable: true })
+    }
+
     it('should throw an error in production if secret is missing and not in build phase', () => {
       delete process.env.BETTER_AUTH_SECRET
       delete process.env.NEXT_PHASE
       delete process.env.npm_lifecycle_event
       delete process.env.__NEXT_BUILD
-      delete process.env.VITEST
-      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', configurable: true, writable: true })
+      setProductionEnv()
 
       expect(() => resolveAuthSecret()).toThrow(/Missing required environment variable: BETTER_AUTH_SECRET/)
       process.env = { ...originalEnv }
@@ -189,8 +193,7 @@ describe('Campus Constants & PU Landmark Integrity', () => {
 
     it('should provide safe build placeholder during static production build phase', () => {
       delete process.env.BETTER_AUTH_SECRET
-      delete process.env.VITEST
-      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', configurable: true, writable: true })
+      setProductionEnv()
       process.env.NEXT_PHASE = 'phase-production-build'
 
       expect(resolveAuthSecret()).toBe('build_time_static_analysis_secret_placeholder')

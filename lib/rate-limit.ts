@@ -10,6 +10,15 @@ export interface RateLimiterStore {
   reset(identifier: string): Promise<void> | void
 }
 
+function makeAllowedResult(limit: number, current: number, resetTime: number): RateLimitResult {
+  return {
+    success: true,
+    remaining: Math.max(0, limit - current),
+    resetTime,
+    retryAfter: 0,
+  }
+}
+
 export class MemoryRateLimiterStore implements RateLimiterStore {
   private map = new Map<string, { count: number; resetTime: number }>()
 
@@ -36,12 +45,7 @@ export class MemoryRateLimiterStore implements RateLimiterStore {
     if (!record || now > record.resetTime) {
       const resetTime = now + windowMs
       this.map.set(identifier, { count: 1, resetTime })
-      return {
-        success: true,
-        remaining: Math.max(0, limit - 1),
-        resetTime,
-        retryAfter: 0,
-      }
+      return makeAllowedResult(limit, 1, resetTime)
     }
 
     if (record.count >= limit) {
@@ -55,12 +59,7 @@ export class MemoryRateLimiterStore implements RateLimiterStore {
     }
 
     record.count += 1
-    return {
-      success: true,
-      remaining: Math.max(0, limit - record.count),
-      resetTime: record.resetTime,
-      retryAfter: 0,
-    }
+    return makeAllowedResult(limit, record.count, record.resetTime)
   }
 
   reset(identifier: string): void {
@@ -129,12 +128,7 @@ export class UpstashRateLimiterStore implements RateLimiterStore {
         }
       }
 
-      return {
-        success: true,
-        remaining: Math.max(0, limit - count),
-        resetTime,
-        retryAfter: 0,
-      }
+      return makeAllowedResult(limit, count, resetTime)
     } catch {
       return defaultMemoryStore.check(identifier, limit, windowMs)
     }
@@ -214,15 +208,14 @@ export class DatabaseRateLimiterStore implements RateLimiterStore {
         [identifier]
       )
 
-      return {
-        success: true,
-        remaining: Math.max(0, limit - (currentCount + 1)),
-        resetTime: currentResetTime,
-        retryAfter: 0,
-      }
+      return makeAllowedResult(limit, currentCount + 1, currentResetTime)
     } catch {
-      return defaultMemoryStore.check(identifier, limit, windowMs)
+      return this.fallback(identifier, limit, windowMs)
     }
+  }
+
+  private fallback(id: string, lim: number, win: number): RateLimitResult {
+    return defaultMemoryStore.check(id, lim, win)
   }
 
   async reset(identifier: string): Promise<void> {

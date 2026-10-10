@@ -2,8 +2,8 @@ import { and, desc, asc, eq, gte, ilike, lte, or, type SQL } from 'drizzle-orm'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { listings } from '@/lib/db/schema'
-import { parseNaturalLanguageSearch } from '@/lib/ai'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { parseSearchQueryFilters } from '@/lib/search-helper'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,31 +17,27 @@ export async function GET(request: NextRequest) {
     }
 
     const params = request.nextUrl.searchParams
-    let rawQuery = params.get('q')?.trim().slice(0, 150) || ''
-    const categoryParam = params.get('category')?.trim().slice(0, 80)
-    const typeParam = params.get('type')?.trim().slice(0, 30)
-    const conditionParam = params.get('condition')?.trim().slice(0, 40)
     const sortParam = params.get('sort')?.trim().slice(0, 30) || 'newest'
     const page = Math.max(1, Number.parseInt(params.get('page') ?? '1', 10) || 1)
     const limit = Math.min(60, Math.max(1, Number.parseInt(params.get('limit') ?? '24', 10) || 24))
     const status = params.get('status')?.trim() || 'active'
-    const aiSearch = params.get('ai') === 'true'
 
-    let category = categoryParam
-    let type = typeParam
-    let condition = conditionParam
-    let minPrice = Math.max(0, Number.parseInt(params.get('minPrice') ?? '0', 10) || 0)
-    let maxPrice = Number.parseInt(params.get('maxPrice') ?? '', 10)
+    const parsedFilters = parseSearchQueryFilters({
+      rawQuery: params.get('q')?.trim().slice(0, 150),
+      categoryParam: params.get('category')?.trim().slice(0, 80),
+      typeParam: params.get('type')?.trim().slice(0, 30),
+      conditionParam: params.get('condition')?.trim().slice(0, 40),
+      minPriceParam: params.get('minPrice'),
+      maxPriceParam: params.get('maxPrice'),
+      aiSearch: params.get('ai') === 'true',
+    })
 
-    if (aiSearch && rawQuery) {
-      const parsed = parseNaturalLanguageSearch(rawQuery)
-      rawQuery = parsed.query
-      if (!category && parsed.category) category = parsed.category
-      if (!type && parsed.type) type = parsed.type
-      if (!condition && parsed.condition) condition = parsed.condition
-      if (parsed.maxPrice && (!maxPrice || isNaN(maxPrice))) maxPrice = parsed.maxPrice
-      if (parsed.minPrice && minPrice === 0) minPrice = parsed.minPrice
-    }
+    const rawQuery = parsedFilters.query
+    const category = parsedFilters.category
+    const type = parsedFilters.type
+    const condition = parsedFilters.condition
+    const minPrice = parsedFilters.minPrice
+    const maxPrice = parsedFilters.maxPrice
 
     const conditions: SQL<unknown>[] = [eq(listings.status, status)]
 
@@ -92,7 +88,7 @@ export async function GET(request: NextRequest) {
       conditions.push(gte(listings.price, minPrice))
     }
 
-    if (Number.isFinite(maxPrice) && maxPrice > 0) {
+    if (typeof maxPrice === 'number' && Number.isFinite(maxPrice) && maxPrice > 0) {
       conditions.push(lte(listings.price, maxPrice))
     }
 

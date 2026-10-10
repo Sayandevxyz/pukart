@@ -80,11 +80,16 @@ export function getTrustedOrigins(env: Record<string, string | undefined> = proc
   ]
 }
 
-export function validateAndPrepareUser(user: { email?: string; role?: string; [key: string]: unknown }) {
-  const email = user.email?.trim().toLowerCase()
+function requireValidEmail(rawEmail?: string, errorMsg = 'Please provide a valid email address.'): string {
+  const email = rawEmail?.trim().toLowerCase()
   if (!email || !isValidEmail(email)) {
-    throw new Error('Please provide a valid email address.')
+    throw new Error(errorMsg)
   }
+  return email
+}
+
+export function validateAndPrepareUser(user: { email?: string; role?: string; [key: string]: unknown }) {
+  const email = requireValidEmail(user.email)
   const role = isUserAdmin(email, user.role) ? 'admin' : 'user'
   return {
     data: {
@@ -96,10 +101,7 @@ export function validateAndPrepareUser(user: { email?: string; role?: string; [k
 }
 
 export function mapGoogleProfileToUser(profile: { email?: string; name?: string; picture?: string }) {
-  const email = profile.email?.trim().toLowerCase()
-  if (!email || !isValidEmail(email)) {
-    throw new Error('Please sign in with a valid email address.')
-  }
+  const email = requireValidEmail(profile.email, 'Please sign in with a valid email address.')
   return {
     email,
     name: profile.name || 'Campus User',

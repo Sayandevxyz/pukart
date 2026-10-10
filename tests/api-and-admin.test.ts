@@ -1,49 +1,33 @@
 import { describe, it, expect } from 'vitest'
 import { isUserAdmin } from '../lib/auth'
-import { parseNaturalLanguageSearch } from '../lib/ai'
+import { parseSearchQueryFilters } from '../lib/search-helper'
 
 describe('API Routes & Administration Control Suite', () => {
   describe('Listing API Query Parser & Filter Rules (/api/listings)', () => {
     function parseListingQueryParams(params: Record<string, string | undefined>) {
-      let rawQuery = (params.q || '').trim().slice(0, 150)
-      const categoryParam = params.category?.trim().slice(0, 80)
-      const typeParam = params.type?.trim().slice(0, 30)
-      const conditionParam = params.condition?.trim().slice(0, 40)
-      const sortParam = params.sort?.trim().slice(0, 30) || 'newest'
       const page = Math.max(1, Number.parseInt(params.page ?? '1', 10) || 1)
       const limit = Math.min(60, Math.max(1, Number.parseInt(params.limit ?? '24', 10) || 24))
       const status = params.status?.trim() || 'active'
-      const aiSearch = params.ai === 'true'
+      const sortParam = params.sort?.trim().slice(0, 30) || 'newest'
 
-      let category = categoryParam
-      let type = typeParam
-      let condition = conditionParam
-      let minPrice = Math.max(0, Number.parseInt(params.minPrice ?? '0', 10) || 0)
-      let maxPrice = Number.parseInt(params.maxPrice ?? '', 10)
-
-      if (aiSearch && rawQuery) {
-        const parsed = parseNaturalLanguageSearch(rawQuery)
-        rawQuery = parsed.query
-        if (!category && parsed.category) category = parsed.category
-        if (!type && parsed.type) type = parsed.type
-        if (!condition && parsed.condition) condition = parsed.condition
-        if (parsed.maxPrice && (!maxPrice || isNaN(maxPrice))) maxPrice = parsed.maxPrice
-        if (parsed.minPrice && minPrice === 0) minPrice = parsed.minPrice
-      }
-
-      const words = rawQuery
-        .split(/\s+/)
-        .map((w) => w.trim())
-        .filter((w) => w.length >= 2)
+      const parsed = parseSearchQueryFilters({
+        rawQuery: (params.q || '').trim().slice(0, 150),
+        categoryParam: params.category?.trim().slice(0, 80),
+        typeParam: params.type?.trim().slice(0, 30),
+        conditionParam: params.condition?.trim().slice(0, 40),
+        minPriceParam: params.minPrice,
+        maxPriceParam: params.maxPrice,
+        aiSearch: params.ai === 'true',
+      })
 
       return {
-        rawQuery,
-        words,
-        category: category === 'All' ? undefined : category,
-        type: type === 'All' ? undefined : type?.toLowerCase(),
-        condition: condition === 'All' ? undefined : condition?.toLowerCase(),
-        minPrice,
-        maxPrice: Number.isFinite(maxPrice) && maxPrice > 0 ? maxPrice : undefined,
+        rawQuery: parsed.query,
+        words: parsed.words,
+        category: parsed.category,
+        type: parsed.type,
+        condition: parsed.condition,
+        minPrice: parsed.minPrice,
+        maxPrice: parsed.maxPrice,
         sortParam,
         page,
         limit,

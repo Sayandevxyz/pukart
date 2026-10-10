@@ -140,14 +140,21 @@ describe('Upload API Route & Validation Suite (/api/upload)', () => {
       return new File([bytes], name, { type })
     }
 
+    function makeUploadRequest(fileName = 'item.jpg', mime = 'image/jpeg', clientIp?: string) {
+      const form = new FormData()
+      form.append('file', createValidImageFile(fileName, mime))
+      return createMockRequest(form, clientIp)
+    }
+
+    async function executeUpload(req: NextRequest, expectedStatus = 200) {
+      const res = await POST(req)
+      expect(res.status).toBe(expectedStatus)
+      return res.json()
+    }
+
     it('should reject unauthenticated requests with 401', async () => {
       vi.mocked(auth.api.getSession).mockResolvedValueOnce(null as never)
-      const form = new FormData()
-      form.append('file', createValidImageFile('item.jpg', 'image/jpeg'))
-
-      const res = await POST(createMockRequest(form))
-      expect(res.status).toBe(401)
-      const data = await res.json()
+      const data = await executeUpload(makeUploadRequest(), 401)
       expect(data.error).toContain('Unauthorized')
     })
 
@@ -159,90 +166,66 @@ describe('Upload API Route & Validation Suite (/api/upload)', () => {
         createMockSession('usr-prod-test', 'test@pondiuni.ac.in')
       )
 
-      const form = new FormData()
-      form.append('file', createValidImageFile('valid.jpg', 'image/jpeg'))
-
-      const res = await POST(createMockRequest(form, '203.0.113.1'))
-      expect(res.status).toBe(503)
-      const data = await res.json()
+      const data = await executeUpload(makeUploadRequest('valid.jpg', 'image/jpeg', '203.0.113.1'), 503)
       expect(data.error).toContain('unavailable')
     })
 
-    it('should reject request with 400 when no files are provided', async () => {
+    async function executeFormUpload(
+      form: FormData,
+      expectedStatus = 200,
+      userId = 'usr-123',
+      email = 'student@pondiuni.ac.in'
+    ) {
       vi.mocked(auth.api.getSession).mockResolvedValueOnce(
-        createMockSession('usr-123', 'student@pondiuni.ac.in')
+        createMockSession(userId, email)
       )
+      return executeUpload(createMockRequest(form), expectedStatus)
+    }
 
-      const form = new FormData()
-      const res = await POST(createMockRequest(form))
-      expect(res.status).toBe(400)
-      const data = await res.json()
+    it('should reject request with 400 when no files are provided', async () => {
+      const data = await executeFormUpload(new FormData(), 400)
       expect(data.error).toContain('No image file provided')
     })
 
     it('should reject request with 400 when batch exceeds 8 images', async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValueOnce(
-        createMockSession('usr-123', 'student@pondiuni.ac.in')
-      )
-
       const form = new FormData()
       for (let i = 0; i < 9; i++) {
         form.append('files', createValidImageFile(`img${i}.jpg`, 'image/jpeg'))
       }
 
-      const res = await POST(createMockRequest(form))
-      expect(res.status).toBe(400)
-      const data = await res.json()
+      const data = await executeFormUpload(form, 400)
       expect(data.error).toContain('Maximum 8 images allowed')
     })
 
     it('should reject unsupported MIME type with 415', async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValueOnce(
-        createMockSession('usr-123', 'student@pondiuni.ac.in')
-      )
-
       const form = new FormData()
       const badFile = new File([new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])], 'bad.gif', {
         type: 'image/gif',
       })
       form.append('file', badFile)
 
-      const res = await POST(createMockRequest(form))
-      expect(res.status).toBe(415)
-      const data = await res.json()
+      const data = await executeFormUpload(form, 415)
       expect(data.error).toContain('Unsupported image format')
     })
 
     it('should reject file exceeding 5MB with 413', async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValueOnce(
-        createMockSession('usr-123', 'student@pondiuni.ac.in')
-      )
-
       const form = new FormData()
       const largeBytes = new Uint8Array(5 * 1024 * 1024 + 64)
       largeBytes.set([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01])
       const largeFile = new File([largeBytes], 'huge.jpg', { type: 'image/jpeg' })
       form.append('file', largeFile)
 
-      const res = await POST(createMockRequest(form))
-      expect(res.status).toBe(413)
-      const data = await res.json()
+      const data = await executeFormUpload(form, 413)
       expect(data.error).toContain('5 MB')
     })
 
     it('should reject fake image with mismatched magic bytes with 400', async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValueOnce(
-        createMockSession('usr-123', 'student@pondiuni.ac.in')
-      )
-
       const form = new FormData()
       const fakeBytes = new TextEncoder().encode('fake image content payload')
       const fakeImage = new File([fakeBytes], 'fake.jpg', { type: 'image/jpeg' })
       form.append('file', fakeImage)
 
-      const res = await POST(createMockRequest(form))
-      expect(res.status).toBe(400)
-      const data = await res.json()
+      const data = await executeFormUpload(form, 400)
       expect(data.error).toContain('Security check failed')
     })
 
@@ -254,12 +237,7 @@ describe('Upload API Route & Validation Suite (/api/upload)', () => {
         createMockSession('student-dev-1', 'dev@pondiuni.ac.in')
       )
 
-      const form = new FormData()
-      form.append('file', createValidImageFile('item.jpg', 'image/jpeg'))
-
-      const res = await POST(createMockRequest(form))
-      expect(res.status).toBe(200)
-      const data = await res.json()
+      const data = await executeUpload(makeUploadRequest(), 200)
       expect(data.url).toMatch(/^\/uploads\/student-dev-1\/[a-f0-9-]+\.jpg$/)
       expect(data.url).not.toContain('data:image')
       expect(fs.mkdir).toHaveBeenCalled()
@@ -282,12 +260,7 @@ describe('Upload API Route & Validation Suite (/api/upload)', () => {
         etag: '"mock-etag"',
       })
 
-      const form = new FormData()
-      form.append('file', createValidImageFile('item.jpg', 'image/jpeg'))
-
-      const res = await POST(createMockRequest(form))
-      expect(res.status).toBe(200)
-      const data = await res.json()
+      const data = await executeUpload(makeUploadRequest(), 200)
       expect(data.url).toBe('https://blob.vercel-storage.com/listings/student-blob-1/photo.jpg')
       expect(blobModule.put).toHaveBeenCalled()
     })

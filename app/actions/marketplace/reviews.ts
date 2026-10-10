@@ -4,12 +4,11 @@ import { and, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import {
-  notifications,
   reviews,
   transactions,
 } from '@/lib/db/schema'
 import { sanitizeText } from '@/lib/utils'
-import { currentUser } from './validation'
+import { currentUser, getTxParticipantRole, createSafeNotification } from './validation'
 
 export async function leaveReview(input: {
   transactionId: number
@@ -39,14 +38,13 @@ export async function leaveReview(input: {
         error: 'Reviews can only be submitted for completed transactions',
       }
 
-    const isBuyer = tx.buyerId === user.id
-    const isSeller = tx.sellerId === user.id
-
-    if (!isBuyer && !isSeller)
+    const { isBuyer, isParticipant } = await getTxParticipantRole(tx, user.id)
+    if (!isParticipant) {
       return {
         success: false,
         error: 'Only participants of this transaction can leave a review',
       }
+    }
 
     const recipientId = isBuyer ? tx.sellerId : tx.buyerId
 
@@ -74,17 +72,13 @@ export async function leaveReview(input: {
       })
       .returning()
 
-    try {
-      await db.insert(notifications).values({
-        userId: recipientId,
-        kind: 'review',
-        title: 'New Campus Review Received!',
-        body: `${user.name || 'A student'} rated you ${rating} stars: "${cleanBody.slice(0, 60)}"`,
-        link: `/seller/${recipientId}`,
-      })
-    } catch (notifErr) {
-      console.error('[leaveReview notification error]', notifErr)
-    }
+    await createSafeNotification({
+      userId: recipientId,
+      kind: 'review',
+      title: 'New Campus Review Received!',
+      body: `${user.name || 'A student'} rated you ${rating} stars: "${cleanBody.slice(0, 60)}"`,
+      link: `/seller/${recipientId}`,
+    })
 
     revalidatePath(`/seller/${recipientId}`)
     revalidatePath('/transactions')

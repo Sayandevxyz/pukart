@@ -1,10 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Navbar } from '@/components/navbar'
 import {
   Layers,
   Star,
@@ -16,16 +14,18 @@ import {
   updateTransactionStatus,
   leaveReview,
 } from '@/app/actions/marketplace'
-import { authClient } from '@/lib/auth-client'
+import { useToast } from '@/lib/hooks/useToast'
+import { useRequireAuth } from '@/lib/hooks/useRequireAuth'
+import { PageShell } from '@/components/ui/PageShell'
+import { TabNavigation } from '@/components/ui/TabNavigation'
+import { TransactionReviewModal } from '@/components/transactions/TransactionReviewModal'
 
 type TransactionEntry = Awaited<ReturnType<typeof getMyTransactions>>[number]
 
 export default function TransactionsPage() {
-  const router = useRouter()
   const [transactions, setTransactions] = useState<TransactionEntry[]>([])
-  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'all' | 'buying' | 'selling'>('all')
-  const [toastMessage, setToastMessage] = useState('')
+  const { toastMessage, showToast } = useToast()
 
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
   const [selectedTx, setSelectedTx] = useState<TransactionEntry | null>(null)
@@ -33,32 +33,18 @@ export default function TransactionsPage() {
   const [reviewBody, setReviewBody] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
 
-  function showToast(msg: string) {
-    setToastMessage(msg)
-    window.setTimeout(() => setToastMessage(''), 3000)
-  }
+  const { loading } = useRequireAuth(() => {
+    loadTransactions()
+  })
 
   async function loadTransactions() {
-    setLoading(true)
     try {
       const data = await getMyTransactions()
       setTransactions(data)
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to load transactions')
-    } finally {
-      setLoading(false)
     }
   }
-
-  useEffect(() => {
-    authClient.getSession().then((res) => {
-      if (res?.data?.user) {
-        loadTransactions()
-      } else {
-        router.push('/sign-in')
-      }
-    }).catch(() => router.push('/sign-in'))
-  }, [router])
 
   async function handleStatusUpdate(txId: number, status: 'accepted' | 'completed' | 'rejected' | 'cancelled') {
     try {
@@ -97,19 +83,7 @@ export default function TransactionsPage() {
   })
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
-
-      {toastMessage && (
-        <div
-          role="status"
-          className="fixed bottom-6 left-1/2 z-[80] -translate-x-1/2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-2xl"
-        >
-          {toastMessage}
-        </div>
-      )}
-
-      <main id="main-content" className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+    <PageShell toastMessage={toastMessage} maxWidthClass="max-w-5xl">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-serif text-3xl font-bold text-primary">Campus Transactions & Deals</h1>
@@ -119,24 +93,16 @@ export default function TransactionsPage() {
           </div>
         </div>
 
-        <div className="mt-6 flex gap-2 border-b border-border pb-3 text-sm font-semibold">
-          {([
-            { id: 'all' as const, label: `All Deals (${transactions.length})` },
-            { id: 'buying' as const, label: `Buying (${transactions.filter((t) => t.isBuyer).length})` },
-            { id: 'selling' as const, label: `Selling (${transactions.filter((t) => !t.isBuyer).length})` },
-          ]).map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`rounded-xl px-4 py-2 transition ${
-                activeTab === tab.id
-                  ? 'bg-primary text-primary-foreground font-bold shadow-sm'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div className="mt-6">
+          <TabNavigation
+            tabs={[
+              { id: 'all' as const, label: `All Deals (${transactions.length})` },
+              { id: 'buying' as const, label: `Buying (${transactions.filter((t) => t.isBuyer).length})` },
+              { id: 'selling' as const, label: `Selling (${transactions.filter((t) => !t.isBuyer).length})` },
+            ]}
+            activeTab={activeTab}
+            onSelect={setActiveTab}
+          />
         </div>
 
         {loading ? (
@@ -290,72 +256,17 @@ export default function TransactionsPage() {
             })}
           </div>
         )}
-      </main>
-
-      {reviewModalOpen && selectedTx && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-bold text-primary">Student Review</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Rate your experience for the purchase of &quot;{selectedTx.listing?.title}&quot;.
-            </p>
-            <form onSubmit={handleReviewSubmit} className="mt-5 space-y-4">
-              <div role="group" aria-labelledby="star-rating-label">
-                <p id="star-rating-label" className="block text-xs font-bold uppercase tracking-wider text-foreground">
-                  Star Rating (1 - 5)
-                </p>
-                <div className="mt-2 flex gap-2">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setRating(s)}
-                      className="p-1 hover:scale-110 transition"
-                    >
-                      <Star
-                        size={26}
-                        className={s <= rating ? 'fill-accent text-accent' : 'text-muted-foreground/30'}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="review-body-input" className="block text-xs font-bold uppercase tracking-wider text-foreground">
-                  Your Review Feedback
-                </label>
-                <textarea
-                  id="review-body-input"
-                  required
-                  rows={3}
-                  value={reviewBody}
-                  onChange={(e) => setReviewBody(e.target.value)}
-                  placeholder="Describe punctuality, item condition as described, and campus handoff friendliness."
-                  className="mt-1.5 w-full rounded-xl border border-border bg-background p-3 text-sm outline-none focus:border-accent"
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setReviewModalOpen(false)}
-                  className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold hover:bg-muted"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submittingReview}
-                  className="flex-1 rounded-xl bg-accent py-3 text-sm font-bold text-accent-foreground hover:opacity-90"
-                >
-                  {submittingReview ? 'Publishing...' : 'Submit Review'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+        <TransactionReviewModal
+          isOpen={reviewModalOpen && Boolean(selectedTx)}
+          onClose={() => setReviewModalOpen(false)}
+          listingTitle={selectedTx?.listing?.title}
+          rating={rating}
+          onRatingChange={setRating}
+          reviewBody={reviewBody}
+          onReviewBodyChange={setReviewBody}
+          onSubmit={handleReviewSubmit}
+          submitting={submittingReview}
+        />
+    </PageShell>
   )
 }

@@ -86,11 +86,16 @@ export function useListingDetail(listingId: number) {
       .catch(() => {})
   }, [listingId])
 
-  async function handleToggleFavorite() {
+  function ensureAuth(): boolean {
     if (!session?.user) {
       router.push(`/sign-in?redirect=${encodeURIComponent(`/listing/${listingId}`)}`)
-      return
+      return false
     }
+    return true
+  }
+
+  async function handleToggleFavorite() {
+    if (!ensureAuth()) return
     const nextSaved = !isSaved
     setIsSaved(nextSaved)
     showToast(nextSaved ? 'Saved to favorites' : 'Removed from favorites')
@@ -103,11 +108,8 @@ export function useListingDetail(listingId: number) {
   }
 
   async function handleContactSeller() {
-    if (!session?.user) {
-      router.push(`/sign-in?redirect=${encodeURIComponent(`/listing/${listingId}`)}`)
-      return
-    }
-    if (session.user.id === listing?.userId) {
+    if (!ensureAuth()) return
+    if (session?.user?.id === listing?.userId) {
       showToast('You cannot message yourself')
       return
     }
@@ -132,28 +134,18 @@ export function useListingDetail(listingId: number) {
   }
 
   function handleOpenOfferModal() {
-    if (!session?.user) {
-      router.push(`/sign-in?redirect=${encodeURIComponent(`/listing/${listingId}`)}`)
-      return
-    }
-    setOfferModalOpen(true)
+    if (ensureAuth()) setOfferModalOpen(true)
   }
 
   function handleOpenBuyModal() {
-    if (!session?.user) {
-      router.push(`/sign-in?redirect=${encodeURIComponent(`/listing/${listingId}`)}`)
-      return
+    if (ensureAuth()) {
+      setIsRentalPurchase(false)
+      setBuyModalOpen(true)
     }
-    setIsRentalPurchase(false)
-    setBuyModalOpen(true)
   }
 
   function handleOpenReportModal() {
-    if (!session?.user) {
-      router.push(`/sign-in?redirect=${encodeURIComponent(`/listing/${listingId}`)}`)
-      return
-    }
-    setReportModalOpen(true)
+    if (ensureAuth()) setReportModalOpen(true)
   }
 
   function handleViewSellerProfile(e: React.MouseEvent) {
@@ -166,65 +158,68 @@ export function useListingDetail(listingId: number) {
     router.push(`/seller/${listing.userId}`)
   }
 
-  async function handleMakeOfferSubmit(e: React.FormEvent) {
+  async function executeAuthenticatedAction(
+    e: React.FormEvent,
+    action: () => Promise<void>,
+    failureFallbackMsg: string
+  ) {
     e.preventDefault()
     if (!session?.user) {
       router.push('/sign-in')
       return
     }
+    setActionLoading(true)
+    try {
+      await action()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : failureFallbackMsg)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  async function handleMakeOfferSubmit(e: React.FormEvent) {
     const val = Number(offerAmount)
     if (!val || val <= 0) {
+      e.preventDefault()
       showToast('Enter a valid amount in INR')
       return
     }
-    setActionLoading(true)
-    try {
-      await makeOffer(listingId, val, offerNote)
-      setOfferModalOpen(false)
-      setOfferAmount('')
-      setOfferNote('')
-      showToast(`Offer of ₹${val} submitted to seller! Check Messages.`)
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to send offer')
-    } finally {
-      setActionLoading(false)
-    }
+    await executeAuthenticatedAction(
+      e,
+      async () => {
+        await makeOffer(listingId, val, offerNote)
+        setOfferModalOpen(false)
+        setOfferAmount('')
+        setOfferNote('')
+        showToast(`Offer of ₹${val} submitted to seller! Check Messages.`)
+      },
+      'Failed to send offer'
+    )
   }
 
   async function handleBuyRequestSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!session?.user) {
-      router.push('/sign-in')
-      return
-    }
-    setActionLoading(true)
-    try {
-      await requestTransaction(listingId, meetupLocation)
-      setBuyModalOpen(false)
-      showToast('Purchase request sent! The seller will contact you to coordinate handover.')
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Request failed')
-    } finally {
-      setActionLoading(false)
-    }
+    await executeAuthenticatedAction(
+      e,
+      async () => {
+        await requestTransaction(listingId, meetupLocation)
+        setBuyModalOpen(false)
+        showToast('Purchase request sent! The seller will contact you to coordinate handover.')
+      },
+      'Request failed'
+    )
   }
 
   async function handleReportSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!session?.user) {
-      router.push('/sign-in')
-      return
-    }
-    setActionLoading(true)
-    try {
-      await reportListing(listingId, reportReason)
-      setReportModalOpen(false)
-      showToast('Listing reported. Our campus moderation team will review it.')
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Report failed')
-    } finally {
-      setActionLoading(false)
-    }
+    await executeAuthenticatedAction(
+      e,
+      async () => {
+        await reportListing(listingId, reportReason)
+        setReportModalOpen(false)
+        showToast('Listing reported. Our campus moderation team will review it.')
+      },
+      'Report failed'
+    )
   }
 
   function handleShare() {

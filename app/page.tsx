@@ -29,8 +29,9 @@ import {
   User,
 } from 'lucide-react'
 import { toggleFavorite } from '@/app/actions/marketplace'
-import { authClient } from '@/lib/auth-client'
+import { useCurrentUserSession } from '@/lib/hooks/useRequireAuth'
 import { getTypesForCategory, getConditionsForCategory } from '@/lib/constants/categories'
+import { FilterSelect } from '@/components/ui/FilterSelect'
 
 const fetcher = (url: string) =>
   fetch(url).then((response) => {
@@ -68,7 +69,7 @@ function MarketplaceHome() {
   const [page, setPage] = useState(1)
   const [notice, setNotice] = useState('')
 
-  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
+  const { session } = useCurrentUserSession()
   const [saved, setSaved] = useState<number[]>([])
 
   const availableTypes = useMemo(() => getTypesForCategory(activeCategory), [activeCategory])
@@ -98,12 +99,6 @@ function MarketplaceHome() {
   )
 
   const { data: favoriteData } = useSWR<{ listingIds: number[] }>('/api/favorites', fetcher)
-
-  useEffect(() => {
-    authClient.getSession().then((res) => {
-      if (res?.data?.user) setSession(res.data)
-    }).catch(() => { })
-  }, [])
 
   useEffect(() => {
     if (favoriteData?.listingIds) {
@@ -346,47 +341,27 @@ function MarketplaceHome() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-1.5">
-                <label htmlFor="filter-type" className="text-xs font-medium text-muted-foreground">
-                  Type:
-                </label>
-                <select
-                  id="filter-type"
-                  value={activeType}
-                  onChange={(e) => {
-                    setActiveType(e.target.value)
-                    setPage(1)
-                  }}
-                  className="h-10 rounded-xl border border-border bg-background px-3 text-xs font-semibold outline-none shadow-sm"
-                >
-                  {availableTypes.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <FilterSelect
+                id="filter-type"
+                label="Type:"
+                value={activeType}
+                onChange={(val) => {
+                  setActiveType(val)
+                  setPage(1)
+                }}
+                options={availableTypes}
+              />
 
-              <div className="flex items-center gap-1.5">
-                <label htmlFor="filter-condition" className="text-xs font-medium text-muted-foreground">
-                  Condition:
-                </label>
-                <select
-                  id="filter-condition"
-                  value={activeCondition}
-                  onChange={(e) => {
-                    setActiveCondition(e.target.value)
-                    setPage(1)
-                  }}
-                  className="h-10 rounded-xl border border-border bg-background px-3 text-xs font-semibold outline-none shadow-sm"
-                >
-                  {availableConditions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <FilterSelect
+                id="filter-condition"
+                label="Condition:"
+                value={activeCondition}
+                onChange={(val) => {
+                  setActiveCondition(val)
+                  setPage(1)
+                }}
+                options={availableConditions}
+              />
 
               <div className="flex items-center gap-1.5">
                 <label htmlFor="filter-sort" className="text-xs font-medium text-muted-foreground">

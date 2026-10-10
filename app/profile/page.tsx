@@ -15,12 +15,11 @@ import {
   LogOut,
   MapPin,
   AlertTriangle,
-  ChevronDown,
-  Search,
   Check,
 } from 'lucide-react'
 import { saveProfile, getCurrentUserProfile } from '@/app/actions/marketplace'
 import { authClient } from '@/lib/auth-client'
+import type { UserSessionData } from '@/lib/hooks/useRequireAuth'
 import {
   SCHOOLS_AND_DEPARTMENTS,
   DEGREES_AND_PROGRAMS,
@@ -28,155 +27,16 @@ import {
   MEETUP_LOCATIONS,
   checkProfileCompletion,
 } from '@/lib/constants/campus'
-
-function SearchableSelect({
-  label,
-  icon: Icon,
-  value,
-  onChange,
-  placeholder,
-  groups,
-  flatOptions,
-  required,
-}: {
-  label: string
-  icon: React.ElementType
-  value: string
-  onChange: (val: string) => void
-  placeholder: string
-  groups?: { label: string; options: string[] }[]
-  flatOptions?: string[]
-  required?: boolean
-}) {
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState('')
-
-  const allOpts = flatOptions || groups?.flatMap((g) => g.options) || []
-  const filtered = search
-    ? allOpts.filter((o) => o.toLowerCase().includes(search.toLowerCase()))
-    : allOpts
-
-  const filteredGroups = groups
-    ? groups
-      .map((g) => ({
-        ...g,
-        options: g.options.filter((o) =>
-          o.toLowerCase().includes(search.toLowerCase())
-        ),
-      }))
-      .filter((g) => g.options.length > 0)
-    : null
-
-  return (
-    <div className="relative">
-      <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
-        <Icon size={13} className="text-accent" />
-        {label}
-        {required && <span className="text-red-400">*</span>}
-      </label>
-
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="mt-1.5 flex h-11 w-full items-center justify-between rounded-xl border border-border bg-background px-3 text-xs outline-none transition hover:border-accent focus:border-accent"
-      >
-        <span className={value ? 'text-foreground font-medium' : 'text-muted-foreground'}>
-          {value || placeholder}
-        </span>
-        <ChevronDown
-          size={14}
-          className={`text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
-
-      {open && (
-        <>
-          
-          <button
-            type="button"
-            aria-label="Close dropdown"
-            className="fixed inset-0 z-40 cursor-default bg-transparent"
-            onClick={() => setOpen(false)}
-          />
-
-          <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-64 overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
-            
-            <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-              <Search size={13} className="text-muted-foreground" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search..."
-                className="flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
-              />
-            </div>
-
-            <div className="max-h-52 overflow-y-auto">
-              {filteredGroups
-                ? filteredGroups.map((group) => (
-                  <div key={group.label}>
-                    <div className="sticky top-0 bg-card/95 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-accent backdrop-blur-sm">
-                      {group.label}
-                    </div>
-                    {group.options.map((opt) => (
-                      <button
-                        type="button"
-                        key={opt}
-                        onClick={() => {
-                          onChange(opt)
-                          setOpen(false)
-                          setSearch('')
-                        }}
-                        className={`flex w-full items-center gap-2 px-3 py-2 text-xs transition hover:bg-accent/10 ${value === opt
-                            ? 'bg-accent/15 font-semibold text-accent'
-                            : 'text-foreground'
-                          }`}
-                      >
-                        {value === opt && <Check size={12} />}
-                        <span className={value === opt ? '' : 'pl-5'}>{opt}</span>
-                      </button>
-                    ))}
-                  </div>
-                ))
-                : filtered.map((opt) => (
-                  <button
-                    type="button"
-                    key={opt}
-                    onClick={() => {
-                      onChange(opt)
-                      setOpen(false)
-                      setSearch('')
-                    }}
-                    className={`flex w-full items-center gap-2 px-3 py-2 text-xs transition hover:bg-accent/10 ${value === opt
-                        ? 'bg-accent/15 font-semibold text-accent'
-                        : 'text-foreground'
-                      }`}
-                  >
-                    {value === opt && <Check size={12} />}
-                    <span className={value === opt ? '' : 'pl-5'}>{opt}</span>
-                  </button>
-                ))}
-
-              {filtered.length === 0 && (
-                <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-                  No results found
-                </div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
+import { SearchableSelect } from '@/components/ui/SearchableSelect'
+import { useToast } from '@/lib/hooks/useToast'
+import { ToastBanner } from '@/components/ui/ToastBanner'
 
 function ProfilePageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect')
 
-  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
+  const [session, setSession] = useState<UserSessionData | null>(null)
   const [department, setDepartment] = useState('')
   const [course, setCourse] = useState('')
   const [year, setYear] = useState('1')
@@ -185,13 +45,8 @@ function ProfilePageInner() {
   const [hostel, setHostel] = useState('')
   const [meetupPreference, setMeetupPreference] = useState('')
   const [saving, setSaving] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
+  const { toastMessage, showToast } = useToast()
   const [showRedirectBanner, setShowRedirectBanner] = useState(false)
-
-  function showToast(msg: string) {
-    setToastMessage(msg)
-    window.setTimeout(() => setToastMessage(''), 3000)
-  }
 
   async function loadProfile() {
     try {
@@ -318,14 +173,7 @@ function ProfilePageInner() {
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
-      {toastMessage && (
-        <div
-          role="status"
-          className="fixed bottom-6 left-1/2 z-[80] -translate-x-1/2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-2xl"
-        >
-          {toastMessage}
-        </div>
-      )}
+      <ToastBanner message={toastMessage} />
 
       <main id="main-content" className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
         

@@ -24,6 +24,46 @@ interface NavbarSession {
   user?: { id: string; name?: string; email?: string; role?: string; image?: string }
 }
 
+function NavbarSearchInput({
+  query,
+  setQuery,
+  onSubmit,
+  isMobile = false,
+}: {
+  query: string
+  setQuery: (val: string) => void
+  onSubmit: (e: React.FormEvent) => void
+  isMobile?: boolean
+}) {
+  return (
+    <form
+      onSubmit={onSubmit}
+      className={`relative flex items-center ${isMobile ? '' : 'hidden max-w-2xl flex-1 md:flex'}`}
+    >
+      <Search className="absolute left-3.5 text-muted-foreground" size={isMobile ? 16 : 17} />
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        aria-label={isMobile ? 'Mobile search marketplace' : 'Search marketplace'}
+        placeholder={isMobile ? 'Search campus marketplace...' : 'Search books, laptops, cycles, hostel gear...'}
+        className={`${isMobile ? 'h-10' : 'h-11'} w-full rounded-xl border border-border bg-muted/40 pl-10 pr-10 text-sm outline-none transition focus:border-accent ${
+          isMobile ? '' : 'focus:bg-background focus:ring-4 focus:ring-accent/15'
+        }`}
+      />
+      {query && (
+        <button
+          type="button"
+          onClick={() => setQuery('')}
+          className="absolute right-3 rounded-md p-1 text-muted-foreground hover:bg-muted"
+          aria-label="Clear search input"
+        >
+          <X size={15} />
+        </button>
+      )}
+    </form>
+  )
+}
+
 export function Navbar({
   initialQuery = '',
   onSearch,
@@ -142,29 +182,11 @@ export function Navbar({
           </div>
         </Link>
 
-        <form
+        <NavbarSearchInput
+          query={searchQuery}
+          setQuery={setSearchQuery}
           onSubmit={(e) => handleSearchSubmit(e, false)}
-          className="relative hidden max-w-2xl flex-1 md:flex items-center"
-        >
-          <Search className="absolute left-3.5 text-muted-foreground" size={17} />
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Search marketplace"
-            placeholder="Search books, laptops, cycles, hostel gear..."
-            className="h-11 w-full rounded-xl border border-border bg-muted/40 pl-10 pr-10 text-sm outline-none transition focus:border-accent focus:bg-background focus:ring-4 focus:ring-accent/15"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 rounded-md p-1 text-muted-foreground hover:bg-muted"
-              aria-label="Clear search input"
-            >
-              <X size={15} />
-            </button>
-          )}
-        </form>
+        />
 
         <nav aria-label="Main Navigation" className="ml-auto hidden items-center gap-1.5 lg:flex">
           {session?.user ? (
@@ -270,25 +292,12 @@ export function Navbar({
       </div>
 
       <div className="px-4 pb-3 md:hidden">
-        <form onSubmit={(e) => handleSearchSubmit(e, false)} className="relative flex items-center">
-          <Search className="absolute left-3.5 text-muted-foreground" size={16} />
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search campus marketplace..."
-            className="h-10 w-full rounded-xl border border-border bg-muted/40 pl-10 pr-10 text-sm outline-none focus:border-accent"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 rounded-md p-1 text-muted-foreground hover:bg-muted"
-              aria-label="Clear"
-            >
-              <X size={15} />
-            </button>
-          )}
-        </form>
+        <NavbarSearchInput
+          query={searchQuery}
+          setQuery={setSearchQuery}
+          onSubmit={(e) => handleSearchSubmit(e, false)}
+          isMobile
+        />
       </div>
 
       {mobileMenuOpen && (

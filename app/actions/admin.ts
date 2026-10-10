@@ -1,9 +1,8 @@
 'use server'
 
 import { desc, eq, ilike, or, sql } from 'drizzle-orm'
-import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { auth, isValidPondiUniEmail, isUserAdmin } from '@/lib/auth'
+import { isUserAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
 import {
   categories,
@@ -13,17 +12,15 @@ import {
   user as userTable,
 } from '@/lib/db/schema'
 
+import { getAuthenticatedUser } from './listings'
+
 async function requireAdmin() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  const email = session?.user?.email?.trim().toLowerCase()
-  if (!session?.user?.id || !isValidPondiUniEmail(email)) {
-    throw new Error('Unauthorized: Valid account required')
-  }
-  const isAdmin = isUserAdmin(email, (session.user as { role?: string }).role)
+  const user = await getAuthenticatedUser()
+  const isAdmin = isUserAdmin(user.email, (user as { role?: string }).role)
   if (!isAdmin) {
     throw new Error('Forbidden: Admin privilege required')
   }
-  return session.user
+  return user
 }
 
 export async function getAdminDashboardStats() {
@@ -81,28 +78,22 @@ export async function getAdminUsers(query?: string) {
 export async function setUserSuspension(userId: string, isSuspended: boolean) {
   const admin = await requireAdmin()
   if (userId === admin.id) throw new Error('Cannot suspend your own account')
+  return patchUserFields(userId, { isSuspended })
+}
 
+async function patchUserFields(userId: string, data: Partial<typeof userTable.$inferInsert>) {
   const [updated] = await db
     .update(userTable)
-    .set({ isSuspended, updatedAt: new Date() })
+    .set({ ...data, updatedAt: new Date() })
     .where(eq(userTable.id, userId))
     .returning()
-
   revalidatePath('/admin')
   return updated
 }
 
 export async function setUserRole(userId: string, role: 'user' | 'admin') {
   await requireAdmin()
-
-  const [updated] = await db
-    .update(userTable)
-    .set({ role, updatedAt: new Date() })
-    .where(eq(userTable.id, userId))
-    .returning()
-
-  revalidatePath('/admin')
-  return updated
+  return patchUserFields(userId, { role })
 }
 
 export async function getAdminListings(statusFilter?: string) {

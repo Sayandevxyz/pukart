@@ -1,6 +1,6 @@
 'use server'
 
-import { and, desc, eq, sql } from 'drizzle-orm'
+import { and, desc, eq, sql, type SQL } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import { notifications } from '@/lib/db/schema'
@@ -22,34 +22,26 @@ export async function getNotifications() {
   }
 }
 
-export async function markNotificationRead(id: number) {
+async function markNotificationsWithFilter(filterSql: SQL) {
   try {
     const user = await currentUser()
     if (!user) return { success: false }
     await db
       .update(notifications)
       .set({ readAt: new Date() })
-      .where(and(eq(notifications.id, id), eq(notifications.userId, user.id)))
+      .where(and(eq(notifications.userId, user.id), filterSql))
     revalidatePath('/notifications')
     return { success: true }
   } catch (err) {
-    console.error('[markNotificationRead error]', err)
+    console.error('[markNotificationsWithFilter error]', err)
     return { success: false }
   }
 }
 
+export async function markNotificationRead(id: number) {
+  return markNotificationsWithFilter(eq(notifications.id, id))
+}
+
 export async function markAllNotificationsRead() {
-  try {
-    const user = await currentUser()
-    if (!user) return { success: false }
-    await db
-      .update(notifications)
-      .set({ readAt: new Date() })
-      .where(and(eq(notifications.userId, user.id), sql`${notifications.readAt} IS NULL`))
-    revalidatePath('/notifications')
-    return { success: true }
-  } catch (err) {
-    console.error('[markAllNotificationsRead error]', err)
-    return { success: false }
-  }
+  return markNotificationsWithFilter(sql`${notifications.readAt} IS NULL`)
 }

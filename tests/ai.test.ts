@@ -175,22 +175,26 @@ describe('AI Features & Natural Language Processing (Priority 14)', () => {
       expect(desc).toContain('Pondicherry University')
     })
 
+    function mockFetchJsonResponse(body: unknown) {
+      return vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      )
+    }
+
     it('should generate description using remote AI Gateway / LLM when API key is configured', async () => {
       const origKey = process.env.GEMINI_API_KEY
-      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            choices: [
-              {
-                message: {
-                  content: 'AI generated premium campus listing description from LLM endpoint.',
-                },
-              },
-            ],
-          }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
-        )
-      )
+      const fetchSpy = mockFetchJsonResponse({
+        choices: [
+          {
+            message: {
+              content: 'AI generated premium campus listing description from LLM endpoint.',
+            },
+          },
+        ],
+      })
       try {
         process.env.GEMINI_API_KEY = 'test-gemini-key'
 
@@ -263,9 +267,7 @@ describe('AI Features & Natural Language Processing (Priority 14)', () => {
 
     it('should fallback when remote response returns empty choices', async () => {
       const origKey = process.env.GEMINI_API_KEY
-      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-        new Response(JSON.stringify({ choices: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } })
-      )
+      const fetchSpy = mockFetchJsonResponse({ choices: [] })
       try {
         process.env.GEMINI_API_KEY = 'test-gemini-key'
         const desc = await generateProductDescription({
@@ -289,10 +291,10 @@ describe('AI Features & Natural Language Processing (Priority 14)', () => {
       expect(res.reason).toContain('prohibited content keywords')
     })
 
+    const encodeMetadata = (text: string) => new TextEncoder().encode(text)
+
     it('should assign rejected warning level when multiple issues are flagged', () => {
-      const encoder = new TextEncoder()
-      const text = '<x:xmpmeta><dc:subject>adult</dc:subject></x:xmpmeta>'
-      const fakeBuffer = encoder.encode(text)
+      const fakeBuffer = encodeMetadata('<x:xmpmeta><dc:subject>adult</dc:subject></x:xmpmeta>')
       const res = moderateImageContent('sample-nude.jpg', fakeBuffer)
       expect(res.rejected).toBe(true)
       expect(res.warningLevel).toBe('rejected')
@@ -307,18 +309,14 @@ describe('AI Features & Natural Language Processing (Priority 14)', () => {
     })
 
     it('should reject images containing explicit XMP metadata tags', () => {
-      const encoder = new TextEncoder()
-      const text = '<x:xmpmeta><dc:subject>adult</dc:subject></x:xmpmeta>'
-      const fakeBuffer = encoder.encode(text)
+      const fakeBuffer = encodeMetadata('<x:xmpmeta><dc:subject>adult</dc:subject></x:xmpmeta>')
       const res = moderateImageContent('campus_photo.jpg', fakeBuffer)
       expect(res.rejected).toBe(true)
       expect(res.details.some((d) => d.includes('adult'))).toBe(true)
     })
 
     it('should reject images containing NSFW EXIF signatures', () => {
-      const encoder = new TextEncoder()
-      const text = 'Camera Model EXIF: stable diffusion nsfw generator output'
-      const fakeBuffer = encoder.encode(text)
+      const fakeBuffer = encodeMetadata('Camera Model EXIF: stable diffusion nsfw generator output')
       const res = moderateImageContent('test.png', fakeBuffer)
       expect(res.rejected).toBe(true)
       expect(res.details.some((d) => d.includes('stable diffusion nsfw'))).toBe(true)

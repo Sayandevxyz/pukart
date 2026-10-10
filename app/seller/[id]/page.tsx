@@ -8,20 +8,16 @@ import { Navbar } from '@/components/navbar'
 import {
   ShieldCheck,
   Star,
-  MessageCircle,
   MapPin,
   ShoppingBag,
   Heart,
   GraduationCap,
-  Phone,
-  Copy,
-  Check,
-  Home,
-  Zap,
-  Award,
 } from 'lucide-react'
 import { getSellerProfile, toggleFavorite } from '@/app/actions/marketplace'
-import { authClient } from '@/lib/auth-client'
+import { useCurrentUserSession } from '@/lib/hooks/useRequireAuth'
+import { useToast } from '@/lib/hooks/useToast'
+import { PageShell } from '@/components/ui/PageShell'
+import { SellerHeaderCard } from '@/components/seller/SellerHeaderCard'
 import type { ListingItem, ReviewItem, SellerProfileData } from '@/lib/types'
 
 export default function SellerProfilePage() {
@@ -29,17 +25,12 @@ export default function SellerProfilePage() {
   const router = useRouter()
   const sellerId = String(params?.id)
 
-  const [session, setSession] = useState<{ user?: { id: string; name?: string; email?: string } } | null>(null)
+  const { session } = useCurrentUserSession()
   const [profileData, setProfileData] = useState<SellerProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [favorites, setFavorites] = useState<number[]>([])
-  const [toastMessage, setToastMessage] = useState('')
+  const { toastMessage, showToast } = useToast()
   const [copiedPhone, setCopiedPhone] = useState(false)
-
-  function showToast(msg: string) {
-    setToastMessage(msg)
-    window.setTimeout(() => setToastMessage(''), 3000)
-  }
 
   function handleCopyPhone(phoneStr?: string | null) {
     if (!phoneStr) return
@@ -50,10 +41,6 @@ export default function SellerProfilePage() {
   }
 
   useEffect(() => {
-    authClient.getSession().then((res) => {
-      if (res?.data?.user) setSession(res.data)
-    }).catch(() => { })
-
     if (!sellerId) return
 
     getSellerProfile(sellerId).then((data) => {
@@ -144,121 +131,13 @@ export default function SellerProfilePage() {
   const { user, listings, ratingStats } = profileData
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
-
-      {toastMessage && (
-        <div
-          role="status"
-          className="fixed bottom-6 left-1/2 z-[80] -translate-x-1/2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-2xl"
-        >
-          {toastMessage}
-        </div>
-      )}
-
-      <main id="main-content" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        
-        <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            <div className="flex size-20 sm:size-24 shrink-0 items-center justify-center rounded-3xl bg-primary text-3xl font-bold text-primary-foreground shadow-lg">
-              {user.name?.[0]?.toUpperCase() || 'P'}
-            </div>
-            <div className="space-y-1.5 flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="font-serif text-2xl sm:text-3xl font-bold text-primary">{user.name}</h1>
-                <span className="flex items-center gap-1 rounded-full bg-accent/15 px-3 py-1 text-xs font-bold text-accent">
-                  <ShieldCheck size={14} /> Verified PU Account
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground font-medium">{user.email}</p>
-              {(user.department || user.course) && (
-                <p className="text-xs sm:text-sm text-foreground/80 font-semibold">
-                  {user.course || 'Student'} {user.department ? `· Dept of ${user.department}` : ''} {user.year ? `· Year ${user.year}` : ''}
-                </p>
-              )}
-              {user.bio && <p className="text-xs text-muted-foreground mt-2 max-w-2xl">{user.bio}</p>}
-
-              {user.phone && (
-                <div className="mt-3 flex flex-wrap items-center gap-2 pt-2 border-t border-border/60">
-                  <span className="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-xl border border-primary/20">
-                    <Phone size={13} className="text-accent" />
-                    <span>{user.phone.startsWith('+') ? user.phone : `+91 ${user.phone}`}</span>
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => handleCopyPhone(user.phone)}
-                    className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-muted transition"
-                  >
-                    {copiedPhone ? (
-                      <>
-                        <Check size={13} className="text-emerald-500" />
-                        <span className="text-emerald-500">Copied</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={13} />
-                        <span>Copy</span>
-                      </>
-                    )}
-                  </button>
-
-                  <a
-                    href={`https://wa.me/${user.phone.replace(/\D/g, '').length === 10 ? `91${user.phone.replace(/\D/g, '')}` : user.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
-                      `Hi ${user.name || 'there'}, I found your profile on PUKart and would like to inquire about your campus listings.`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition"
-                  >
-                    <MessageCircle size={12} /> WhatsApp
-                  </a>
-                </div>
-              )}
-
-              <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2.5 border-t border-border/60">
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 border border-emerald-500/20">
-                  <GraduationCap size={12} className="text-emerald-400 shrink-0" />
-                  <span>Verified Scholar {user.department ? `(${user.department})` : 'PU'}</span>
-                </span>
-
-                {user.hostel && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-1 text-[11px] font-semibold text-blue-400 border border-blue-500/20">
-                    <Home size={12} className="text-blue-400 shrink-0" />
-                    <span>Hosteller ({user.hostel})</span>
-                  </span>
-                )}
-
-                {(ratingStats?.averageRating || 5) >= 4.5 && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-400 border border-amber-500/20">
-                    <Star size={12} className="text-amber-400 fill-amber-400 shrink-0" />
-                    <span>Top Senior Peer ({ratingStats?.averageRating || '5.0'} / 5)</span>
-                  </span>
-                )}
-
-                <span className="inline-flex items-center gap-1 rounded-full bg-teal-500/10 px-2.5 py-1 text-[11px] font-semibold text-teal-400 border border-teal-500/20">
-                  <Zap size={12} className="text-teal-400 shrink-0" />
-                  <span>Same-Day Handoff</span>
-                </span>
-
-                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2.5 py-1 text-[11px] font-semibold text-indigo-400 border border-indigo-500/20">
-                  <Award size={12} className="text-indigo-400 shrink-0" />
-                  <span>{(ratingStats?.reviewCount || 0) > 0 ? `${ratingStats?.reviewCount} Meetups Completed` : 'Campus Verified'}</span>
-                </span>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-muted/30 p-4 text-center min-w-[140px]">
-              <div className="flex items-center justify-center gap-1 text-2xl font-black text-primary">
-                <span>{ratingStats?.averageRating ?? 'New'}</span>
-                {ratingStats?.averageRating && <Star className="size-5 fill-emerald-600 text-emerald-600" />}
-              </div>
-              <p className="text-xs font-semibold text-muted-foreground mt-0.5">
-                {ratingStats?.reviewCount || 0} Campus Review{ratingStats?.reviewCount === 1 ? '' : 's'}
-              </p>
-            </div>
-          </div>
-        </div>
+    <PageShell toastMessage={toastMessage}>
+      <SellerHeaderCard
+          user={user}
+          ratingStats={ratingStats}
+          copiedPhone={copiedPhone}
+          onCopyPhone={handleCopyPhone}
+        />
 
         <div className="mt-10 space-y-6">
           <div className="flex items-center justify-between">
@@ -355,7 +234,6 @@ export default function SellerProfilePage() {
             <p className="text-xs text-muted-foreground italic">No student reviews received yet.</p>
           )}
         </div>
-      </main>
-    </div>
+    </PageShell>
   )
 }

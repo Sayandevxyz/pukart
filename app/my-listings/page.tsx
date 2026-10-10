@@ -1,10 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Navbar } from '@/components/navbar'
 import {
   Package,
   Plus,
@@ -13,45 +11,32 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { getMyListings, setListingStatus, deleteListing } from '@/app/actions/listings'
-import { authClient } from '@/lib/auth-client'
+import { useToast } from '@/lib/hooks/useToast'
+import { useRequireAuth } from '@/lib/hooks/useRequireAuth'
+import { PageShell } from '@/components/ui/PageShell'
+import { TabNavigation } from '@/components/ui/TabNavigation'
 
 type MyListingItem = Awaited<ReturnType<typeof getMyListings>>[number]
 type MyListingTab = 'all' | 'active' | 'reserved' | 'sold' | 'rented' | 'archived'
 type ListingItemStatus = 'active' | 'reserved' | 'sold' | 'rented' | 'archived'
 
 export default function MyListingsPage() {
-  const router = useRouter()
   const [listings, setListings] = useState<MyListingItem[]>([])
   const [activeTab, setActiveTab] = useState<MyListingTab>('all')
-  const [loading, setLoading] = useState(true)
-  const [toastMessage, setToastMessage] = useState('')
+  const { toastMessage, showToast } = useToast()
 
-  function showToast(msg: string) {
-    setToastMessage(msg)
-    window.setTimeout(() => setToastMessage(''), 3000)
-  }
+  const { loading } = useRequireAuth(() => {
+    loadListings('all')
+  })
 
   async function loadListings(tab: MyListingTab = activeTab) {
-    setLoading(true)
     try {
       const data = await getMyListings(tab)
       setListings(data)
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to load your listings')
-    } finally {
-      setLoading(false)
     }
   }
-
-  useEffect(() => {
-    authClient.getSession().then((res) => {
-      if (res?.data?.user) {
-        loadListings('all')
-      } else {
-        router.push('/sign-in')
-      }
-    }).catch(() => router.push('/sign-in'))
-  }, [router])
 
   async function handleStatusChange(id: number, newStatus: ListingItemStatus) {
     try {
@@ -75,19 +60,7 @@ export default function MyListingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
-
-      {toastMessage && (
-        <div
-          role="status"
-          className="fixed bottom-6 left-1/2 z-[80] -translate-x-1/2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-2xl"
-        >
-          {toastMessage}
-        </div>
-      )}
-
-      <main id="main-content" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <PageShell toastMessage={toastMessage}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="font-serif text-3xl font-bold text-primary">My Listings</h1>
@@ -101,30 +74,22 @@ export default function MyListingsPage() {
           </Link>
         </div>
 
-        <div className="mt-6 flex gap-2 overflow-x-auto border-b border-border pb-3 text-xs sm:text-sm font-semibold">
-          {([
-            { id: 'all' as const, label: 'All Items' },
-            { id: 'active' as const, label: 'Active / Available' },
-            { id: 'reserved' as const, label: 'Reserved' },
-            { id: 'sold' as const, label: 'Sold' },
-            { id: 'rented' as const, label: 'Rented' },
-            { id: 'archived' as const, label: 'Archived' },
-          ]).map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id)
-                loadListings(tab.id)
-              }}
-              className={`rounded-xl px-4 py-2 whitespace-nowrap transition ${
-                activeTab === tab.id
-                  ? 'bg-primary text-primary-foreground font-bold shadow-sm'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div className="mt-6">
+          <TabNavigation
+            tabs={[
+              { id: 'all' as const, label: 'All Items' },
+              { id: 'active' as const, label: 'Active / Available' },
+              { id: 'reserved' as const, label: 'Reserved' },
+              { id: 'sold' as const, label: 'Sold' },
+              { id: 'rented' as const, label: 'Rented' },
+              { id: 'archived' as const, label: 'Archived' },
+            ]}
+            activeTab={activeTab}
+            onSelect={(t) => {
+              setActiveTab(t)
+              loadListings(t)
+            }}
+          />
         </div>
 
         {loading ? (
@@ -228,7 +193,6 @@ export default function MyListingsPage() {
             ))}
           </div>
         )}
-      </main>
-    </div>
+    </PageShell>
   )
 }

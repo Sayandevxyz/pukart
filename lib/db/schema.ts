@@ -9,44 +9,53 @@ import {
   index,
 } from "drizzle-orm/pg-core"
 
-export const user = pgTable("user", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  emailVerified: boolean("emailVerified").notNull().default(false),
-  image: text("image"),
-  role: text("role").notNull().default("user"), 
-  isSuspended: boolean("isSuspended").notNull().default(false),
+const serialId = () => serial("id").primaryKey()
+const createdCol = () => timestamp("createdAt").notNull().defaultNow()
+const updatedCol = () => timestamp("updatedAt").notNull().defaultNow()
+const timestamps = () => ({
+  createdAt: createdCol(),
+  updatedAt: updatedCol(),
+})
+
+const studentProfileCols = () => ({
   department: text("department"),
   course: text("course"),
   year: integer("year"),
   bio: text("bio"),
   phone: text("phone"),
   hostel: text("hostel"),
-  createdAt: timestamp("createdAt").notNull().defaultNow(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
+
+export const user = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("emailVerified").notNull().default(false),
+  image: text("image"),
+  role: text("role").notNull().default("user"),
+  isSuspended: boolean("isSuspended").notNull().default(false),
+  ...studentProfileCols(),
+  ...timestamps(),
+})
+
+const userCascade = (name = "userId") =>
+  text(name).notNull().references(() => user.id, { onDelete: "cascade" })
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
   expiresAt: timestamp("expiresAt").notNull(),
   token: text("token").notNull().unique(),
-  createdAt: timestamp("createdAt").notNull().defaultNow(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  ...timestamps(),
   ipAddress: text("ipAddress"),
   userAgent: text("userAgent"),
-  userId: text("userId")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
+  userId: userCascade(),
 })
 
 export const account = pgTable("account", {
   id: text("id").primaryKey(),
   accountId: text("accountId").notNull(),
   providerId: text("providerId").notNull(),
-  userId: text("userId")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
+  userId: userCascade(),
   accessToken: text("accessToken"),
   refreshToken: text("refreshToken"),
   idToken: text("idToken"),
@@ -55,8 +64,7 @@ export const account = pgTable("account", {
   scope: text("scope"),
   password: text("password"),
   issuer: text("issuer"),
-  createdAt: timestamp("createdAt").notNull().defaultNow(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  ...timestamps(),
 })
 
 export const verification = pgTable("verification", {
@@ -64,59 +72,55 @@ export const verification = pgTable("verification", {
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
   expiresAt: timestamp("expiresAt").notNull(),
-  createdAt: timestamp("createdAt").notNull().defaultNow(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  ...timestamps(),
 })
 
 export const universities = pgTable("universities", {
-  id: serial("id").primaryKey(),
+  id: serialId(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   domain: text("domain").notNull().unique(),
   city: text("city").notNull().default("Puducherry"),
   state: text("state").notNull().default("Puducherry"),
   active: boolean("active").notNull().default(true),
-  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  createdAt: createdCol(),
 })
 
 export const categories = pgTable("categories", {
-  id: serial("id").primaryKey(),
+  id: serialId(),
   name: text("name").notNull().unique(),
   slug: text("slug").notNull().unique(),
   icon: text("icon"),
   description: text("description"),
   order: integer("order").notNull().default(0),
   active: boolean("active").notNull().default(true),
-  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  createdAt: createdCol(),
 })
 
 export const listings = pgTable(
   "listings",
   {
-    id: serial("id").primaryKey(),
-    userId: text("userId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    id: serialId(),
+    userId: userCascade(),
     sellerName: text("sellerName").notNull(),
     title: text("title").notNull(),
     description: text("description").notNull(),
     price: integer("price").notNull(),
     originalPrice: integer("originalPrice"),
     priceUnit: text("priceUnit").default("item"),
-    type: text("type").notNull().default("sell"), 
+    type: text("type").notNull().default("sell"),
     categoryId: integer("categoryId").references(() => categories.id, { onDelete: "set null" }),
     category: text("category").notNull(),
-    condition: text("condition").notNull().default("good"), 
-    imageUrl: text("imageUrl"), 
+    condition: text("condition").notNull().default("good"),
+    imageUrl: text("imageUrl"),
     location: text("location").default("Pondicherry University"),
     phone: text("phone"),
-    status: text("status").notNull().default("active"), 
+    status: text("status").notNull().default("active"),
     featured: boolean("featured").notNull().default(false),
     viewsCount: integer("viewsCount").notNull().default(0),
     aiFlagged: boolean("aiFlagged").notNull().default(false),
     aiFlagReason: text("aiFlagReason"),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    ...timestamps(),
   },
   (t) => [
     index("listings_status_idx").on(t.status),
@@ -128,17 +132,24 @@ export const listings = pgTable(
   ]
 )
 
+const listingCascade = (name = "listingId") =>
+  integer(name).notNull().references(() => listings.id, { onDelete: "cascade" })
+
+const partyCols = () => ({
+  listingId: listingCascade(),
+  buyerId: userCascade("buyerId"),
+  sellerId: userCascade("sellerId"),
+})
+
 export const listingImages = pgTable(
   "listing_images",
   {
-    id: serial("id").primaryKey(),
-    listingId: integer("listingId")
-      .notNull()
-      .references(() => listings.id, { onDelete: "cascade" }),
+    id: serialId(),
+    listingId: listingCascade(),
     url: text("url").notNull(),
     displayOrder: integer("displayOrder").notNull().default(0),
     isPrimary: boolean("isPrimary").notNull().default(false),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    createdAt: createdCol(),
   },
   (t) => [index("listing_images_listing_id_idx").on(t.listingId)]
 )
@@ -146,19 +157,11 @@ export const listingImages = pgTable(
 export const conversations = pgTable(
   "conversations",
   {
-    id: serial("id").primaryKey(),
-    listingId: integer("listingId")
-      .notNull()
-      .references(() => listings.id, { onDelete: "cascade" }),
-    buyerId: text("buyerId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    sellerId: text("sellerId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    id: serialId(),
+    ...partyCols(),
     lastMessage: text("lastMessage"),
     lastMessageAt: timestamp("lastMessageAt").defaultNow(),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    createdAt: createdCol(),
   },
   (t) => [
     unique().on(t.listingId, t.buyerId),
@@ -171,17 +174,15 @@ export const conversations = pgTable(
 export const messages = pgTable(
   "messages",
   {
-    id: serial("id").primaryKey(),
+    id: serialId(),
     conversationId: integer("conversationId")
       .notNull()
       .references(() => conversations.id, { onDelete: "cascade" }),
-    senderId: text("senderId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    senderId: userCascade("senderId"),
     content: text("content").notNull(),
     imageUrl: text("imageUrl"),
     readAt: timestamp("readAt"),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    createdAt: createdCol(),
   },
   (t) => [
     index("messages_conversation_idx").on(t.conversationId),
@@ -193,22 +194,13 @@ export const messages = pgTable(
 export const offers = pgTable(
   "offers",
   {
-    id: serial("id").primaryKey(),
-    listingId: integer("listingId")
-      .notNull()
-      .references(() => listings.id, { onDelete: "cascade" }),
-    buyerId: text("buyerId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    sellerId: text("sellerId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    id: serialId(),
+    ...partyCols(),
     amount: integer("amount").notNull(),
     counterAmount: integer("counterAmount"),
-    status: text("status").notNull().default("pending"), 
+    status: text("status").notNull().default("pending"),
     message: text("message"),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    ...timestamps(),
   },
   (t) => [
     index("offers_listing_idx").on(t.listingId),
@@ -220,23 +212,14 @@ export const offers = pgTable(
 export const transactions = pgTable(
   "transactions",
   {
-    id: serial("id").primaryKey(),
-    listingId: integer("listingId")
-      .notNull()
-      .references(() => listings.id, { onDelete: "cascade" }),
-    buyerId: text("buyerId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    sellerId: text("sellerId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    id: serialId(),
+    ...partyCols(),
     offerId: integer("offerId").references(() => offers.id, { onDelete: "set null" }),
-    status: text("status").notNull().default("inquiry"), 
+    status: text("status").notNull().default("inquiry"),
     amount: integer("amount").notNull(),
-    paymentMethod: text("paymentMethod").notNull().default("meetup_cash"), 
+    paymentMethod: text("paymentMethod").notNull().default("meetup_cash"),
     meetupLocation: text("meetupLocation"),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    ...timestamps(),
   },
   (t) => [
     index("transactions_listing_idx").on(t.listingId),
@@ -249,20 +232,16 @@ export const transactions = pgTable(
 export const reviews = pgTable(
   "reviews",
   {
-    id: serial("id").primaryKey(),
+    id: serialId(),
     transactionId: integer("transactionId")
       .notNull()
       .references(() => transactions.id, { onDelete: "cascade" }),
     listingId: integer("listingId").references(() => listings.id, { onDelete: "set null" }),
-    authorId: text("authorId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    recipientId: text("recipientId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    rating: integer("rating").notNull(), 
+    authorId: userCascade("authorId"),
+    recipientId: userCascade("recipientId"),
+    rating: integer("rating").notNull(),
     body: text("body").notNull(),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    createdAt: createdCol(),
   },
   (t) => [
     unique().on(t.transactionId, t.authorId),
@@ -274,14 +253,10 @@ export const reviews = pgTable(
 export const favorites = pgTable(
   "favorites",
   {
-    id: serial("id").primaryKey(),
-    userId: text("userId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    listingId: integer("listingId")
-      .notNull()
-      .references(() => listings.id, { onDelete: "cascade" }),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    id: serialId(),
+    userId: userCascade(),
+    listingId: listingCascade(),
+    createdAt: createdCol(),
   },
   (t) => [
     unique().on(t.userId, t.listingId),
@@ -293,16 +268,14 @@ export const favorites = pgTable(
 export const notifications = pgTable(
   "notifications",
   {
-    id: serial("id").primaryKey(),
-    userId: text("userId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    kind: text("kind").notNull(), 
+    id: serialId(),
+    userId: userCascade(),
+    kind: text("kind").notNull(),
     title: text("title").notNull(),
     body: text("body").notNull(),
     link: text("link"),
     readAt: timestamp("readAt"),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    createdAt: createdCol(),
   },
   (t) => [
     index("notifications_user_idx").on(t.userId),
@@ -313,18 +286,15 @@ export const notifications = pgTable(
 export const reports = pgTable(
   "reports",
   {
-    id: serial("id").primaryKey(),
-    reporterId: text("reporterId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    id: serialId(),
+    reporterId: userCascade("reporterId"),
     listingId: integer("listingId").references(() => listings.id, { onDelete: "set null" }),
     reportedUserId: text("reportedUserId").references(() => user.id, { onDelete: "set null" }),
     reason: text("reason").notNull(),
     details: text("details"),
-    status: text("status").notNull().default("open"), 
+    status: text("status").notNull().default("open"),
     adminNotes: text("adminNotes"),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    ...timestamps(),
   },
   (t) => [
     index("reports_status_idx").on(t.status),
@@ -336,26 +306,17 @@ export const profiles = pgTable("profiles", {
   userId: text("userId")
     .primaryKey()
     .references(() => user.id, { onDelete: "cascade" }),
-  department: text("department"),
-  course: text("course"),
-  year: integer("year"),
-  bio: text("bio"),
-  phone: text("phone"),
-  hostel: text("hostel"),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  ...studentProfileCols(),
+  updatedAt: updatedCol(),
 })
 
 export const blockedUsers = pgTable(
   "blocked_users",
   {
-    id: serial("id").primaryKey(),
-    userId: text("userId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    blockedUserId: text("blockedUserId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    id: serialId(),
+    userId: userCascade(),
+    blockedUserId: userCascade("blockedUserId"),
+    createdAt: createdCol(),
   },
   (t) => [unique().on(t.userId, t.blockedUserId)]
 )
@@ -375,4 +336,3 @@ export type Notification = typeof notifications.$inferSelect
 export type Report = typeof reports.$inferSelect
 export type Profile = typeof profiles.$inferSelect
 export type BlockedUser = typeof blockedUsers.$inferSelect
-
